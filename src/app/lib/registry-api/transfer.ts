@@ -1,8 +1,5 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { and, eq, inArray } from 'drizzle-orm';
 import type { ArtifactKind, ArtifactOwnerKind, ArtifactReference, ArtifactReferenceKind } from '@handoff/artifacts/types';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
-import { isSafePathSegment, isSafeRelativePath } from '@handoff/registry/path';
 import {
   buildMetadata,
   componentFiles,
@@ -13,7 +10,10 @@ import {
   patternFiles,
   patterns,
 } from '@handoff/registry/db/schema';
+import { isSafePathSegment, isSafeRelativePath } from '@handoff/registry/path';
 import type { TransferArtifact, TransferBuild, TransferEntityKind, TransferFile, TransferPackage } from '@handoff/registry/transfer';
+import { and, eq, inArray } from 'drizzle-orm';
+import type { NextApiRequest, NextApiResponse } from 'next';
 import { singleQueryValue } from '../api/query';
 import { sendRegistryError } from './errors';
 import { validateFileBody } from './files';
@@ -22,15 +22,15 @@ import { buildMeta, resolveBuildMeta } from './meta';
 import { revalidateEntityPages } from './revalidate';
 import { getEntity, listEntityFiles, upsertEntityFile } from './store';
 import {
+  applyFailed,
   asString,
   invalidPackage as invalid,
   isPlainObject,
   normalizeSafeRelativePath,
-  applyFailed,
   rejected,
+  validateTransferBuild,
   type ApplyResult,
   type PackageValidation,
-  validateTransferBuild,
 } from './validation';
 
 /**
@@ -343,6 +343,8 @@ const upsertEntityRecord = async (
           tags: asStringArray(item.tags),
           type: asString(item.type) ?? '',
           renderer: asString(item.renderer),
+          // Drizzle omits an `undefined` column from the UPDATE, so only null clears a source format the item no longer has.
+          sourceFormat: asString(item.sourceFormat) ?? null,
           categories: asStringArray(item.categories),
         }
       : kind === 'pattern'

@@ -26,7 +26,7 @@ export const resolveComponentIdForChangedFile = (
   changedFilePath: string
 ): string | undefined => {
   const normalizedChangedPath = normalizePathForCompare(changedFilePath);
-  const runtimeComponents = handoff.runtimeConfig?.entries?.components ?? {};
+  const runtimeComponents = handoff.runtimeConfig?.entities.components ?? {};
 
   for (const [componentId, componentDef] of Object.entries(runtimeComponents)) {
     const entries = componentDef.entries ?? {};
@@ -53,8 +53,8 @@ export const getRuntimeComponentsPathsToWatch = (
 ): Map<string, RuntimeComponentEntryType> => {
   const result: Map<string, RuntimeComponentEntryType> = new Map();
 
-  for (const runtimeComponentId of Object.keys(handoff.runtimeConfig?.entries.components ?? {})) {
-    const runtimeComponent = handoff.runtimeConfig.entries.components[runtimeComponentId];
+  for (const runtimeComponentId of Object.keys(handoff.runtimeConfig?.entities.components ?? {})) {
+    const runtimeComponent = handoff.runtimeConfig.entities.components[runtimeComponentId];
     for (const [runtimeComponentEntryType, runtimeComponentEntryPath] of Object.entries(runtimeComponent.entries ?? {})) {
       const normalizedComponentEntryPath = runtimeComponentEntryPath as string;
       if (fs.existsSync(normalizedComponentEntryPath)) {

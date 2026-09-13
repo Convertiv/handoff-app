@@ -1,5 +1,8 @@
 # Handoff API
 
+Register implementations and compositions with `defineCatalogItem`. See the
+[catalog examples](../README.md#catalog-items) and [version 1.x.x to version 2.x.x migration guide](../UPGRADE.md#version-1xx-to-version-2xx).
+
 Handoff exposes two APIs - A Javascript API for interacting with the pipeline
 Handoff exposes a Javascript API allowing you to easily integrate Handoff into
 existing Node based applications, CI/CD, and command line tools. This API also

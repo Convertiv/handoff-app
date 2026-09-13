@@ -14,6 +14,7 @@
  *   returned exactly as it was published.
  */
 
+import { orderPreviews } from '../catalog/previews';
 import { and, eq, inArray, or, sql, type SQLWrapper } from 'drizzle-orm';
 import type { AssetStorage, AssetStorageReadResult } from '../registry/asset-storage/types';
 import type { RegistryDatabase } from '../registry/db/client';
@@ -86,17 +87,27 @@ const toTextFileResource = (row: RegistryFileRow): TextFileResource | null => {
   };
 };
 
+/**
+ * Restore source order after jsonb storage without exposing transfer-only metadata. `entries` and
+ * `componentExport` describe the publisher's source layout and exist for checkout. The workspace
+ * has no equivalent, so the docs API must not serve them.
+ */
+const readComponentRecord = (record: ComponentListObject): ComponentListObject => {
+  const { previewOrder, entries, componentExport, ...item } = record;
+  return { ...item, previews: orderPreviews(item.previews ?? {}, previewOrder ?? []) };
+};
+
 export class RegistryComponentStore implements ComponentStore {
   constructor(private readonly context: RegistryStoreContext) {}
 
   async list(): Promise<ComponentListObject[]> {
     const rows = await this.context.db.select({ record: components.record }).from(components);
-    return rows.map((row) => row.record);
+    return rows.map((row) => readComponentRecord(row.record));
   }
 
   async get(id: string): Promise<ComponentListObject | null> {
     const rows = await this.context.db.select({ record: components.record }).from(components).where(eq(components.id, id)).limit(1);
-    return rows[0]?.record ?? null;
+    return rows[0] ? readComponentRecord(rows[0].record) : null;
   }
 
   /**

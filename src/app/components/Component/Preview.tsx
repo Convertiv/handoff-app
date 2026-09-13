@@ -33,6 +33,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import PageSliceResolver from './PageSliceResolver';
 
+/** A preview without a url has no built artifact, so it can never be shown. */
+const getRenderablePreviewKeys = (previews: PreviewObject['previews'] | undefined): string[] =>
+  Object.entries(previews ?? {})
+    .filter(([, preview]) => preview.url)
+    .map(([key]) => key);
+
+/** The inspect artifact sits beside the preview artifact under a fixed suffix. */
+const toArtifactPath = (url: string, inspect: boolean): string => (inspect ? `${url.split('.html')[0]}-inspect.html` : url);
+
 const getDefaultSlices = (): PageSlice[] => [
   { type: 'BEST_PRACTICES' },
   { type: 'COMPONENT_DISPLAY' },
@@ -61,10 +70,14 @@ export const ComponentDisplay: React.FC<{
   const context = usePreviewContext();
   const ref = React.useRef<HTMLIFrameElement>(null);
   const [height, setHeight] = React.useState('100px');
-  const [previewUrl, setPreviewUrl] = React.useState('');
+  const [previewKey, setPreviewKey] = React.useState<string | null>(null);
   const [width, setWidth] = React.useState('1100px');
   const [inspect, setInspect] = React.useState(false);
   const [scale, setScale] = React.useState(0.8);
+
+  const renderablePreviewKeys = getRenderablePreviewKeys(component?.previews);
+  const selectedPreview = previewKey ? component?.previews?.[previewKey] : undefined;
+  const artifactPath = selectedPreview?.url ? toArtifactPath(selectedPreview.url, inspect) : null;
 
   // Generate variants from component previews only for Figma atomic components
   const localVariants = React.useMemo(() => {
@@ -113,53 +126,28 @@ export const ComponentDisplay: React.FC<{
     };
   }, [onLoad]);
 
-  const transformPreviewUrl = (url: string) => {
-    let target = url;
-    if (inspect) {
-      target = url.split('.html')[0] + '-inspect.html';
-    } else {
-      target = url.split('-inspect.html')[0] + '.html';
+  // One effect owns the selection. Split in two, the filter effect clears the selection, then
+  // returns early on the next render and never restores it.
+  React.useEffect(() => {
+    const keys = getRenderablePreviewKeys(component?.previews);
+
+    if (!context.variantFilter) {
+      setPreviewKey(keys[0] ?? null);
+      return;
     }
-    setPreviewUrl(target);
-  };
 
-  React.useEffect(() => {
-    transformPreviewUrl(previewUrl);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inspect]);
-
-  React.useEffect(() => {
-    if (component && component.previews) {
-      const keys = Object.keys(component.previews);
-      if (keys.length === 0) {
-        return;
-      }
-      const firstPreview = component.previews[keys[0]];
-      setPreviewUrl(firstPreview.url);
-    }
-  }, [component]);
-
-  React.useEffect(() => {
-    if (!component) return;
-    if (!context.variantFilter) return;
-
-    const previewFilterResult = Object.values(component.previews).filter((item) =>
-      Object.entries(context.variantFilter).every(([key, value]) => item.values[key] === value)
+    const match = keys.find((key) =>
+      Object.entries(context.variantFilter).every(([property, value]) => component.previews[key].values[property] === value)
     );
 
-    if (!!previewFilterResult && previewFilterResult.length > 0) {
-      setPreviewUrl(previewFilterResult[0].url);
-    } else {
-      setPreviewUrl(null);
-    }
+    setPreviewKey(match ?? null);
   }, [context.variantFilter, component]);
 
   React.useEffect(() => {
-    if (!component?.previews || !previewUrl) return;
-    const selectedPreview = Object.values(component.previews).find((preview) => preview.url === previewUrl);
-    if (!selectedPreview) return;
+    // The plain url identifies the preview downstream, so inspect mode must not change it.
+    if (!selectedPreview?.url) return;
     !!onPreviewChange && onPreviewChange(selectedPreview.url);
-  }, [component?.previews, onPreviewChange, previewUrl]);
+  }, [onPreviewChange, selectedPreview?.url]);
 
   const { reloadCounter } = useContext(HotReloadContext);
 
@@ -226,18 +214,16 @@ export const ComponentDisplay: React.FC<{
                   </>
                 ) : (
                   <>
-                    <Select value={previewUrl ?? undefined} onValueChange={setPreviewUrl}>
+                    <Select value={previewKey ?? ''} onValueChange={setPreviewKey}>
                       <SelectTrigger className="h-8 w-[180px] border-none border-gray-200 bg-white text-xs shadow-none dark:border-gray-900">
                         <SelectValue placeholder="Preview" />
                       </SelectTrigger>
                       <SelectContent>
-                        {Object.keys(component.previews)
-                          .filter((key) => component.previews[key].url)
-                          .map((key) => (
-                            <SelectItem key={component.previews[key].url} value={component.previews[key].url}>
-                              {component.previews[key].title}
-                            </SelectItem>
-                          ))}
+                        {renderablePreviewKeys.map((key) => (
+                          <SelectItem key={key} value={key}>
+                            {component.previews[key].title}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </>
@@ -315,7 +301,7 @@ export const ComponentDisplay: React.FC<{
                         className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
                         onClick={() => {
                           // open in new tab
-                          window.open(buildArtifactUrl(`component/${previewUrl}`, process.env.HANDOFF_APP_BASE_PATH ?? ''), '_blank');
+                          window.open(buildArtifactUrl(`component/${artifactPath}`, process.env.HANDOFF_APP_BASE_PATH ?? ''), '_blank');
                         }}
                         variant="ghost"
                       >
@@ -329,10 +315,10 @@ export const ComponentDisplay: React.FC<{
             </div>
 
             <div className="dotted-bg w-full p-8">
-              {previewUrl ? (
+              {artifactPath ? (
                 <div>
                   <iframe
-                    key={`${previewUrl}-${reloadCounter}`}
+                    key={`${artifactPath}-${reloadCounter}`}
                     onLoad={onLoad}
                     ref={ref}
                     height={height}
@@ -345,7 +331,7 @@ export const ComponentDisplay: React.FC<{
                       display: 'block',
                       margin: '0 auto',
                     }}
-                    src={buildArtifactUrl(`component/${previewUrl}`, process.env.HANDOFF_APP_BASE_PATH ?? '')}
+                    src={buildArtifactUrl(`component/${artifactPath}`, process.env.HANDOFF_APP_BASE_PATH ?? '')}
                   />
                 </div>
               ) : (

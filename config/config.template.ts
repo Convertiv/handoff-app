@@ -34,11 +34,10 @@ export default defineConfig({
     },
     ports: { app: 3000, websocket: 3001 },
   },
+  catalog: { include: ['./components'] },
   entries: {
     scss: './sass/main.scss',
     js: './js/main.js',
-    components: ['./components'],
-    // patterns: ['./patterns'],
   },
   assetsZipLinks: {
     icons: null,

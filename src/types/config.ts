@@ -94,24 +94,23 @@ export interface ConfigEntries {
    * @example "scripts/main.js"
    */
   js?: string;
+}
+
+/** Catalog item registration. */
+export interface ConfigCatalog {
   /**
-   * Array of component paths to be included in the build
-   * @example ["components/button", "components/input"]
+   * Directories to search for catalog items. A path is either an item directory or a collection
+   * directory whose subdirectories are each treated as an item.
+   * @example ["components", "patterns"]
    */
-  components?: string[];
-  /**
-   * Array of pattern paths to be included in the build.
-   * Patterns compose multiple component previews into single-page views.
-   * @example ["patterns/hero-section", "patterns"]
-   */
-  patterns?: string[];
+  include?: string[];
 }
 
 /** Runtime mode. Resolved solely from `runtime.mode`; never inferred from env vars or connection settings. */
 export type RuntimeMode = 'workspace' | 'registry';
 
 /** Format used when synthesizing local workspace declarations. */
-export type DeclarationFormat = 'ts' | 'js' | 'cjs' | 'json';
+export type DeclarationFormat = 'ts' | 'js' | 'cjs';
 
 /**
  * User-facing `runtime` configuration block. A single optional block that selects the runtime
@@ -227,6 +226,10 @@ export interface Config {
    * Configuration for entry points to assets and components that will be built
    */
   entries?: ConfigEntries;
+  /**
+   * Where catalog items are registered.
+   */
+  catalog?: ConfigCatalog;
   /**
    * Override URLs for the asset zip download links. When unset, each link defaults to the
    * basePath-aware asset route `{basePath}/api/docs/assets/{collection}/{collection}.zip`, served by
@@ -411,11 +414,23 @@ export interface ConfigFileEntry {
   entityId: string;
 }
 
+/** A catalog declaration skipped because another declaration already took its id. */
+export interface DuplicateCatalogId {
+  id: string;
+  /** Absolute path of the declaration that owns the id. */
+  kept: string;
+  /** Absolute path of the declaration that was skipped. */
+  skipped: string;
+}
+
 export interface RuntimeConfig {
+  /** Resolved absolute paths of the project-wide bundle entry points, from `config.entries`. */
   entries?: {
     scss?: string;
     js?: string;
-    templates?: string;
+  };
+  /** Entities discovered from the workspace, keyed by id. Always present, possibly empty. */
+  entities: {
     components: {
       [id: string]: ComponentListObject;
     };
@@ -426,6 +441,11 @@ export interface RuntimeConfig {
       [id: string]: PageListObject;
     };
   };
+  /**
+   * Catalog declarations skipped because their id was already taken. Always present, possibly empty.
+   * Discovery is the only pass that sees both declarations, so publish reads the duplicates from here.
+   */
+  duplicateCatalogIds: DuplicateCatalogId[];
   options: {
     [key: string]: RuntimeConfigComponentOptions;
   };

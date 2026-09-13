@@ -1,7 +1,7 @@
 /**
  * Filesystem-backed implementation of the normalized store abstraction.
  *
- * It is a thin read view over the already-resolved `runtimeConfig.entries`, so the records it
+ * It is a thin read view over the already-resolved `runtimeConfig.entities`, so the records it
  * returns are the same normalized component/pattern records the build consumes today — discovery
  * and normalization (modern `*.handoff.*` + legacy `{dirname}.*`, react/handlebars/csf/plain-object
  * declarations, CSF story discovery, `entries` resolution) all happen upstream in
@@ -71,7 +71,7 @@ export class FilesystemComponentStore implements ComponentStore {
   constructor(private readonly context: FilesystemStoreContext) {}
 
   private get records(): Record<string, ComponentListObject> {
-    return this.context.runtimeConfig?.entries?.components ?? {};
+    return this.context.runtimeConfig?.entities.components ?? {};
   }
 
   list(): ComponentListObject[] {
@@ -97,7 +97,7 @@ export class FilesystemPatternStore implements PatternStore {
   constructor(private readonly context: FilesystemStoreContext) {}
 
   private get records(): Record<string, PatternListObject> {
-    return this.context.runtimeConfig?.entries?.patterns ?? {};
+    return this.context.runtimeConfig?.entities.patterns ?? {};
   }
 
   list(): PatternListObject[] {
@@ -145,7 +145,7 @@ export class FilesystemPageStore implements PageStore {
   constructor(private readonly context: FilesystemStoreContext) {}
 
   private get records(): Record<string, PageListObject> {
-    return this.context.runtimeConfig?.entries?.pages ?? {};
+    return this.context.runtimeConfig?.entities.pages ?? {};
   }
 
   list(): PageListObject[] {

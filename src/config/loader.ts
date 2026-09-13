@@ -153,6 +153,18 @@ export const initConfigWithMetadata = (configOverride?: Partial<Config>, context
     });
   }
 
+  const entries = config.entries as Record<string, unknown> | undefined;
+  if (entries && ('components' in entries || 'patterns' in entries)) {
+    throw new HandoffConfigError(
+      'entries.components and entries.patterns were removed. Use catalog.include. See UPGRADE.md#catalog-items.'
+    );
+  }
+  const format = config.runtime?.workspace?.declarationFormat;
+  if (format !== undefined && !['ts', 'js', 'cjs'].includes(format)) {
+    throw new HandoffConfigError(
+      'Item declarations support ts, js, and cjs. Convert JSON declarations to defineCatalogItem. See UPGRADE.md#catalog-items.'
+    );
+  }
   const defaults = defaultConfig();
   // Top-level merge stays shallow to preserve 1.x semantics, except for the `runtime`
   // block which is deep-merged so a partial user `runtime` (e.g. only `mode`) does not

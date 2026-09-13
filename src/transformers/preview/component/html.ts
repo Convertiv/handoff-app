@@ -1,7 +1,7 @@
 import react from '@vitejs/plugin-react';
 import { Types as CoreTypes } from 'handoff-core';
-import { InlineConfig, build as viteBuild } from 'vite';
-import { RendererKind } from '../../../declarations/types';
+import { InlineConfig, PluginOption, build as viteBuild } from 'vite';
+import type { RendererKind, SourceFormat } from '../../../catalog/renderers';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
 import { csfRenderPlugin, handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
@@ -9,16 +9,24 @@ import viteBaseConfig from '../../vite-config';
 import { getComponentOutputPath } from '../component';
 import { TransformComponentTokensResult } from '../types';
 
-const resolveRenderer = (data: TransformComponentTokensResult): RendererKind | undefined => {
-  const templatePath = data.entries?.template || '';
-  return (
-    data.renderer ||
-    (data.entries?.story || templatePath.match(/\.stories\.(jsx|tsx|js|ts)$/) ? 'csf' : undefined) ||
-    (data.entries?.component || (templatePath.includes('.tsx') && !templatePath.match(/\.stories\.(jsx|tsx|js|ts)$/))
-      ? 'react'
-      : undefined) ||
-    (templatePath.includes('.hbs') ? 'handlebars' : undefined)
-  );
+type PreviewPlugins = (
+  data: TransformComponentTokensResult,
+  components: CoreTypes.IDocumentationObject['components'] | undefined,
+  handoff: Handoff
+) => PluginOption[];
+
+/**
+ * Exactly one entry builds an item. A source format claims it before its renderer, because a CSF
+ * item is also a React item and both plugins would write their own previews. The maps are
+ * exhaustive, so a new renderer fails to compile until its previews are built.
+ */
+const FORMAT_PLUGINS: Record<SourceFormat, PreviewPlugins> = {
+  csf: (data, components, handoff) => [csfRenderPlugin(data, components, handoff)],
+};
+
+const RENDERER_PLUGINS: Record<RendererKind, PreviewPlugins> = {
+  handlebars: (data, components, handoff) => [handlebarsPreviewsPlugin(data, components, handoff)],
+  react: (data, components, handoff) => [react(), ssrRenderPlugin(data, components, handoff)],
 };
 
 /**
@@ -42,14 +50,17 @@ export const buildPreviews = async (
 ): Promise<TransformComponentTokensResult> => {
   if (!data.entries?.template) return data;
 
-  const resolvedRenderer = resolveRenderer(data);
+  const { renderer, sourceFormat } = data;
 
-  const plugins = [
-    ...(viteBaseConfig.plugins || []),
-    ...(resolvedRenderer === 'handlebars' ? [handlebarsPreviewsPlugin(data, components, handoff)] : []),
-    ...(resolvedRenderer === 'csf' ? [csfRenderPlugin(data, components, handoff)] : []),
-    ...(resolvedRenderer === 'react' ? [react(), ssrRenderPlugin(data, components, handoff)] : []),
-  ];
+  const previewPlugins = sourceFormat ? FORMAT_PLUGINS[sourceFormat] : RENDERER_PLUGINS[renderer];
+  if (!previewPlugins) {
+    Logger.error(
+      `No preview support for renderer "${renderer}"${sourceFormat ? ` and source format "${sourceFormat}"` : ''}: ${data.entries.template}`
+    );
+    return data;
+  }
+
+  const plugins = [...(viteBaseConfig.plugins || []), ...previewPlugins(data, components, handoff)];
 
   // Store the current NODE_ENV value before vite build
   // This is necessary because viteBuild forcibly sets NODE_ENV to 'production'

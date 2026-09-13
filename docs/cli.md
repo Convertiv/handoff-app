@@ -63,7 +63,7 @@ Commands:
   logout [--url <registry-url>] - Revokes the saved token when possible, then removes the local credential.
 
   make
-    make:template <component> <state> [opts] - Creates a new template
+    make:component <name> [opts] - Creates a new catalog item with a declaration
     make:page <component> <state> [opts] - Creates a new page
 
   eject - Ejects the default entire configuration to the current directory

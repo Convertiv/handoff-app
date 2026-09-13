@@ -17,7 +17,7 @@ import {
   resolveCompatTargets,
 } from '../compat/push-args';
 import { SharedArgs } from '../types';
-import { getPublishOptions, runRegistryCommand, withTargetPositionals } from '../utils';
+import { COMPAT_TARGET_KINDS, getPublishOptions, runRegistryCommand, withTargetPositionals } from '../utils';
 
 /**
  * Deprecated `push` family: the command names used by the published docs, kept working over the
@@ -43,7 +43,7 @@ const push: CommandModule<{}, PushArgs> = {
   describe: 'Deprecated alias for publish',
   deprecated: true,
   builder: (yargs) =>
-    withTargetPositionals(getPublishOptions(yargs), 'publish').options({
+    withTargetPositionals(getPublishOptions(yargs), 'publish', COMPAT_TARGET_KINDS).options({
       components: { type: 'array', string: true, description: 'Publish only these component ids' },
       patterns: { type: 'array', string: true, description: 'Publish only these pattern ids' },
       pages: { type: 'array', string: true, description: 'Publish only these page slugs' },

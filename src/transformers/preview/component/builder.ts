@@ -1,6 +1,7 @@
 import { Types as CoreTypes } from 'handoff-core';
 import cloneDeep from 'lodash/cloneDeep';
 import { buildComponentDetailUrl } from '../../../artifacts/url';
+import type { SourceFormat } from '../../../catalog/renderers';
 import {
   BuildCache,
   checkOutputExists,
@@ -67,8 +68,16 @@ type ComponentBuildPlan = {
   validationMode: boolean;
 };
 
+/**
+ * A source format reads its previews out of the source file. A placeholder there is a preview
+ * nothing can render: the docs would offer a "Default" entry with no artifact. Only a renderer
+ * that renders whatever previews it is given needs the placeholder.
+ */
+const ownsItsPreviews = (data: { sourceFormat?: SourceFormat } | undefined): boolean => !!data?.sourceFormat;
+
 const ensureDefaultPreview = (data: TransformComponentTokensResult): void => {
   if (!data) return;
+  if (ownsItsPreviews(data)) return;
   if (!data.previews || Object.keys(data.previews).length === 0) {
     data.previews = {
       default: {
@@ -180,7 +189,7 @@ export async function processComponents(
   const documentationObject = await handoff.getDocumentationObject();
   const components = documentationObject?.components ?? ({} as CoreTypes.IDocumentationObject['components']);
   // Resolve the component set through the storage-agnostic store (v2). The filesystem store is a
-  // read view over `runtimeConfig.entries.components`, so these are the same records the build has
+  // read view over `runtimeConfig.entities.components`, so these are the same records the build has
   // always used — rebuilt into the id-keyed map the build logic below expects.
   const runtimeComponents: Record<string, ComponentListObject> = {};
   for (const component of await handoff.store.components.list()) {
@@ -191,7 +200,7 @@ export async function processComponents(
   if (id && !runtimeComponents[id]) {
     await removeComponentApi(handoff, id);
     await removeComponentFromSummaryApi(handoff, id);
-    await syncComponentArtifacts(handoff);
+    await syncComponentArtifacts(handoff, [id]);
     return [];
   }
 
@@ -302,7 +311,7 @@ export async function processComponents(
     // If this is NOT a figma component, add the default generic preview.
     // We add it here (before merge) so that if the user explicitly provided previews in 'restMetadata',
     // those will override this default (standard "config overrides defaults" behavior).
-    if (!restMetadata.figmaComponentId) {
+    if (!restMetadata.figmaComponentId && !ownsItsPreviews(restMetadata)) {
       componentDefaults.previews = {
         default: {
           title: 'Default',
@@ -337,12 +346,14 @@ export async function processComponents(
         data.css = existingData.css;
         data.sass = existingData.sass;
       }
-      // If we're not building previews, preserve pre-existing HTML, code snippet, usage, and previews.
+      // If we're not building previews, preserve pre-existing HTML, code snippet, usage, previews,
+      // and the code language they were rendered in.
       if (!buildPlan.previews) {
         data.html = existingData.html;
         data.code = existingData.code;
         data.usage = existingData.usage;
         data.previews = existingData.previews;
+        data.format = existingData.format;
       }
       /**
        * Always keep validation results from the previous data,
@@ -466,6 +477,8 @@ const buildComponentSummary = (id: string, data: TransformComponentTokensResult)
     properties: data.properties,
     previews: getDocumentedPreviews(data.previews),
     path: buildComponentDetailUrl(id, process.env.HANDOFF_APP_BASE_PATH ?? ''),
+    ...(data.renderer ? { renderer: data.renderer } : {}),
+    ...(data.sourceFormat ? { sourceFormat: data.sourceFormat } : {}),
   };
 };
 

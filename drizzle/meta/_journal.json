@@ -43,6 +43,13 @@
       "when": 1785229875267,
       "tag": "0005_add_registry_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788980586467,
+      "tag": "0006_add_component_source_format",
+      "breakpoints": true
     }
   ]
 }

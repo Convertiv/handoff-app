@@ -11,7 +11,7 @@ import { ConfigDiffStrategy, FinalizeContext } from '../types';
  * components. Outer key is component id, inner key is synthetic preview key.
  */
 const snapshotPatternSynthetics = (handoff: Handoff, patternId: string): MapSnapshot => {
-  const components = handoff.runtimeConfig?.entries?.components ?? {};
+  const components = handoff.runtimeConfig?.entities.components ?? {};
   const prefix = `__pattern_${patternId}_`;
   const result: MapSnapshot = new Map();
 

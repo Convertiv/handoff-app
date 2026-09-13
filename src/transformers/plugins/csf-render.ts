@@ -7,6 +7,7 @@ import ReactDOMServer from 'react-dom/server';
 import reactElementToJSXString from 'react-element-to-jsx-string';
 import { Plugin } from 'vite';
 import Handoff from '../..';
+import { orderPreviews, readExportOrderFromSource } from '../../catalog';
 import { Logger } from '../../utils/logger';
 import { generateDocsArtifact, getPropertiesForComponentFromDocs } from '../docgen';
 import { SlotMetadata, SlotType } from '../preview/component';
@@ -358,9 +359,10 @@ export function csfRenderPlugin(
         Object.entries(incomingPreviews).filter(([key]) => key.startsWith('__pattern_'))
       );
 
-      // Include all named stories as previews and preserve injected pattern previews.
+      // Include all named stories as previews and preserve injected pattern previews. Story order
+      // comes from the source text: esbuild emits its export map alphabetically.
       componentData.previews = {
-        ...createCsfStoryPreviews(moduleExports),
+        ...orderPreviews(createCsfStoryPreviews(moduleExports), readExportOrderFromSource(sourceCode)),
         ...patternPreviews,
       };
 

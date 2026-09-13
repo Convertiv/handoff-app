@@ -1,12 +1,24 @@
 import { Argv } from 'yargs';
 import Handoff from '../';
-import { REGISTRY_ENTITY_KINDS, type RegistryEntityKind } from '../registry/content-kinds';
+import { REGISTRY_ENTITY_KINDS } from '../registry/content-kinds';
 import { Logger } from '../utils/logger';
 import { SharedArgs } from './types';
 
-/** The `type` argument accepted by publish/checkout: any content kind, or `all` for every kind. */
-export const REGISTRY_TARGET_KINDS = [...REGISTRY_ENTITY_KINDS, 'all'] as const;
+/**
+ * The `type` argument accepted by publish and checkout, or `all` for every kind. `catalog` covers
+ * every catalog item. An item's lane comes from its declaration, so the command line names items and
+ * never a lane.
+ */
+export const REGISTRY_TARGET_KINDS = ['catalog', 'pages', 'tokens', 'assets', 'all'] as const;
 export type RegistryTargetKind = (typeof REGISTRY_TARGET_KINDS)[number];
+
+/**
+ * The `type` argument accepted by the deprecated `push` / `pull` aliases: the plural content kinds the
+ * published docs name. This list keeps `components` and `patterns`, which the canonical commands do
+ * not take, and omits `catalog`, which the docs do not describe.
+ */
+export const COMPAT_TARGET_KINDS = [...REGISTRY_ENTITY_KINDS, 'all'] as const;
+export type CompatTargetKind = (typeof COMPAT_TARGET_KINDS)[number];
 
 export const createHandoff = (args: SharedArgs): Handoff =>
   new Handoff({
@@ -80,15 +92,15 @@ export const getCheckoutOptions = (yargs: Argv) =>
  * `choices` is always declared: yargs allows an omitted optional positional while still rejecting an
  * unrecognized one, so the deprecated commands get the same guard as the canonical ones.
  */
-export const withTargetPositionals = (yargs: Argv, verb: 'publish' | 'checkout') =>
+export const withTargetPositionals = <TKind extends string>(yargs: Argv, verb: 'publish' | 'checkout', choices: readonly TKind[]) =>
   yargs
     .positional('type', {
       describe: `The kind of content to ${verb}, or "all" for every kind`,
-      choices: REGISTRY_TARGET_KINDS,
+      choices,
       type: 'string',
     })
     .positional('id', {
-      describe: `The stable id (component/pattern/page id, token set id, or asset collection); omit to ${verb} all of that kind`,
+      describe: `The stable id (catalog item id, page id, token set id, or asset collection); omit to ${verb} all of that kind`,
       type: 'string',
       array: true,
     });
@@ -98,5 +110,8 @@ export const runTarget = (handoff: Handoff, type: RegistryTargetKind, ids: strin
   if (type === 'all') {
     return verb === 'publish' ? handoff.publishAll() : handoff.checkoutAll();
   }
-  return verb === 'publish' ? handoff.publishKind(type, ids) : handoff.checkoutKind(type as RegistryEntityKind, ids);
+  if (type === 'catalog') {
+    return verb === 'publish' ? handoff.publishCatalog(ids) : handoff.checkoutCatalog(ids);
+  }
+  return verb === 'publish' ? handoff.publishKind(type, ids) : handoff.checkoutKind(type, ids);
 };
