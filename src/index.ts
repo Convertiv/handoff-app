@@ -1,11 +1,11 @@
-import 'dotenv/config';
+import './config/env';
 import fs from 'fs-extra';
 import { Types as CoreTypes, Handoff as HandoffRunner, Providers } from 'handoff-core';
 import path from 'path';
 import buildApp, { devApp, watchApp, type BuildPackage, type BuildTarget } from './app-builder';
 import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
 import { makeComponent, makePage } from './cli/make';
-import { initConfigWithMetadata, initRuntimeConfig, validateConfig } from './config';
+import { initConfigWithMetadata, initRuntimeConfig, loadProfileEnv, resolveProfileSelection, validateConfig } from './config';
 import pipeline, { buildComponents, buildPatterns } from './pipeline';
 import { ALL_KIND_ORDER, ENTITY_WIRE_KIND, isRegistryEntityKind, REGISTRY_ENTITY_KINDS, type RegistryEntityKind } from './registry/content-kinds';
 import type { TransferEntityKind } from './registry/transfer';
@@ -32,6 +32,11 @@ export interface HandoffOptions {
   config?: Partial<Config>;
   /** Explicit config file (the CLI's `-c, --config`), resolved from the working path. */
   configPath?: string;
+  /**
+   * Config profile to merge onto the base config (the CLI's `--profile`). It overrides
+   * `HANDOFF_PROFILE`, and a selected profile has to resolve to a `handoff.config.<profile>.*` file.
+   */
+  profile?: string;
 }
 
 /**
@@ -142,6 +147,8 @@ class Handoff {
   private _configFilePaths: string[] = [];
   private _configFileIndex: Map<string, ConfigFileEntry> = new Map();
   private _mainConfigFilePath?: string;
+  private _profileConfigFilePath?: string;
+  private _profile?: string;
   private _documentationObjectCache?: CoreTypes.IDocumentationObject;
   private _handoffRunner?: ReturnType<typeof HandoffRunner> | null;
 
@@ -151,7 +158,8 @@ class Handoff {
   }
 
   private construct(options: HandoffOptions) {
-    this.config = null;
+    // Ahead of `Logger.init` so a profile env file can set `HANDOFF_LOG_LEVEL` and `HANDOFF_LOG_SCOPES`.
+    loadProfileEnv(resolveProfileSelection(options.profile)?.name);
     this.debug = options.debug ?? false;
     this.force = options.force ?? false;
     this.dryRun = options.dryRun ?? false;
@@ -161,13 +169,19 @@ class Handoff {
   }
 
   init(configOverride?: Partial<Config>): Handoff {
+    // Resolved before anything is assigned: a reload that throws - a deleted profile file, a
+    // broken config - then leaves the last good state in place for the watchers holding this
+    // instance.
     const configResult = initConfigWithMetadata(configOverride ?? {}, {
       workingPath: this.workingPath,
       configPath: this._options.configPath,
+      profile: this._options.profile,
     });
     const config = configResult.config;
     this.config = config;
     this._mainConfigFilePath = configResult.configPath;
+    this._profileConfigFilePath = configResult.profileConfigPath;
+    this._profile = configResult.profile;
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
     [this.runtimeConfig, this._configFilePaths, this._configFileIndex] = initRuntimeConfig(this);
@@ -571,8 +585,8 @@ class Handoff {
    * @returns {string[]} Array of absolute paths to config files
    */
   getConfigFilePaths(): string[] {
-    const combined = this._mainConfigFilePath ? [this._mainConfigFilePath, ...this._configFilePaths] : this._configFilePaths;
-    return Array.from(new Set(combined));
+    const mainPaths = [this._mainConfigFilePath, this._profileConfigFilePath].filter(Boolean) as string[];
+    return Array.from(new Set([...mainPaths, ...this._configFilePaths]));
   }
 
   /**
@@ -580,6 +594,24 @@ class Handoff {
    */
   getMainConfigFilePath(): string | undefined {
     return this._mainConfigFilePath;
+  }
+
+  /**
+   * Gets the selected config profile if one was selected.
+   */
+  getProfile(): string | undefined {
+    return this._profile;
+  }
+
+  /**
+   * True for the base config file and for the profile file merged onto it. Both carry project-wide
+   * settings, so a change to either one invalidates every entity rather than a single declaration.
+   */
+  isMainConfigFile(filePath: string): boolean {
+    const normalized = normalizePathForCompare(filePath);
+    return [this._mainConfigFilePath, this._profileConfigFilePath]
+      .filter(Boolean)
+      .some((mainPath) => normalizePathForCompare(mainPath as string) === normalized);
   }
 
   getConfigFileEntry(configPath: string): ConfigFileEntry | undefined {

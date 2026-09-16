@@ -250,21 +250,31 @@ export const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState)
               const handle =
                 entryBefore && strategy ? strategy.capture(handoff, entryBefore.entityId) : undefined;
 
-              handoff.reload();
-              await persistClientConfig(handoff);
+              let reloadFailed = false;
+              try {
+                handoff.reload();
+                await persistClientConfig(handoff);
+              } catch (e) {
+                // A failed reload leaves the last config that loaded on the instance, so the
+                // re-arm below still names the file that just broke. Without it the file drops
+                // out of the watch set - chokidar stops tracking a watched file once it is
+                // deleted - and a later valid save is never seen.
+                reloadFailed = true;
+                Logger.error('Error reloading runtime configuration:', e);
+              }
+
               watchRuntimeComponents(handoff, state, getRuntimeComponentsPathsToWatch(handoff));
               watchRuntimeConfiguration(handoff, state);
 
-              const entryAfter = handoff.getConfigFileEntry(changedFile);
+              if (reloadFailed) {
+                return;
+              }
 
-              const normalizedChanged = normalizePathForCompare(changedFile);
-              const normalizedMainConfig = handoff.getMainConfigFilePath()
-                ? normalizePathForCompare(handoff.getMainConfigFilePath() as string)
-                : undefined;
+              const entryAfter = handoff.getConfigFileEntry(changedFile);
 
               const kindChanged = !!entryBefore && !!entryAfter && entryBefore.kind !== entryAfter.kind;
 
-              if (normalizedMainConfig && normalizedChanged === normalizedMainConfig) {
+              if (handoff.isMainConfigFile(changedFile)) {
                 await processComponents(handoff);
               } else if (kindChanged) {
                 // The declaration switched between an implementation and a composition. A targeted

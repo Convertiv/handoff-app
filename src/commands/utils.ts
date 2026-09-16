@@ -25,6 +25,7 @@ export const createHandoff = (args: SharedArgs): Handoff =>
     debug: args.debug,
     force: args.force,
     configPath: args.config,
+    profile: args.profile,
     dryRun: args.dryRun,
     // yargs gives `--no-build` as `build: false`; anything else leaves the build in place.
     skipBuild: args.build === false,
@@ -60,6 +61,10 @@ export const getSharedOptions = (yargs: Argv) => {
       alias: 'd',
       type: 'boolean',
       description: 'Enable debug mode',
+    },
+    profile: {
+      type: 'string',
+      description: 'Config profile to merge onto the base config (handoff.config.<profile>.*); overrides HANDOFF_PROFILE',
     },
   });
 };

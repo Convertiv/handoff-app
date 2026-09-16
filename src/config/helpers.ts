@@ -39,5 +39,7 @@ export const normalizeConfig = (config: Config): Config => {
 /**
  * Optional helper for strongly-typed config authoring.
  * It normalizes modern camelCase keys to legacy runtime keys.
+ *
+ * Every part of `Config` is optional, so this types a profile as well as a base config.
  */
 export const defineConfig = (config: Config): Config => normalizeConfig(config);

@@ -49,21 +49,24 @@ export default defineConfig({
   //   include: ["components", "patterns"],
   // },
 
-  // Runtime settings, all optional. The default is workspace mode with the MCP endpoint served.
-  // `mcp: false` leaves the /api/mcp/ endpoint, and the connect affordance in the docs header, out
-  // of the build; the route then answers 404.
+  // Runtime settings. `mode` is the sole determinant of the runtime mode; a registry build packages
+  // a registry app whatever this says. Every other key here is optional, and the MCP endpoint is
+  // served by default. `mcp: false` leaves the /api/mcp/ endpoint, and the connect affordance in
+  // the docs header, out of the build; the route then answers 404.
   // The registry block is only needed when deploying a hosted registry, and is used by
-  // `build --target registry` and `db:migrate`. The default workspace mode uses no database.
+  // `build --target registry` and `db:migrate`. Workspace mode uses no database.
   // Handoff runs on PostgreSQL, and `driver` just picks the connection driver to use, not
   // the database engine. Secrets are referenced by env var name and never written here.
-  // runtime: {
-  //   mode: "registry",
-  //   mcp: false,
-  //   registry: {
-  //     databaseUrlEnv: "DATABASE_URL",
-  //     database: { driver: "pg" }, // 'pg' | 'neon'
-  //   },
-  // },
+  // A configuration profile is a good home for the registry block: put it in
+  // handoff.config.registry.* and select it with `--profile registry` or HANDOFF_PROFILE.
+  runtime: {
+    mode: "workspace",
+    // mcp: false,
+    // registry: {
+    //   databaseUrlEnv: "DATABASE_URL",
+    //   database: { driver: "pg" }, // 'pg' | 'neon'
+    // },
+  },
 
   // Optional handoff-docgen settings used by component docs generation
   // reactDocgen: {

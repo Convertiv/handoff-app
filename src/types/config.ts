@@ -58,8 +58,8 @@ export type RegisterHandlebarsHelpersContext = {
 
 export interface NextAppConfig {
   theme?: string;
-  title: string;
-  client: string;
+  title?: string;
+  client?: string;
   google_tag_manager?: string | null | undefined;
   googleTagManager?: string | null | undefined;
   type_copy?: string;
@@ -68,12 +68,14 @@ export interface NextAppConfig {
   typeSort?: string[];
   color_sort?: string[];
   colorSort?: string[];
-  breakpoints: Breakpoints;
+  /** Omit to keep the defaults; a declared block merges onto them rather than replacing them. */
+  breakpoints?: Breakpoints;
   component_sort?: string[];
   componentSort?: string[];
   base_path?: string;
   basePath?: string;
-  attribution: boolean;
+  /** @default true */
+  attribution?: boolean;
   ports?: {
     app: number;
     websocket: number;

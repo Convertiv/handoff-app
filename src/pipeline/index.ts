@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import '../config/env';
 import Handoff from '..';
 import buildApp from '../app-builder';
 import { Logger } from '../utils/logger';

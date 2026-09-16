@@ -48,7 +48,11 @@ export interface BuildCache {
  * Gets the path to the build cache file
  */
 export function getCachePath(handoff: Handoff): string {
-  return path.resolve(handoff.modulePath, '.handoff', handoff.getProjectId(), '.cache', 'build-cache.json');
+  // Two profiles share one project id and can build different output, so the profile has to name
+  // the cache file. One shared cache would serve the other profile's components.
+  const profile = handoff.getProfile();
+  const fileName = profile ? `build-cache.${profile}.json` : 'build-cache.json';
+  return path.resolve(handoff.modulePath, '.handoff', handoff.getProjectId(), '.cache', fileName);
 }
 
 /**

@@ -27,8 +27,8 @@ export const defaultConfig = (): Config => ({
   },
   app: {
     theme: 'default',
-    title: 'Convertiv Design System',
-    client: 'Convertiv',
+    title: 'Handoff Design System',
+    client: 'Handoff',
     google_tag_manager: null,
     attribution: true,
     type_copy: 'Almost before we knew it, we had left the ground.',

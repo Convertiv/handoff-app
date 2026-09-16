@@ -521,13 +521,15 @@ for Claude Code, Cursor and VS Code behind the plug icon in the header. By hand:
 ## Configuration
 
 Configuration is read from `handoff.config.ts`, `.js`, `.cjs`, or `.json`, in
-that order. `defineConfig` provides typed authoring. A partial `runtime` block
-is deep-merged with defaults.
+that order. `defineConfig` provides typed authoring. Values merge onto the
+defaults: plain objects merge recursively, and arrays, scalars, `null`, and
+functions replace.
 
 Useful environment variables:
 
 | Variable | Purpose |
 | --- | --- |
+| `HANDOFF_PROFILE` | Config profile merged onto the base config |
 | `HANDOFF_FIGMA_PROJECT_ID` | Figma file ID used by `fetch` |
 | `HANDOFF_DEV_ACCESS_TOKEN` | Figma personal access token used by `fetch` |
 | `HANDOFF_REGISTRY_URL` | Connected workspace registry URL |
@@ -550,6 +552,49 @@ Vercel Blob or a custom adapter can be selected through
 selected through `runtime.registry.database.driver`; PostgreSQL is used by
 both.
 
+## Profiles
+
+A profile is a sidecar config file that merges onto the base config. It holds
+only what changes between environments, so a project keeps one shared config
+instead of a second complete copy of it.
+
+- The base config is `handoff.config.ts`, `.js`, `.cjs`, or `.json`. It is the
+  only config file loaded when no profile is selected.
+- A profile file is `handoff.config.<profile>.*`, with the same four
+  extensions.
+- Select a profile with `--profile <name>` or with `HANDOFF_PROFILE`.
+  `--profile` takes precedence over `HANDOFF_PROFILE`.
+- Profile names are not predefined. A name can contain lowercase letters,
+  numbers, and hyphens.
+- A selected profile must exist. If no `handoff.config.<name>.*` file is found,
+  the command stops with an error.
+- Layers resolve as defaults, base config, profile, then programmatic config,
+  with the merge rules described under [Configuration](#configuration).
+- A selected profile also reads `.env.<profile>` on top of `.env`, when that
+  file exists. Both are read from the directory the command runs in, and a
+  variable already set in the environment beats both files.
+
+```bash
+npx handoff-app build --target registry --profile registry
+```
+
+`build --target registry` always packages a registry-mode application, so a
+profile does not need to set `runtime.mode`. This makes a profile a good place
+for the registry build settings: the database driver, the database
+environment-variable name, the asset storage, and whether MCP is enabled. A
+hosting provider or a CI job selects the profile through `HANDOFF_PROFILE`.
+
+`defineConfig` types a profile as well as a base config. The generated
+`.gitignore` lists `handoff.config.local.*`, which makes `local` the usual name
+for a profile that stays on one machine.
+
+Arrays replace, so a profile that declares `catalog.include` also decides what
+`make` and `checkout` register.
+
+`.env.<profile>` is read once at startup rather than watched.
+`HANDOFF_WORKING_PATH` cannot be set from it, because the working path is
+resolved before any profile is known.
+
 ## CLI reference
 
 | Command | Description |
@@ -566,7 +611,9 @@ both.
 | `npm run login -- --url <url>` | The CLI is authorized through the registry device flow |
 | `npm run logout -- [--url <url>]` | A saved CLI credential is revoked and removed |
 
-`publish` and `checkout` additionally accept `--dry-run`, and `publish` accepts `--no-build`.
+Every command except `init` accepts `-c, --config`, `--profile`, `-d, --debug`,
+and `-f, --force`. `publish` and `checkout` additionally accept `--dry-run`, and
+`publish` accepts `--no-build`.
 
 Arguments after `--` are forwarded to the local CLI. Exact options can be shown
 by adding `--help` after the separator. Advanced configuration and hooks are

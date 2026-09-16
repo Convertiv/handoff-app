@@ -2,8 +2,11 @@
 export { defaultConfig, getClientConfig, isMcpEnabled } from './defaults';
 export type { ImageStyle } from './defaults';
 
+// Environment files
+export { loadProfileEnv } from './env';
+
 // Config file loading
-export { HandoffConfigError, initConfig, initConfigWithMetadata } from './loader';
+export { CONFIG_FILE_PREFERENCE, HandoffConfigError, initConfig, initConfigWithMetadata, resolveProfileSelection } from './loader';
 export type { ConfigLoadContext } from './loader';
 
 // Config helpers

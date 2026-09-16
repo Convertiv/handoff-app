@@ -11,7 +11,14 @@ public/api
 
 # Environment
 .env
+.env.*
 .handoff/
+
+# Local configuration profile
+handoff.config.local.ts
+handoff.config.local.js
+handoff.config.local.cjs
+handoff.config.local.json
 
 # Deployment
 .vercel
