@@ -14,7 +14,7 @@ import path from 'path';
 import { resolveTokenTransformers, tokenArtifactPathsForSet } from '../pipeline/token-transformers';
 import { deriveTokenSets, isComponentSet, setNameForId } from '../registry/tokens/sets';
 import type { ComponentListObject, PageListObject, PatternListObject } from '../transformers/preview/types';
-import type { Config, RuntimeConfig } from '../types/config';
+import type { ResolvedConfig, RuntimeConfig } from '../types/config';
 import { getRelatedSourceFilesForRecord, sourceContentTypeForPath } from './source-files';
 import type {
   ComponentStore,
@@ -34,7 +34,7 @@ import type {
  */
 export interface FilesystemStoreContext {
   runtimeConfig?: RuntimeConfig | null;
-  config?: Config | null;
+  config?: ResolvedConfig | null;
   /** Workspace root (`Handoff.workingPath`), holding `public/` and `fonts/`. */
   workingPath?: string;
   /** Absolute path to the generated `tokens.json` (`Handoff.getTokensFilePath()`). */

@@ -14,13 +14,13 @@
 
 import fs from 'fs-extra';
 import path from 'path';
-import { Config } from '../types/config';
+import { ResolvedConfig } from '../types/config';
 import { arePathsEqual } from '../utils/path';
 import { getComponentsForPath } from './runtime';
 
 /** Minimal handoff shape needed here; avoids importing the full Handoff class (circular dep). */
 interface ConfigContext {
-  config?: Config;
+  config?: ResolvedConfig;
   workingPath: string;
 }
 

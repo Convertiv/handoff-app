@@ -120,7 +120,9 @@ function RegistryTokensPage() {
         <Card>
           <CardHeader>
             <CardTitle>Create access token</CardTitle>
-            <CardDescription>Use tokens for CI or integrations that cannot complete the browser device login.</CardDescription>
+            <CardDescription>
+              Connect a workspace, a CI job, or an integration. This is the same credential the CLI login issues.
+            </CardDescription>
           </CardHeader>
           <form onSubmit={create}>
             <CardContent className="space-y-4">

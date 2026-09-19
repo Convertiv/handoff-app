@@ -1,4 +1,4 @@
-import { Config } from '../types/config';
+import { ResolvedConfig } from '../types/config';
 import { Logger } from '../utils/logger';
 
 /**
@@ -8,15 +8,13 @@ import { Logger } from '../utils/logger';
  * @returns The validated config (same reference).
  * @throws {Error} If required Figma credentials are missing.
  */
-export const validateConfig = (config: Config): Config => {
+export const validateConfig = (config: ResolvedConfig): ResolvedConfig => {
   // TODO: Check to see if the exported folder exists before we run start
-  if (!config.figma_project_id && !process.env.HANDOFF_FIGMA_PROJECT_ID) {
-    // check to see if we can get this from the env
+  if (!config.figma_project_id) {
     Logger.error('Figma Project ID missing. Please set HANDOFF_FIGMA_PROJECT_ID or run "handoff-app fetch".');
     throw new Error('Cannot initialize configuration');
   }
-  if (!config.dev_access_token && !process.env.HANDOFF_DEV_ACCESS_TOKEN) {
-    // check to see if we can get this from the env
+  if (!config.dev_access_token) {
     Logger.error('Figma Access Token missing. Please set HANDOFF_DEV_ACCESS_TOKEN or run "handoff-app fetch".');
     throw new Error('Cannot initialize configuration');
   }

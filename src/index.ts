@@ -1,17 +1,25 @@
-import 'dotenv/config';
+import './config/env';
 import fs from 'fs-extra';
 import { Types as CoreTypes, Handoff as HandoffRunner, Providers } from 'handoff-core';
 import path from 'path';
 import buildApp, { devApp, watchApp, type BuildPackage, type BuildTarget } from './app-builder';
 import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
 import { makeComponent, makePage } from './cli/make';
-import { initConfigWithMetadata, initRuntimeConfig, validateConfig } from './config';
+import { loginProfileNames } from './cli/auth/store';
+import {
+  type ConfigLoadContext,
+  initConfigWithMetadata,
+  initRuntimeConfig,
+  loadProfileEnv,
+  resolveProfileSelection,
+  validateConfig,
+} from './config';
 import pipeline, { buildComponents, buildPatterns } from './pipeline';
 import { ALL_KIND_ORDER, ENTITY_WIRE_KIND, isRegistryEntityKind, REGISTRY_ENTITY_KINDS, type RegistryEntityKind } from './registry/content-kinds';
 import type { TransferEntityKind } from './registry/transfer';
 import { createFilesystemStore, type HandoffStore } from './store';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
-import { Config, ConfigFileEntry, RuntimeConfig } from './types/config';
+import { Config, ResolvedConfig, ConfigFileEntry, RuntimeConfig } from './types/config';
 import { Logger } from './utils/logger';
 import { normalizePathForCompare, resolveWorkingPath } from './utils/path';
 import { generateFilesystemSafeId } from './utils/path';
@@ -32,6 +40,19 @@ export interface HandoffOptions {
   config?: Partial<Config>;
   /** Explicit config file (the CLI's `-c, --config`), resolved from the working path. */
   configPath?: string;
+  /**
+   * Config profile to merge onto the base config (the CLI's `--profile`). It overrides
+   * `HANDOFF_PROFILE`, and a selected profile has to resolve to a `handoff.config.<profile>.*` file
+   * unless {@link profileWithoutConfig} widens that.
+   */
+  profile?: string;
+  /**
+   * What a selected profile may resolve to when it has no config file. `'saved-login'` accepts a name
+   * a saved registry login uses, so publish and checkout can address a registry that no config file
+   * describes. `'any'` accepts any valid name, for the `login` command that creates the login. Unset,
+   * a profile must name a config file, so a typo cannot silently run with the base config.
+   */
+  profileWithoutConfig?: 'saved-login' | 'any';
 }
 
 /**
@@ -109,7 +130,7 @@ const runKinds = async (
 };
 
 class Handoff {
-  config: Config | null;
+  config: ResolvedConfig | null;
   debug: boolean = false;
   force: boolean = false;
   dryRun: boolean = false;
@@ -142,6 +163,8 @@ class Handoff {
   private _configFilePaths: string[] = [];
   private _configFileIndex: Map<string, ConfigFileEntry> = new Map();
   private _mainConfigFilePath?: string;
+  private _profileConfigFilePath?: string;
+  private _profile?: string;
   private _documentationObjectCache?: CoreTypes.IDocumentationObject;
   private _handoffRunner?: ReturnType<typeof HandoffRunner> | null;
 
@@ -151,7 +174,8 @@ class Handoff {
   }
 
   private construct(options: HandoffOptions) {
-    this.config = null;
+    // Ahead of `Logger.init` so a profile env file can set `HANDOFF_LOG_LEVEL` and `HANDOFF_LOG_SCOPES`.
+    loadProfileEnv(resolveProfileSelection(options.profile)?.name);
     this.debug = options.debug ?? false;
     this.force = options.force ?? false;
     this.dryRun = options.dryRun ?? false;
@@ -160,14 +184,50 @@ class Handoff {
     this.init(options.config);
   }
 
+  /**
+   * What a selected profile may resolve to besides a config file, and how to explain a name that
+   * resolves to nothing. A command that does not accept a login still names one it found, so the
+   * difference between the two kinds of profile is visible rather than puzzling.
+   */
+  private profilesWithoutConfig(): Pick<ConfigLoadContext, 'knownProfiles' | 'profileNotFoundHint'> {
+    const selected = resolveProfileSelection(this._options.profile)?.name;
+    if (!selected) {
+      return {};
+    }
+
+    const accepts = this._options.profileWithoutConfig;
+    const names = loginProfileNames(this.workingPath);
+    if (!accepts) {
+      return names.includes(selected)
+        ? {
+            profileNotFoundHint:
+              'A saved registry login uses that name, but only login, logout, publish, and checkout accept a profile without a config file.',
+          }
+        : {};
+    }
+
+    return {
+      knownProfiles: accepts === 'any' ? [...names, selected] : names,
+      profileNotFoundHint:
+        'No saved registry login uses that name either. Run `handoff-app login --profile <name> --url <registry-url>` to create one.',
+    };
+  }
+
   init(configOverride?: Partial<Config>): Handoff {
+    // Resolved before anything is assigned: a reload that throws - a deleted profile file, a
+    // broken config - then leaves the last good state in place for the watchers holding this
+    // instance.
     const configResult = initConfigWithMetadata(configOverride ?? {}, {
       workingPath: this.workingPath,
       configPath: this._options.configPath,
+      profile: this._options.profile,
+      ...this.profilesWithoutConfig(),
     });
     const config = configResult.config;
     this.config = config;
     this._mainConfigFilePath = configResult.configPath;
+    this._profileConfigFilePath = configResult.profileConfigPath;
+    this._profile = configResult.profile;
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
     [this.runtimeConfig, this._configFilePaths, this._configFileIndex] = initRuntimeConfig(this);
@@ -571,8 +631,8 @@ class Handoff {
    * @returns {string[]} Array of absolute paths to config files
    */
   getConfigFilePaths(): string[] {
-    const combined = this._mainConfigFilePath ? [this._mainConfigFilePath, ...this._configFilePaths] : this._configFilePaths;
-    return Array.from(new Set(combined));
+    const mainPaths = [this._mainConfigFilePath, this._profileConfigFilePath].filter(Boolean) as string[];
+    return Array.from(new Set([...mainPaths, ...this._configFilePaths]));
   }
 
   /**
@@ -580,6 +640,21 @@ class Handoff {
    */
   getMainConfigFilePath(): string | undefined {
     return this._mainConfigFilePath;
+  }
+
+  getProfile(): string | undefined {
+    return this._profile;
+  }
+
+  /**
+   * True for the base config file and for the profile file merged onto it. Both carry project-wide
+   * settings, so a change to either one invalidates every entity rather than a single declaration.
+   */
+  isMainConfigFile(filePath: string): boolean {
+    const normalized = normalizePathForCompare(filePath);
+    return [this._mainConfigFilePath, this._profileConfigFilePath]
+      .filter(Boolean)
+      .some((mainPath) => normalizePathForCompare(mainPath as string) === normalized);
   }
 
   getConfigFileEntry(configPath: string): ConfigFileEntry | undefined {
@@ -608,8 +683,10 @@ class Handoff {
   }
 }
 
-export type { Config, RegisterHandlebarsHelpersContext } from './types/config';
+export type { Config, ResolvedConfig, RegisterHandlebarsHelpersContext } from './types/config';
 export { defineConfig } from './config';
+export { fromEnv } from './config/from-env';
+export type { EnvValue, EnvSecret, RuntimeEnvReference } from './config/from-env';
 export type {
   CatalogItem,
   CatalogItemEntries,

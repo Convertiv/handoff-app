@@ -17,7 +17,7 @@ import processComponents from '../../transformers/preview/component/builder';
 import { processPatterns } from '../../transformers/preview/pattern/builder';
 import { Logger } from '../../utils/logger';
 import { createRegistryClient, RegistryClientError, type RegistryClient } from '../client';
-import { resolveAuthenticatedRegistryConnection } from '../connection';
+import { loginCommandHint, resolveAuthenticatedRegistryConnection, unusedLoginNote } from '../connection';
 import type { EntitySummary, TransferEntityKind } from '../transfer';
 import { quoteIds, selectIds, splitCatalogIds } from '../selection';
 import { describePublishError, describeUploadFailure } from './errors';
@@ -74,17 +74,17 @@ const assertUniqueCatalogIds = (handoff: Handoff): void => {
 export const resolveConnectionOrThrow = async (handoff: Handoff) => {
   assertPublishableWorkspace(handoff);
 
-  const connection = await resolveAuthenticatedRegistryConnection(handoff.config, handoff.workingPath);
+  const connection = await resolveAuthenticatedRegistryConnection(handoff.config, handoff.workingPath, handoff.getProfile());
   if (!connection.url) {
     throw new PublishError(
-      `No registry is configured. Run \`handoff-app login --url <registry-url>\`, set runtime.registryConnection.url, ` +
+      `No registry is configured. Run \`${loginCommandHint(connection)}\`, set runtime.registryConnection.url, ` +
         `or set the "${connection.urlEnv}" environment variable to the base URL of the registry to publish to.`
     );
   }
   if (!connection.accessToken) {
     throw new PublishError(
-      `No registry access token is configured. Run \`handoff-app login --url ${connection.url}\`, or set the ` +
-        `"${connection.accessTokenEnv}" environment variable to a user-issued token for CI.`
+      `No registry access token is configured. Run \`${loginCommandHint(connection)}\`, or set the ` +
+        `"${connection.accessTokenEnv}" environment variable to a user-issued token for CI.${unusedLoginNote(connection)}`
     );
   }
   return connection;

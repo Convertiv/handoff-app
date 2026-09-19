@@ -3,6 +3,8 @@ import { Arguments } from 'yargs';
 export interface SharedArgs extends Arguments {
   /** Explicit config file, replacing the usual `handoff.config.*` lookup. */
   config?: string;
+  /** Config profile merged onto the base config; overrides `HANDOFF_PROFILE`. */
+  profile?: string;
   force?: boolean;
   debug?: boolean;
   /**

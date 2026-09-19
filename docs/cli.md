@@ -58,9 +58,9 @@ Commands:
 
   db:migrate [opts] - Runs registry database migrations (Drizzle / PostgreSQL). Reads the project config and database env vars, applies the package-owned migration set, and runs independently of `build`.
 
-  login --url <registry-url> - Authorizes this workspace in the browser and stores a revocable token in `.handoff/cli-auth.json`.
+  login [--profile <name>] --url <registry-url> - Authorizes this workspace in the browser and stores a revocable token in `.handoff/cli-auth.json`, under the selected profile.
 
-  logout [--url <registry-url>] - Revokes the saved token when possible, then removes the local credential.
+  logout [--profile <name>] [--url <registry-url>] [--all] - Revokes the saved token when possible, then removes the local credential of the selected profile, or of every profile with `--all`.
 
   make
     make:component <name> [opts] - Creates a new catalog item with a declaration

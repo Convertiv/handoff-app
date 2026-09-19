@@ -29,6 +29,37 @@ handoff.fetch();
 3. Build your typescript `tsc`
 4. Run your project `node handoff.js`
 
+## Configuration profiles
+
+A profile is a sidecar config file, `handoff.config.<profile>.*`, that merges
+onto the base config. The CLI selects one with `--profile`, and the class takes
+it as a constructor option. Handoff reads `HANDOFF_PROFILE` when neither is
+given.
+
+```js
+const handoff = new Handoff({ profile: 'registry' });
+```
+
+A profile also names the saved registry login that `publish` and `checkout`
+use, so one workspace can address several registries. `profileWithoutConfig`
+decides what a profile may resolve to when it has no config file:
+`'saved-login'` accepts a name a saved login uses, and `'any'` accepts any
+valid name, which is how `login` creates a new one.
+
+```js
+const handoff = new Handoff({ profile: 'staging', profileWithoutConfig: 'saved-login' });
+```
+
+`defineConfig` types a profile as well as a base config.
+
+```ts
+import { defineConfig } from 'handoff-app';
+
+export default defineConfig({
+  runtime: { registry: { database: { driver: 'neon' } } },
+});
+```
+
 ## Methods
 
 Methods of the handoff class can be called to run actions in the

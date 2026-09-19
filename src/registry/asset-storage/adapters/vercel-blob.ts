@@ -21,7 +21,7 @@ export const createVercelBlobStorage = (params: { tokenEnv: string; options: Rec
     if (!token) {
       throw new Error(
         `Vercel Blob storage is configured but the token env var "${params.tokenEnv}" is not set. ` +
-          'Set it to a Blob read/write token, or change runtime.registry.assetStorage.tokenEnv.'
+          'Set it to a Blob read/write token, or change runtime.registry.assetStorage.token.'
       );
     }
     return token;

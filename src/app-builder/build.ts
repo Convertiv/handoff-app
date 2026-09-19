@@ -443,13 +443,21 @@ After migrations and deployment, open \`/install\` immediately and create the in
 The installer verifies the deployment but never changes the schema. An exposed, uninstalled registry
 can be claimed by its first visitor, so do not leave this step unattended.
 
-Once installation completes, sign in and authorize a workspace:
+Once installation completes, sign in and authorize a workspace. Either approve the CLI in the
+browser:
 
 \`\`\`bash
 handoff-app login --url https://registry.example.com
 \`\`\`
 
-The browser approval issues a revocable, user-owned credential. The former
+or create a token under Account > Access tokens and set it in the workspace environment:
+
+\`\`\`bash
+HANDOFF_REGISTRY_URL=https://registry.example.com
+HANDOFF_REGISTRY_ACCESS_TOKEN=hnd_…
+\`\`\`
+
+Both produce the same revocable, user-owned credential. The former
 \`HANDOFF_REGISTRY_API_TOKEN\` fixed server secret is no longer accepted.
 
 ## Run it (self-hosting)
