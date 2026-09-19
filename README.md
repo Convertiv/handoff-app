@@ -404,6 +404,12 @@ should not be left unattended before installation is complete.
 
 ### 4. Workspace authorization
 
+A workspace reaches a registry with a registry URL and an access token. There
+are two ways to supply them. Both use the same kind of token, and both are
+listed and revoked under Account → Access tokens in the registry.
+
+#### Device login
+
 CLI authorization is started from the source workspace with:
 
 ```bash
@@ -411,8 +417,28 @@ npm run login -- --url http://localhost:4000
 ```
 
 Registry sign-in, entry of the displayed device code, and CLI approval are
-completed in the browser. The revocable credential is saved in
+completed in the browser. The issued credential is saved in
 `.handoff/cli-auth.json` for that exact registry URL.
+
+#### Environment variables
+
+A token is created in the registry under Account → Access tokens. Read and
+write access is required to publish; read access is enough to check out. The
+token and the registry URL are then set in `.env`:
+
+```dotenv
+HANDOFF_REGISTRY_URL=http://localhost:4000
+HANDOFF_REGISTRY_ACCESS_TOKEN=hnd_...
+```
+
+No configuration file entry is needed, because these two variables are the
+defaults for `runtime.registryConnection`. A selected profile reads
+`.env.<profile>` on top of `.env`, so one workspace can address a different
+registry per profile. In CI, the job environment supplies the same two
+variables instead of a file.
+
+Environment values win over a saved device login, so a CI job stays
+deterministic on a machine where a developer is signed in.
 
 ### 5. Content publishing
 
@@ -462,7 +488,12 @@ After the registry is reloaded, the published catalog items and foundations are
 visible. Published database records are read by registry pages; the local
 workspace is never read directly.
 
-For CI, configure a registry connection and user-issued token (`fromEnv` is imported from `handoff-app`):
+For CI, supply `HANDOFF_REGISTRY_URL` and `HANDOFF_REGISTRY_ACCESS_TOKEN`
+through the job environment, as described under
+[Workspace authorization](#4-workspace-authorization). A connection block in
+`handoff.config.ts` is needed only to pin the URL in the repository, or to read
+the values from differently named variables (`fromEnv` is imported from
+`handoff-app`):
 
 ```ts
 runtime: {
@@ -533,7 +564,7 @@ Useful environment variables:
 | `HANDOFF_FIGMA_PROJECT_ID` | Figma file ID used by `fetch` |
 | `HANDOFF_DEV_ACCESS_TOKEN` | Figma personal access token used by `fetch` |
 | `HANDOFF_REGISTRY_URL` | Connected workspace registry URL |
-| `HANDOFF_REGISTRY_ACCESS_TOKEN` | User-issued CI token |
+| `HANDOFF_REGISTRY_ACCESS_TOKEN` | Registry access token used by a connected workspace |
 | `HANDOFF_SYNC_SECRET` | Optional deployment-wide registry credential |
 | `DATABASE_URL` | Registry PostgreSQL connection string |
 | `AUTH_SECRET` | Registry session-signing secret, at least 32 characters |
