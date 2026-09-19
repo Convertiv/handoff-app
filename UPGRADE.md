@@ -18,9 +18,29 @@ Each feature section identifies the affected projects and the required changes.
 
 | Change | Affected projects |
 | --- | --- |
+| [Figma token environment references](#figma-token-environment-references) | Projects that put a Figma token directly in config |
 | [Catalog items](#catalog-items) | Projects with component or pattern declarations |
 
 <!-- Add future breaking changes as feature sections before "Verify the upgrade". Add each section to this table. -->
+
+### Figma token environment references
+
+`devAccessToken` and its legacy spelling `dev_access_token` now accept only an environment reference.
+A literal token throws `HandoffConfigError`, including in JavaScript and JSON configs.
+Move the token to the environment and replace the literal:
+
+```ts
+import { defineConfig, fromEnv } from 'handoff-app';
+
+export default defineConfig({
+  devAccessToken: fromEnv('HANDOFF_DEV_ACCESS_TOKEN'),
+});
+```
+
+For JSON, use `"devAccessToken": { "$env": "HANDOFF_DEV_ACCESS_TOKEN" }`.
+If you already use `HANDOFF_DEV_ACCESS_TOKEN` and omit the config property, no change is required.
+Environment references resolve after profile merging. Higher-layer literals still override default
+environment seeds for properties that allow literals, such as output directories.
 
 ### Catalog items
 

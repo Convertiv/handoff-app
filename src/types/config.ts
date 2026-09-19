@@ -1,3 +1,4 @@
+import type { EnvValue, EnvSecret, RuntimeEnvReference } from '../config/from-env';
 import { BuildOptions } from 'esbuild';
 import type Handlebars from 'handlebars';
 import { Types as HandoffTypes } from 'handoff-core';
@@ -77,8 +78,8 @@ export interface NextAppConfig {
   /** @default true */
   attribution?: boolean;
   ports?: {
-    app: number;
-    websocket: number;
+    app: EnvValue<number>;
+    websocket: EnvValue<number>;
   };
 }
 
@@ -142,12 +143,7 @@ export interface HandoffRuntimeConfig {
   /** Registry-mode host settings. Env-var values are stored as names, never as secrets. */
   registry?: {
     /** Name of the env var holding the database URL. @default "DATABASE_URL" */
-    databaseUrlEnv?: string;
-    /**
-     * @deprecated Fixed registry secrets are no longer authorized. This option remains parseable
-     * only so existing configuration files do not break.
-     */
-    apiTokenEnv?: string;
+    databaseUrl?: RuntimeEnvReference<string>;
     database?: {
       /**
        * PostgreSQL is the supported database. `driver` selects the built-in connection driver — how
@@ -171,10 +167,10 @@ export interface HandoffRuntimeConfig {
       /** For `adapter: "custom"` - server-only module path default-exporting a `defineAssetStorage` adapter. */
       module?: string;
       /** For `adapter: "vercel-blob"` - env var name holding the Blob read/write token. @default "BLOB_READ_WRITE_TOKEN" */
-      tokenEnv?: string;
+      token?: RuntimeEnvReference<string>;
       /** Max bytes kept inline in the database `bytea` column (larger uploads are rejected). @default 4194304 */
       maxInlineBytes?: number;
-      /** Non-secret adapter options (bucket env-var names, region, a custom `providerId`, …). */
+      /** Non-secret options, JSON-encoded into the bundle. Pass secret variable names to the adapter, never secret references. */
       options?: Record<string, unknown>;
     };
   };
@@ -183,22 +179,21 @@ export interface HandoffRuntimeConfig {
    * `mode: 'workspace'` plus this block — it is not a third runtime mode.
    */
   registryConnection?: {
-    url?: string;
-    /** @default "HANDOFF_REGISTRY_URL" */
-    urlEnv?: string;
-    /** @default "HANDOFF_REGISTRY_ACCESS_TOKEN" */
-    accessTokenEnv?: string;
+    /** @default fromEnv('HANDOFF_REGISTRY_URL', { default: '' }) */
+    url?: EnvValue<string>;
+    /** @default fromEnv('HANDOFF_REGISTRY_ACCESS_TOKEN', { default: '' }) */
+    accessToken?: EnvSecret<string>;
   };
 }
 
 export interface Config {
-  dev_access_token?: string | null | undefined;
-  devAccessToken?: string | null | undefined;
-  figma_project_id?: string | null | undefined;
-  figmaProjectId?: string | null | undefined;
-  exportsOutputDirectory?: string;
-  sitesOutputDirectory?: string;
-  useVariables?: boolean;
+  dev_access_token?: EnvSecret<string | null>;
+  devAccessToken?: EnvSecret<string | null>;
+  figma_project_id?: EnvValue<string | null>;
+  figmaProjectId?: EnvValue<string | null>;
+  exportsOutputDirectory?: EnvValue<string>;
+  sitesOutputDirectory?: EnvValue<string>;
+  useVariables?: EnvValue<boolean>;
   /**
    * Configuration for React component docs generation (handoff-docgen).
    */
@@ -398,7 +393,26 @@ export interface ClientRuntimeConfig {
   connected: boolean;
 }
 
-export type ClientConfig = Pick<Config, 'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'> & {
+/** Values available after config loading. Deferred references retain their names. */
+export type ResolvedConfig = Omit<
+  Config,
+  'dev_access_token' | 'devAccessToken' | 'figma_project_id' | 'figmaProjectId' |
+  'exportsOutputDirectory' | 'sitesOutputDirectory' | 'useVariables' | 'app' | 'runtime'
+> & {
+  dev_access_token?: string | null;
+  devAccessToken?: string | null;
+  figma_project_id?: string | null;
+  figmaProjectId?: string | null;
+  exportsOutputDirectory?: string;
+  sitesOutputDirectory?: string;
+  useVariables?: boolean;
+  app?: Omit<NextAppConfig, 'ports'> & { ports?: { app: number; websocket: number } };
+  runtime?: Omit<HandoffRuntimeConfig, 'registryConnection'> & {
+    registryConnection?: { url?: string; accessToken?: string };
+  };
+};
+
+export type ClientConfig = Pick<ResolvedConfig, 'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'> & {
   runtime: ClientRuntimeConfig;
 };
 

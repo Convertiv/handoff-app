@@ -7,7 +7,7 @@
  * env-var *names* are ever persisted; secret *values* are read from `process.env` at request time.
  */
 
-import type { Config } from '../../types/config';
+import type { ResolvedConfig } from '../../types/config';
 import type { AssetStorageProvider } from '../db/schema';
 
 /** Which adapter implementation is active. */
@@ -68,5 +68,8 @@ export const resolveAssetStorageSettings = (settings: AssetStorageSettings | nul
 };
 
 /** Resolve the active asset storage settings from a loaded config (CLI/build side). */
-export const resolveAssetStorageFromConfig = (config: Config | null | undefined): ResolvedAssetStorage =>
-  resolveAssetStorageSettings(config?.runtime?.registry?.assetStorage);
+export const resolveAssetStorageFromConfig = (config: ResolvedConfig | null | undefined): ResolvedAssetStorage =>
+  resolveAssetStorageSettings({
+    ...config?.runtime?.registry?.assetStorage,
+    tokenEnv: config?.runtime?.registry?.assetStorage?.token?.$env,
+  });

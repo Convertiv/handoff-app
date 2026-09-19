@@ -359,12 +359,12 @@ runtime variables listed above are supplied through the deployment environment.
 
 #### Neon PostgreSQL
 
-The Neon connection driver is selected in `handoff.config.ts`:
+Import `fromEnv` from `handoff-app`. Select the Neon connection driver in `handoff.config.ts`:
 
 ```ts
 runtime: {
   registry: {
-    databaseUrlEnv: 'DATABASE_URL',
+    databaseUrl: fromEnv('DATABASE_URL'),
     database: {
       driver: 'neon',
     },
@@ -462,13 +462,13 @@ After the registry is reloaded, the published catalog items and foundations are
 visible. Published database records are read by registry pages; the local
 workspace is never read directly.
 
-For CI, a registry connection and user-issued token are configured:
+For CI, configure a registry connection and user-issued token (`fromEnv` is imported from `handoff-app`):
 
 ```ts
 runtime: {
   registryConnection: {
     url: 'https://registry.example.com',
-    accessTokenEnv: 'HANDOFF_REGISTRY_ACCESS_TOKEN',
+    accessToken: fromEnv('HANDOFF_REGISTRY_ACCESS_TOKEN'),
   },
 },
 ```

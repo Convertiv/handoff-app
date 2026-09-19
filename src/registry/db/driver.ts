@@ -10,7 +10,7 @@
  * the value is never stored in config.
  */
 
-import type { Config } from '../../types/config';
+import type { ResolvedConfig } from '../../types/config';
 
 /** Built-in registry database connection driver. Both ship with the package and target Postgres. */
 export type RegistryDatabaseDriver = 'pg' | 'neon';
@@ -35,24 +35,13 @@ export interface ResolvedRegistryDatabase {
 }
 
 /** Resolve the env-var name holding the database URL (defaults to `DATABASE_URL`). */
-export const resolveDatabaseUrlEnv = (config: Config | null | undefined): string => {
-  const configured = config?.runtime?.registry?.databaseUrlEnv?.trim();
+export const resolveDatabaseUrlEnv = (config: ResolvedConfig | null | undefined): string => {
+  const configured = config?.runtime?.registry?.databaseUrl?.$env?.trim();
   return configured || DEFAULT_DATABASE_URL_ENV;
 };
 
-/**
- * Resolve the legacy fixed-token env-var name for configuration compatibility.
- *
- * @deprecated The returned env var is intentionally ignored by registry authorization. Use a
- * user-issued access token or `handoff-app login`.
- */
-export const resolveApiTokenEnv = (config: Config | null | undefined): string => {
-  const configured = config?.runtime?.registry?.apiTokenEnv?.trim();
-  return configured || DEFAULT_REGISTRY_API_TOKEN_ENV;
-};
-
 /** Resolve the configured registry database driver (defaults to `pg`). */
-export const resolveRegistryDriver = (config: Config | null | undefined): RegistryDatabaseDriver => {
+export const resolveRegistryDriver = (config: ResolvedConfig | null | undefined): RegistryDatabaseDriver => {
   return config?.runtime?.registry?.database?.driver ?? DEFAULT_REGISTRY_DRIVER;
 };
 
@@ -61,7 +50,7 @@ export const resolveRegistryDriver = (config: Config | null | undefined): Regist
  * when the configured env var is unset so the CLI can surface a clear "missing database URL"
  * message instead of failing deep inside the driver.
  */
-export const resolveRegistryDatabase = (config: Config | null | undefined): ResolvedRegistryDatabase => {
+export const resolveRegistryDatabase = (config: ResolvedConfig | null | undefined): ResolvedRegistryDatabase => {
   const driver = resolveRegistryDriver(config);
   const databaseUrlEnv = resolveDatabaseUrlEnv(config);
   const connectionString = process.env[databaseUrlEnv]?.trim();
@@ -69,7 +58,7 @@ export const resolveRegistryDatabase = (config: Config | null | undefined): Reso
   if (!connectionString) {
     throw new Error(
       `Registry database URL is not configured. Set the "${databaseUrlEnv}" environment variable to a ` +
-        `PostgreSQL connection string (or change "runtime.registry.databaseUrlEnv" to point at the env var you use).`
+        `PostgreSQL connection string (or change "runtime.registry.databaseUrl" to point at the env var you use).`
     );
   }
 

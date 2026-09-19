@@ -1,4 +1,4 @@
-const { defineConfig } = require('handoff-app');
+const { defineConfig, fromEnv } = require('handoff-app');
 /** @typedef {import('handoff-app').Config} HandoffConfig */
 
 /** @type {HandoffConfig} */
@@ -67,7 +67,7 @@ const config = {
     mode: "workspace",
     // mcp: false,
     // registry: {
-    //   databaseUrlEnv: "DATABASE_URL",
+    //   databaseUrl: fromEnv("DATABASE_URL"),
     //   database: { driver: "pg" }, // 'pg' | 'neon'
     // },
   },

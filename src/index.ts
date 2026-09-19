@@ -11,7 +11,7 @@ import { ALL_KIND_ORDER, ENTITY_WIRE_KIND, isRegistryEntityKind, REGISTRY_ENTITY
 import type { TransferEntityKind } from './registry/transfer';
 import { createFilesystemStore, type HandoffStore } from './store';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
-import { Config, ConfigFileEntry, RuntimeConfig } from './types/config';
+import { Config, ResolvedConfig, ConfigFileEntry, RuntimeConfig } from './types/config';
 import { Logger } from './utils/logger';
 import { normalizePathForCompare, resolveWorkingPath } from './utils/path';
 import { generateFilesystemSafeId } from './utils/path';
@@ -114,7 +114,7 @@ const runKinds = async (
 };
 
 class Handoff {
-  config: Config | null;
+  config: ResolvedConfig | null;
   debug: boolean = false;
   force: boolean = false;
   dryRun: boolean = false;
@@ -640,8 +640,10 @@ class Handoff {
   }
 }
 
-export type { Config, RegisterHandlebarsHelpersContext } from './types/config';
+export type { Config, ResolvedConfig, RegisterHandlebarsHelpersContext } from './types/config';
 export { defineConfig } from './config';
+export { fromEnv } from './config/from-env';
+export type { EnvValue, EnvSecret, RuntimeEnvReference } from './config/from-env';
 export type {
   CatalogItem,
   CatalogItemEntries,

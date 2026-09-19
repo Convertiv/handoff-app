@@ -5,7 +5,7 @@ import { getClientConfig, isMcpEnabled } from '../config';
 import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
 import { resolveAuthenticatedRegistryConnection } from '../registry/connection';
 import { resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
-import type { Config, RuntimeMode } from '../types/config';
+import type { ResolvedConfig, RuntimeMode } from '../types/config';
 import { getAppPath } from './paths';
 
 /**
@@ -53,7 +53,7 @@ export const generateTokensApi = async (handoff: Handoff) => {
  * var) to back the registry-mode docs read API. These are non-secret — the connection-string value
  * itself is never persisted, only resolved from the env var at request time.
  */
-const buildServerRuntimeConfig = (config: Config, modeOverride?: RuntimeMode) => {
+const buildServerRuntimeConfig = (config: ResolvedConfig, modeOverride?: RuntimeMode) => {
   const assetStorage = resolveAssetStorageFromConfig(config);
   return {
     mode: modeOverride ?? config?.runtime?.mode ?? 'workspace',

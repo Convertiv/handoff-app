@@ -3,12 +3,15 @@ import fs from 'fs-extra';
 import mergeWith from 'lodash/mergeWith';
 import { createRequire } from 'module';
 import path from 'path';
-import { Config } from '../types/config';
+import { Config, ResolvedConfig } from '../types/config';
 import { Logger } from '../utils/logger';
 import { resolveWorkingPath } from '../utils/path';
 import { defaultConfig } from './defaults';
 import { loadProfileEnv } from './env';
 import { normalizeConfig } from './helpers';
+import { HandoffConfigError } from './errors';
+import { isEnvReference } from './from-env';
+import { resolveConfigEnv } from './resolve-env';
 
 export const CONFIG_FILE_PREFERENCE = [
   'handoff.config.ts',
@@ -23,16 +26,10 @@ const SUPPORTED_CONFIG_EXTENSIONS = Array.from(new Set(CONFIG_FILE_PREFERENCE.ma
 /** A profile name becomes part of a file name, so it stays lowercase letters, numbers, and hyphens. */
 const PROFILE_NAME_PATTERN = /^[a-z0-9-]+$/;
 
-/** Raised when an explicitly requested config file cannot be used. */
-export class HandoffConfigError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'HandoffConfigError';
-  }
-}
+export { HandoffConfigError } from './errors';
 
 type ConfigLoadResult = {
-  config: Config;
+  config: ResolvedConfig;
   configPath?: string;
   profile?: string;
   /** The profile file merged onto the base config. */
@@ -206,11 +203,14 @@ const resolveProfileFilePath = (workingPath: string, baseConfigPath: string | un
 };
 
 /**
- * Arrays are whole values in this config (`catalog.include`, the sort orders), so a later layer
- * replaces one instead of merging it item by item. Everything else keeps lodash semantics: plain
+ * Arrays and environment references are whole values: a later layer replaces them, including
+ * any reference default. Everything else keeps lodash semantics: plain
  * objects merge recursively, scalars, `null` and functions replace, and `undefined` is skipped.
  */
-const replaceArrays = (_destination: unknown, source: unknown) => (Array.isArray(source) ? source : undefined);
+const replaceValues = (destination: unknown, source: unknown) => {
+  if (source === undefined) return undefined;
+  return Array.isArray(source) || isEnvReference(source) || isEnvReference(destination) ? source : undefined;
+};
 
 /**
  * Loads the handoff configuration for the given working directory and returns metadata.
@@ -223,8 +223,7 @@ export const initConfigWithMetadata = (configOverride?: Partial<Config>, context
   const profileSelection = resolveProfileSelection(context?.profile);
   const profileConfigPath = profileSelection ? resolveProfileFilePath(workingPath, configPath, profileSelection) : undefined;
 
-  // Before `defaultConfig()` reads the environment, so a profile env file can supply the values it
-  // seeds from (the Figma project id, the output directories, the ports).
+  // Profile environment values must be present before the merged references resolve.
   loadProfileEnv(profileSelection?.name);
 
   const layers: Partial<Config>[] = [defaultConfig()];
@@ -241,7 +240,8 @@ export const initConfigWithMetadata = (configOverride?: Partial<Config>, context
   Logger.debug(`Config profile: ${profileSelection ? `"${profileSelection.name}" (from ${profileSelection.source})` : 'none selected'}`);
   Logger.debug(`Config files loaded: ${[configPath, profileConfigPath].filter(Boolean).join(', ') || 'none, using defaults'}`);
 
-  const config = mergeWith({}, ...layers, replaceArrays) as Config;
+  const merged = mergeWith({}, ...layers, replaceValues) as Config;
+  const config = resolveConfigEnv(merged, profileSelection?.name, layers[0]);
 
   // Guards run on the resolved config so a profile cannot slip a removed setting past them.
   const entries = config.entries as Record<string, unknown> | undefined;
@@ -271,6 +271,6 @@ export const initConfigWithMetadata = (configOverride?: Partial<Config>, context
  * @param context - Optional working directory, explicit config file, and profile to load.
  * @returns The fully resolved Config object.
  */
-export const initConfig = (configOverride?: Partial<Config>, context?: ConfigLoadContext): Config => {
+export const initConfig = (configOverride?: Partial<Config>, context?: ConfigLoadContext): ResolvedConfig => {
   return initConfigWithMetadata(configOverride, context).config;
 };

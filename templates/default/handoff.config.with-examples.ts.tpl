@@ -1,4 +1,4 @@
-import { defineConfig } from 'handoff-app';
+import { defineConfig, fromEnv } from 'handoff-app';
 
 export default defineConfig({
   app: {
@@ -65,7 +65,7 @@ export default defineConfig({
     mode: "workspace",
     // mcp: false,
     // registry: {
-    //   databaseUrlEnv: "DATABASE_URL",
+    //   databaseUrl: fromEnv("DATABASE_URL"),
     //   database: { driver: "pg" }, // 'pg' | 'neon'
     // },
   },

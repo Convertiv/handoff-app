@@ -14,7 +14,7 @@ import { HOME_PAGE_ID, HOME_PAGE_PATH } from '../registry/content-kinds';
 import { ComponentListObject } from '../transformers/preview/types';
 import { createCsfStoryPreviews } from '../transformers/utils/csf';
 import { buildAndEvaluateModuleSync } from '../transformers/utils/module';
-import { Config, ConfigFileEntry, RuntimeConfig } from '../types/config';
+import { ResolvedConfig, ConfigFileEntry, RuntimeConfig } from '../types/config';
 import { Logger } from '../utils/logger';
 import { parseMarkdown } from '../utils/markdown';
 import { collectPageSlugSegments } from '../utils/pages';
@@ -26,7 +26,7 @@ import { normalizePageDeclaration } from './normalizers/page';
  * Avoids importing the full Handoff class to prevent circular deps.
  */
 interface HandoffContext {
-  config: Config;
+  config: ResolvedConfig;
   workingPath: string;
   modulePath: string;
 }
@@ -129,7 +129,7 @@ const discoverCsfPreviews = (component: ComponentListObject, handoff: HandoffCon
 /**
  * Expands catalog.include into item directories and removes duplicate paths.
  */
-export const getCatalogItemDirectories = (config: Config, workingPath: string): string[] => {
+export const getCatalogItemDirectories = (config: ResolvedConfig, workingPath: string): string[] => {
   const registered = [...(config.catalog?.include ?? [])];
 
   const seen = new Set<string>();

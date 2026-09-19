@@ -29,8 +29,8 @@ export const normalizeConfig = (config: Config): Config => {
 
   return {
     ...(rest as Config),
-    dev_access_token: devAccessToken ?? config.dev_access_token,
-    figma_project_id: figmaProjectId ?? config.figma_project_id,
+    dev_access_token: devAccessToken !== undefined ? devAccessToken : config.dev_access_token,
+    figma_project_id: figmaProjectId !== undefined ? figmaProjectId : config.figma_project_id,
     assets_zip_links: assetsZipLinks ?? config.assets_zip_links,
     app: normalizeAppConfig(app),
   };
