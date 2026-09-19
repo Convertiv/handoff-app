@@ -9,8 +9,16 @@ export interface CliAuth {
   expiresAtMs: number;
 }
 
+/** Name a login is saved under when no profile is selected. */
+export const DEFAULT_LOGIN_PROFILE = 'default';
+
 const AUTH_DIRECTORY = '.handoff';
 const AUTH_FILE = 'cli-auth.json';
+
+/** The credential file: one login per profile name, so a workspace can hold several registries. */
+interface CliAuthFile {
+  logins: Record<string, CliAuth>;
+}
 
 /**
  * Canonicalize a registry URL for both HTTP requests and exact credential matching.
@@ -58,26 +66,55 @@ export const assertRegistryOriginUrl = (baseUrl: string, candidate: string): str
 
 export const cliAuthFilePath = (workingPath: string): string => path.resolve(workingPath, AUTH_DIRECTORY, AUTH_FILE);
 
-const isCliAuth = (value: unknown): value is CliAuth => {
-  if (!value || typeof value !== 'object') return false;
+/** An invalid or partial entry reads as no login, so one bad entry cannot hide the others. */
+const toCliAuth = (value: unknown): CliAuth | null => {
+  if (!value || typeof value !== 'object') return null;
   const auth = value as Partial<CliAuth>;
-  return (
-    typeof auth.remoteUrl === 'string' &&
-    typeof auth.accessToken === 'string' &&
-    auth.accessToken.length > 0 &&
-    typeof auth.expiresAtMs === 'number' &&
-    Number.isFinite(auth.expiresAtMs)
-  );
-};
+  if (typeof auth.remoteUrl !== 'string') return null;
+  if (typeof auth.accessToken !== 'string' || auth.accessToken.length === 0) return null;
+  if (typeof auth.expiresAtMs !== 'number' || !Number.isFinite(auth.expiresAtMs)) return null;
 
-/** Invalid or partial credential files are treated as unauthenticated. */
-export const readCliAuth = async (workingPath: string): Promise<CliAuth | null> => {
   try {
-    const value = (await fs.readJson(cliAuthFilePath(workingPath))) as unknown;
-    if (!isCliAuth(value)) return null;
-    return { ...value, remoteUrl: normalizeRegistryUrl(value.remoteUrl) };
+    return { remoteUrl: normalizeRegistryUrl(auth.remoteUrl), accessToken: auth.accessToken, expiresAtMs: auth.expiresAtMs };
   } catch {
     return null;
+  }
+};
+
+const toLogins = (value: unknown): Record<string, CliAuth> => {
+  const logins = (value as Partial<CliAuthFile> | null)?.logins;
+  if (!logins || typeof logins !== 'object') return {};
+
+  const result: Record<string, CliAuth> = {};
+  for (const [profile, entry] of Object.entries(logins as Record<string, unknown>)) {
+    const auth = toCliAuth(entry);
+    if (auth) result[profile] = auth;
+  }
+  return result;
+};
+
+/** Every saved login, keyed by profile name. A missing or unreadable file reads as no logins. */
+export const readCliLogins = async (workingPath: string): Promise<Record<string, CliAuth>> => {
+  try {
+    return toLogins((await fs.readJson(cliAuthFilePath(workingPath))) as unknown);
+  } catch {
+    return {};
+  }
+};
+
+/** The login saved under one profile name. Never falls back to another profile. */
+export const readCliAuth = async (workingPath: string, profile: string = DEFAULT_LOGIN_PROFILE): Promise<CliAuth | null> =>
+  (await readCliLogins(workingPath))[profile] ?? null;
+
+/**
+ * Profile names that have a saved login. Synchronous because config loading is, and the loader needs
+ * these names to decide whether a selected profile resolves.
+ */
+export const loginProfileNames = (workingPath: string): string[] => {
+  try {
+    return Object.keys(toLogins(fs.readJsonSync(cliAuthFilePath(workingPath)) as unknown));
+  } catch {
+    return [];
   }
 };
 
@@ -85,11 +122,11 @@ export const readCliAuth = async (workingPath: string): Promise<CliAuth | null> 
  * Atomically replace the credential file. Restrictive permissions are best-effort on platforms
  * whose filesystems do not support POSIX modes.
  */
-export const writeCliAuth = async (workingPath: string, auth: CliAuth): Promise<void> => {
+const writeCliLogins = async (workingPath: string, logins: Record<string, CliAuth>): Promise<void> => {
   const filePath = cliAuthFilePath(workingPath);
   const directory = path.dirname(filePath);
   const temporaryPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
-  const value: CliAuth = { ...auth, remoteUrl: normalizeRegistryUrl(auth.remoteUrl) };
+  const value: CliAuthFile = { logins };
 
   await fs.ensureDir(directory, 0o700);
   try {
@@ -117,7 +154,27 @@ export const writeCliAuth = async (workingPath: string, auth: CliAuth): Promise<
   }
 };
 
-export const clearCliAuth = async (workingPath: string): Promise<void> => {
+/** Save the login for one profile and leave the other profiles in place. */
+export const writeCliAuth = async (workingPath: string, auth: CliAuth, profile: string = DEFAULT_LOGIN_PROFILE): Promise<void> => {
+  const logins = await readCliLogins(workingPath);
+  logins[profile] = { ...auth, remoteUrl: normalizeRegistryUrl(auth.remoteUrl) };
+  await writeCliLogins(workingPath, logins);
+};
+
+/** Remove the login for one profile, and the file itself once no login is left. */
+export const clearCliAuth = async (workingPath: string, profile: string = DEFAULT_LOGIN_PROFILE): Promise<void> => {
+  const logins = await readCliLogins(workingPath);
+  delete logins[profile];
+
+  if (Object.keys(logins).length === 0) {
+    await clearAllCliAuth(workingPath);
+    return;
+  }
+  await writeCliLogins(workingPath, logins);
+};
+
+/** Remove every saved login. */
+export const clearAllCliAuth = async (workingPath: string): Promise<void> => {
   const filePath = cliAuthFilePath(workingPath);
   if (await fs.pathExists(filePath)) {
     await fs.remove(filePath);

@@ -40,6 +40,16 @@ given.
 const handoff = new Handoff({ profile: 'registry' });
 ```
 
+A profile also names the saved registry login that `publish` and `checkout`
+use, so one workspace can address several registries. `profileWithoutConfig`
+decides what a profile may resolve to when it has no config file:
+`'saved-login'` accepts a name a saved login uses, and `'any'` accepts any
+valid name, which is how `login` creates a new one.
+
+```js
+const handoff = new Handoff({ profile: 'staging', profileWithoutConfig: 'saved-login' });
+```
+
 `defineConfig` types a profile as well as a base config.
 
 ```ts

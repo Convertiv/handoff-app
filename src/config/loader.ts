@@ -44,6 +44,14 @@ export type ConfigLoadContext = {
   configPath?: string;
   /** Profile to merge onto the base config (the CLI's `--profile`), overriding `HANDOFF_PROFILE`. */
   profile?: string;
+  /**
+   * Profile names that resolve without a `handoff.config.<profile>.*` file, leaving the base config
+   * unchanged. Registry commands pass the names of saved logins, because there a profile selects the
+   * registry rather than a config layer.
+   */
+  knownProfiles?: string[];
+  /** Sentence appended when a selected profile matches neither a config file nor `knownProfiles`. */
+  profileNotFoundHint?: string;
 };
 
 /** Which selector picked the profile, so an error can name the one the user set. */
@@ -176,8 +184,15 @@ export const resolveProfileSelection = (requestedProfile?: string): ProfileSelec
  * without its extension, then the profile name, then any config extension. So `handoff.config.ts`
  * pairs with `handoff.config.local.*`, and a config named through `-c` keeps its own name. A selected
  * profile has to resolve - silently falling back to the base config would deploy the wrong settings.
+ * A name listed in `knownProfiles` resolves without a file, because it names something else that
+ * exists, such as a saved registry login.
  */
-const resolveProfileFilePath = (workingPath: string, baseConfigPath: string | undefined, selection: ProfileSelection): string => {
+const resolveProfileFilePath = (
+  workingPath: string,
+  baseConfigPath: string | undefined,
+  selection: ProfileSelection,
+  context: ConfigLoadContext
+): string | undefined => {
   if (!PROFILE_NAME_PATTERN.test(selection.name)) {
     throw new HandoffConfigError(
       `Invalid config profile "${selection.name}" (from ${selection.source}). ` +
@@ -192,9 +207,13 @@ const resolveProfileFilePath = (workingPath: string, baseConfigPath: string | un
   const { selected, ignored } = pickExisting(candidates);
 
   if (!selected) {
+    if (context.knownProfiles?.includes(selection.name)) {
+      return undefined;
+    }
     throw new HandoffConfigError(
       `Config profile "${selection.name}" (from ${selection.source}) not found. ` +
-        `Create one of: ${candidates.map((candidate) => path.basename(candidate)).join(', ')} in ${path.dirname(candidates[0])}.`
+        `Create one of: ${candidates.map((candidate) => path.basename(candidate)).join(', ')} in ${path.dirname(candidates[0])}.` +
+        (context.profileNotFoundHint ? ` ${context.profileNotFoundHint}` : '')
     );
   }
 
@@ -221,7 +240,7 @@ export const initConfigWithMetadata = (configOverride?: Partial<Config>, context
   warnIgnored(configPath, ignored);
 
   const profileSelection = resolveProfileSelection(context?.profile);
-  const profileConfigPath = profileSelection ? resolveProfileFilePath(workingPath, configPath, profileSelection) : undefined;
+  const profileConfigPath = profileSelection ? resolveProfileFilePath(workingPath, configPath, profileSelection, context ?? {}) : undefined;
 
   // Profile environment values must be present before the merged references resolve.
   loadProfileEnv(profileSelection?.name);
@@ -237,7 +256,10 @@ export const initConfigWithMetadata = (configOverride?: Partial<Config>, context
     layers.push(normalizeConfig(configOverride as Config));
   }
 
-  Logger.debug(`Config profile: ${profileSelection ? `"${profileSelection.name}" (from ${profileSelection.source})` : 'none selected'}`);
+  const profileLabel = profileSelection
+    ? `"${profileSelection.name}" (from ${profileSelection.source})${profileConfigPath ? '' : ' - no config file, the base config is used unchanged'}`
+    : 'none selected';
+  Logger.debug(`Config profile: ${profileLabel}`);
   Logger.debug(`Config files loaded: ${[configPath, profileConfigPath].filter(Boolean).join(', ') || 'none, using defaults'}`);
 
   const merged = mergeWith({}, ...layers, replaceValues) as Config;
@@ -264,7 +286,8 @@ export const initConfigWithMetadata = (configOverride?: Partial<Config>, context
  * Loads the handoff configuration for the given working directory.
  *
  * Searches for config files in order: handoff.config.ts, handoff.config.js, handoff.config.cjs, handoff.config.json,
- * unless `context.configPath` names one explicitly. A selected profile adds a `handoff.config.<profile>.*` sidecar.
+ * unless `context.configPath` names one explicitly. A selected profile adds a `handoff.config.<profile>.*` sidecar,
+ * which only `context.knownProfiles` makes optional.
  * Layers resolve as defaults, base config, profile, then the given overrides, merging plain objects recursively.
  *
  * @param configOverride - Optional partial config to override file-loaded values.

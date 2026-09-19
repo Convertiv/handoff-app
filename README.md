@@ -420,6 +420,22 @@ Registry sign-in, entry of the displayed device code, and CLI approval are
 completed in the browser. The issued credential is saved in
 `.handoff/cli-auth.json` for that exact registry URL.
 
+One credential is saved per profile, so a workspace can stay signed in to
+several registries at the same time:
+
+```bash
+npm run login -- --profile staging --url https://staging.example.com
+npm run publish -- all --profile staging
+```
+
+A login profile name is free. It needs no `handoff.config.<name>.*` file, and
+`login` is the only command that accepts a new name. A profile without its own
+login falls back to the default login, so one `npm run login` is still enough
+for a workspace with one registry.
+
+`npm run logout` revokes and removes the login of the selected profile. The
+`--all` option removes every saved login.
+
 #### Environment variables
 
 A token is created in the registry under Account → Access tokens. Read and
@@ -438,7 +454,10 @@ registry per profile. In CI, the job environment supplies the same two
 variables instead of a file.
 
 Environment values win over a saved device login, so a CI job stays
-deterministic on a machine where a developer is signed in.
+deterministic on a machine where a developer is signed in. A token is only used
+for the registry URL it was issued for. If the environment names a different
+registry than the login of the selected profile, publish and checkout report
+which login was skipped and why.
 
 ### 5. Content publishing
 
@@ -599,6 +618,9 @@ instead of a second complete copy of it.
   numbers, and hyphens.
 - A selected profile must exist. If no `handoff.config.<name>.*` file is found,
   the command stops with an error.
+- `login`, `logout`, `publish`, and `checkout` also accept a profile that has
+  only a saved registry login, because there the profile selects the registry.
+  Every other command still needs the config file.
 - Layers resolve as defaults, base config, profile, then programmatic config,
   with the merge rules described under [Configuration](#configuration).
 - A selected profile also reads `.env.<profile>` on top of `.env`, when that
@@ -639,8 +661,8 @@ resolved before any profile is known.
 | `npm run validate` | Configured components are validated |
 | `npm run publish -- <kind\|all> [id...]` | Catalog items, pages, tokens, or assets are published |
 | `npm run checkout -- <kind\|all> [id...]` | Published content is pulled into a workspace |
-| `npm run login -- --url <url>` | The CLI is authorized through the registry device flow |
-| `npm run logout -- [--url <url>]` | A saved CLI credential is revoked and removed |
+| `npm run login -- [--profile <name>] --url <url>` | The CLI is authorized through the registry device flow |
+| `npm run logout -- [--profile <name>] [--all]` | Saved CLI credentials are revoked and removed |
 
 Every command except `init` accepts `-c, --config`, `--profile`, `-d, --debug`,
 and `-f, --force`. `publish` and `checkout` additionally accept `--dry-run`, and

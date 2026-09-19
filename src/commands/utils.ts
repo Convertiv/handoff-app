@@ -1,5 +1,5 @@
 import { Argv } from 'yargs';
-import Handoff from '../';
+import Handoff, { HandoffOptions } from '../';
 import { REGISTRY_ENTITY_KINDS } from '../registry/content-kinds';
 import { Logger } from '../utils/logger';
 import { SharedArgs } from './types';
@@ -20,7 +20,7 @@ export type RegistryTargetKind = (typeof REGISTRY_TARGET_KINDS)[number];
 export const COMPAT_TARGET_KINDS = [...REGISTRY_ENTITY_KINDS, 'all'] as const;
 export type CompatTargetKind = (typeof COMPAT_TARGET_KINDS)[number];
 
-export const createHandoff = (args: SharedArgs): Handoff =>
+export const createHandoff = (args: SharedArgs, options: Pick<HandoffOptions, 'profileWithoutConfig'> = {}): Handoff =>
   new Handoff({
     debug: args.debug,
     force: args.force,
@@ -29,14 +29,17 @@ export const createHandoff = (args: SharedArgs): Handoff =>
     dryRun: args.dryRun,
     // yargs gives `--no-build` as `build: false`; anything else leaves the build in place.
     skipBuild: args.build === false,
+    ...options,
   });
 
 /**
- * Run a registry command against a fresh Handoff. Registry failures are the user's to act on, so they
- * surface as one actionable line and a non-zero exit rather than a stack trace.
+ * Run a registry command against a fresh Handoff. A selected profile may name a saved login instead
+ * of a config file, because here the profile selects the registry. Registry failures are the
+ * user's to act on, so they surface as one actionable line and a non-zero exit rather than a stack
+ * trace.
  */
 export const runRegistryCommand = async (args: SharedArgs, run: (handoff: Handoff) => Promise<unknown>): Promise<void> => {
-  const handoff = createHandoff(args);
+  const handoff = createHandoff(args, { profileWithoutConfig: 'saved-login' });
   try {
     await run(handoff);
   } catch (error) {
@@ -64,7 +67,8 @@ export const getSharedOptions = (yargs: Argv) => {
     },
     profile: {
       type: 'string',
-      description: 'Config profile to merge onto the base config (handoff.config.<profile>.*); overrides HANDOFF_PROFILE',
+      description:
+        'Config profile merged onto the base config (handoff.config.<profile>.*), and the saved login that registry commands use; overrides HANDOFF_PROFILE',
     },
   });
 };

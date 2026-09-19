@@ -41,6 +41,8 @@ When multiple main config files exist in the project root, Handoff picks the fir
 
 `--profile <name>`, or `HANDOFF_PROFILE` when the flag is absent, adds one sidecar file. It sits beside the resolved base config: the base file name without its extension, then the profile name, then any config extension. So `handoff.config.ts` pairs with `handoff.config.<name>.*`, and a config named through `-c` keeps its own name. The same four extensions are probed in the same order. A selected profile that does not resolve is a `HandoffConfigError`.
 
+`ConfigLoadContext.knownProfiles` widens what resolving means: a listed name loads the base config unchanged instead of failing. The CLI passes the saved registry login names for `login`, `logout`, `publish`, and `checkout`, where a profile selects the registry rather than a config layer. `profileNotFoundHint` is the caller's sentence for a name that matches neither. Everything else keeps the strict rule, so a typo cannot silently run with the base config.
+
 ## Environment Files
 
 `.env` is read once when `env.ts` loads, before the first `Handoff` is constructed. A selected profile then adds an optional `.env.<profile>` from the same directory. Precedence is the process environment, then the profile env file, then `.env`. The keys present at startup are recorded before `.env` is read and are never overwritten, so an inline `VAR=… handoff-app …` still wins.

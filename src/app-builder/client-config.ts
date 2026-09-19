@@ -100,7 +100,9 @@ export const persistClientConfig = async (handoff: Handoff, options: PersistClie
   // registry URL resolves — from config/env or a saved device login — so `login` alone surfaces
   // the publish/checkout UI without also requiring HANDOFF_REGISTRY_URL.
   const connected =
-    mode === 'registry' ? false : Boolean((await resolveAuthenticatedRegistryConnection(handoff.config, handoff.workingPath)).url);
+    mode === 'registry'
+      ? false
+      : Boolean((await resolveAuthenticatedRegistryConnection(handoff.config, handoff.workingPath, handoff.getProfile())).url);
   clientConfig.runtime = { ...clientConfig.runtime, mode, connected };
 
   await fs.writeJson(path.resolve(appPath, 'client.config.json'), { config: clientConfig }, { spaces: 2 });

@@ -31,6 +31,8 @@ interface Envelope<T> {
 
 export interface LoginOptions {
   openBrowser?: boolean;
+  /** Profile the issued credential is saved under. Omitted, it is the default profile. */
+  profile?: string;
 }
 
 const sleep = (milliseconds: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -71,7 +73,10 @@ const shouldOpenBrowser = (options: LoginOptions): boolean => {
 const positiveNumberOr = (value: unknown, fallback: number): number =>
   typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : fallback;
 
-/** Complete the device grant and persist the one-time plaintext access token for this workspace. */
+/**
+ * Complete the device grant and persist the one-time plaintext access token for this workspace,
+ * under the selected profile.
+ */
 export const loginWithDevice = async (workingPath: string, remoteUrl: string, options: LoginOptions = {}): Promise<CliAuth> => {
   const baseUrl = normalizeRegistryUrl(remoteUrl);
   let deviceResponse: Response;
@@ -98,7 +103,7 @@ export const loginWithDevice = async (workingPath: string, remoteUrl: string, op
   const verificationUrl = assertRegistryOriginUrl(
     baseUrl,
     device.verification_uri_complete ||
-      `${device.verification_uri}${device.verification_uri.includes('?') ? '&' : '?'}user_code=${encodeURIComponent(device.user_code)}`,
+      `${device.verification_uri}${device.verification_uri.includes('?') ? '&' : '?'}user_code=${encodeURIComponent(device.user_code)}`
   );
 
   Logger.log('');
@@ -142,7 +147,7 @@ export const loginWithDevice = async (workingPath: string, remoteUrl: string, op
         accessToken: token.access_token,
         expiresAtMs: Date.now() + expiresIn * 1000,
       };
-      await writeCliAuth(workingPath, auth);
+      await writeCliAuth(workingPath, auth, options.profile);
       return auth;
     }
 

@@ -36,7 +36,7 @@ import Handoff from '../../index';
 import type { DeclarationFormat } from '../../types/config';
 import { Logger } from '../../utils/logger';
 import { createRegistryClient, type RegistryClient, RegistryClientError } from '../client';
-import { resolveAuthenticatedRegistryConnection } from '../connection';
+import { loginCommandHint, resolveAuthenticatedRegistryConnection, unusedLoginNote } from '../connection';
 import { isSafePathSegment, isSafeRelativePath, resolvePathWithin } from '../path';
 import { quoteIds, selectIds, splitCatalogIds } from '../selection';
 import type { CheckoutPayload, TransferEntityKind, TransferFile } from '../transfer';
@@ -76,17 +76,17 @@ export const resolveConnectionOrThrow = async (handoff: Handoff) => {
     );
   }
 
-  const connection = await resolveAuthenticatedRegistryConnection(handoff.config, handoff.workingPath);
+  const connection = await resolveAuthenticatedRegistryConnection(handoff.config, handoff.workingPath, handoff.getProfile());
   if (!connection.url) {
     throw new CheckoutError(
-      `No registry is configured. Run \`handoff-app login --url <registry-url>\`, set runtime.registryConnection.url, ` +
+      `No registry is configured. Run \`${loginCommandHint(connection)}\`, set runtime.registryConnection.url, ` +
         `or set the "${connection.urlEnv}" environment variable to the base URL of the registry to checkout from.`
     );
   }
   if (!connection.accessToken) {
     throw new CheckoutError(
-      `No registry access token is configured. Run \`handoff-app login --url ${connection.url}\`, or set the ` +
-        `"${connection.accessTokenEnv}" environment variable to a user-issued token for CI.`
+      `No registry access token is configured. Run \`${loginCommandHint(connection)}\`, or set the ` +
+        `"${connection.accessTokenEnv}" environment variable to a user-issued token for CI.${unusedLoginNote(connection)}`
     );
   }
   return connection;

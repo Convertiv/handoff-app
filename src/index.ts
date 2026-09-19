@@ -5,7 +5,15 @@ import path from 'path';
 import buildApp, { devApp, watchApp, type BuildPackage, type BuildTarget } from './app-builder';
 import { ejectConfig, ejectPages, ejectTheme } from './cli/eject';
 import { makeComponent, makePage } from './cli/make';
-import { initConfigWithMetadata, initRuntimeConfig, loadProfileEnv, resolveProfileSelection, validateConfig } from './config';
+import { loginProfileNames } from './cli/auth/store';
+import {
+  type ConfigLoadContext,
+  initConfigWithMetadata,
+  initRuntimeConfig,
+  loadProfileEnv,
+  resolveProfileSelection,
+  validateConfig,
+} from './config';
 import pipeline, { buildComponents, buildPatterns } from './pipeline';
 import { ALL_KIND_ORDER, ENTITY_WIRE_KIND, isRegistryEntityKind, REGISTRY_ENTITY_KINDS, type RegistryEntityKind } from './registry/content-kinds';
 import type { TransferEntityKind } from './registry/transfer';
@@ -34,9 +42,17 @@ export interface HandoffOptions {
   configPath?: string;
   /**
    * Config profile to merge onto the base config (the CLI's `--profile`). It overrides
-   * `HANDOFF_PROFILE`, and a selected profile has to resolve to a `handoff.config.<profile>.*` file.
+   * `HANDOFF_PROFILE`, and a selected profile has to resolve to a `handoff.config.<profile>.*` file
+   * unless {@link profileWithoutConfig} widens that.
    */
   profile?: string;
+  /**
+   * What a selected profile may resolve to when it has no config file. `'saved-login'` accepts a name
+   * a saved registry login uses, so publish and checkout can address a registry that no config file
+   * describes. `'any'` accepts any valid name, for the `login` command that creates the login. Unset,
+   * a profile must name a config file, so a typo cannot silently run with the base config.
+   */
+  profileWithoutConfig?: 'saved-login' | 'any';
 }
 
 /**
@@ -168,6 +184,35 @@ class Handoff {
     this.init(options.config);
   }
 
+  /**
+   * What a selected profile may resolve to besides a config file, and how to explain a name that
+   * resolves to nothing. A command that does not accept a login still names one it found, so the
+   * difference between the two kinds of profile is visible rather than puzzling.
+   */
+  private profilesWithoutConfig(): Pick<ConfigLoadContext, 'knownProfiles' | 'profileNotFoundHint'> {
+    const selected = resolveProfileSelection(this._options.profile)?.name;
+    if (!selected) {
+      return {};
+    }
+
+    const accepts = this._options.profileWithoutConfig;
+    const names = loginProfileNames(this.workingPath);
+    if (!accepts) {
+      return names.includes(selected)
+        ? {
+            profileNotFoundHint:
+              'A saved registry login uses that name, but only login, logout, publish, and checkout accept a profile without a config file.',
+          }
+        : {};
+    }
+
+    return {
+      knownProfiles: accepts === 'any' ? [...names, selected] : names,
+      profileNotFoundHint:
+        'No saved registry login uses that name either. Run `handoff-app login --profile <name> --url <registry-url>` to create one.',
+    };
+  }
+
   init(configOverride?: Partial<Config>): Handoff {
     // Resolved before anything is assigned: a reload that throws - a deleted profile file, a
     // broken config - then leaves the last good state in place for the watchers holding this
@@ -176,6 +221,7 @@ class Handoff {
       workingPath: this.workingPath,
       configPath: this._options.configPath,
       profile: this._options.profile,
+      ...this.profilesWithoutConfig(),
     });
     const config = configResult.config;
     this.config = config;
