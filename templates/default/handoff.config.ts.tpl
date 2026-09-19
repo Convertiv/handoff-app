@@ -40,25 +40,14 @@ export default defineConfig({
     }
   },
 
-  // catalog: {
-  //   /**
-  //    * Directories to search for catalog items. A path is either an item directory or a
-  //    * collection directory whose subdirectories are each treated as an item. An item declares
-  //    * an implementation (React, Handlebars) or a composition of other items.
-  //    */
-  //   include: ["components", "patterns"],
-  // },
+  // Where catalog items live. A path is either an item directory, or a collection directory whose
+  // subdirectories are each an item.
+  // catalog: { include: ["components", "patterns"] },
 
-  // Runtime settings. `mode` is the sole determinant of the runtime mode; a registry build packages
-  // a registry app whatever this says. Every other key here is optional, and the MCP endpoint is
-  // served by default. `mcp: false` leaves the /api/mcp/ endpoint, and the connect affordance in
-  // the docs header, out of the build; the route then answers 404.
-  // The registry block is only needed when deploying a hosted registry, and is used by
-  // `build --target registry` and `db:migrate`. Workspace mode uses no database.
-  // Handoff runs on PostgreSQL, and `driver` just picks the connection driver to use, not
-  // the database engine. Secrets are referenced by env var name and never written here.
-  // A configuration profile is a good home for the registry block: put it in
-  // handoff.config.registry.* and select it with `--profile registry` or HANDOFF_PROFILE.
+  // `mode` selects the runtime: "workspace" (no database) or "registry" (Postgres). The registry
+  // block is read only by `build --target registry` and `db:migrate`, and secrets are referenced by
+  // env var name. A named profile (`handoff.config.registry.*`, `--profile registry`) is a good home
+  // for it.
   runtime: {
     mode: "workspace",
     // mcp: false,
@@ -68,138 +57,11 @@ export default defineConfig({
     // },
   },
 
-  // Optional handoff-docgen settings used by component docs generation
-  // reactDocgen: {
-  //   maxDepth: 7,
-  //   excludeDirectories: ["dist", "build", ".next"]
+  // reactDocgen: { maxDepth: 7, excludeDirectories: ["dist", "build", ".next"] },
+
+  // Optional build hooks: component validation, esbuild and Vite config overrides, Handlebars
+  // helper registration. Signatures and examples are on the `Config` type.
+  // hooks: {
+  //   validateComponent: async (component) => ({}),
   // },
-
-  hooks: {
-    /**
-     * Optional validation callback for components
-     * @param component - The component instance to validate
-     * @returns A record of validation results where keys are validation types and values are detailed validation results
-     *
-     * @example
-     * validateComponent: async (component) => ({
-     *   a11y: {
-     *     description: 'Accessibility validation check',
-     *     passed: true,
-     *     messages: ['No accessibility issues found']
-     *   },
-     *   responsive: {
-     *     description: 'Responsive design validation',
-     *     passed: false,
-     *     messages: ['Component breaks at mobile breakpoint']
-     *   }
-     * })
-     */
-    // validateComponent: async (component) => {
-    //   // Add your custom validation logic here
-    //   return {};
-    // },
-
-    /**
-     * Optional hook to override the SSR build configuration used in the ssrRenderPlugin
-     * @param config - The default esbuild configuration
-     * @returns Modified esbuild configuration
-     *
-     * @example
-     * ssrBuildConfig: (config) => {
-     *   // Modify the esbuild config as needed
-     *   return config;
-     * }
-     */
-    // ssrBuildConfig: (config) => {
-    //   // Add your custom SSR build configuration here
-    //   return config;
-    // },
-
-    /**
-     * Optional hook to override the client-side build configuration used in the ssrRenderPlugin
-     * @param config - The default esbuild configuration
-     * @returns Modified esbuild configuration
-     *
-     * @example
-     * clientBuildConfig: (config) => {
-     *   // Modify the esbuild config as needed
-     *   return config;
-     * }
-     */
-    // clientBuildConfig: (config) => {
-    //   // Add your custom client build configuration here
-    //   return config;
-    // },
-
-    /**
-     * Optional hook to specify which export property contains the schema
-     * @param exports - The module exports object containing the schema
-     * @returns The schema object from the exports
-     *
-     * @example
-     * getSchemaFromExports: (exports) => exports.customSchema || exports.default
-     */
-    // getSchemaFromExports: (exports) => {
-    //   // Add your custom schema extraction logic here
-    //   return exports.default;
-    // },
-
-    /**
-     * Optional hook to transform the schema into properties
-     * @param schema - The schema object to transform
-     * @returns The transformed properties object
-     */
-    // schemaToProperties: (schema) => {
-    //   // Add your custom schema to properties transformation here
-    //   return {};
-    // },
-
-    /**
-     * Optional hook to override the JavaScript Vite configuration
-     * @param config - The default Vite configuration
-     * @returns Modified Vite configuration
-     *
-     * @example
-     * jsBuildConfig: (config) => {
-     *   // Modify the Vite config as needed
-     *   return config;
-     * }
-     */
-    // jsBuildConfig: (config) => {
-    //   // Add your custom JavaScript build configuration here
-    //   return config;
-    // },
-
-    /**
-     * Optional hook to override the CSS Vite configuration
-     * @param config - The default Vite configuration
-     * @returns Modified Vite configuration
-     *
-     * @example
-     * cssBuildConfig: (config) => {
-     *   // Modify the Vite config as needed
-     *   return config;
-     * }
-     */
-    // cssBuildConfig: (config) => {
-    //   // Add your custom CSS build configuration here
-    //   return config;
-    // },
-
-    /**
-     * Optional hook to override the HTML Vite configuration
-     * @param config - The default Vite configuration
-     * @returns Modified Vite configuration
-     *
-     * @example
-     * htmlBuildConfig: (config) => {
-     *   // Modify the Vite config as needed
-     *   return config;
-     * }
-     */
-    // htmlBuildConfig: (config) => {
-    //   // Add your custom HTML build configuration here
-    //   return config;
-    // },
-  },
 });
