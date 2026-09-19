@@ -82,8 +82,9 @@ fallback. Booleans are true only for `true`. Numbers must be finite. A lower-lay
 becomes the fallback for a replacement reference.
 
 `runtime.registry.assetStorage.options` is for non-secret values only. Its resolved contents are
-JSON-encoded into the bundle. For custom adapter secrets, put a variable name in options and read
-it through the adapter factory's `env` argument at runtime. Never put a secret reference in options.
+JSON-encoded into the bundle, so the loader rejects an environment reference anywhere inside it
+(`BAKED_PATHS`). For custom adapter secrets, put a variable name in options and read it through the
+adapter factory's `env` argument at runtime. A per-environment literal belongs in a profile.
 
 `ResolvedConfig` narrows eager properties by hand. Adding an eager property requires its `Config`
 member and resolved narrowing. A secret also needs a `SECRET_PATHS` entry for untyped configs.

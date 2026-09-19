@@ -13,6 +13,9 @@ const REMOVED_PATHS = new Set([
   'runtime.registryConnection.urlEnv',
   'runtime.registryConnection.accessTokenEnv',
 ]);
+/** Path prefixes whose resolved contents are JSON-baked into the bundle, so a reference would bake its value. */
+const BAKED_PATHS = ['runtime.registry.assetStorage.options'];
+const isBaked = (path: string): boolean => BAKED_PATHS.some((baked) => path === baked || path.startsWith(`${baked}.`));
 const ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const ALIASES: Record<string, string> = {
   HANDOFF_REGISTRY_URL: 'HANDOFF_CLOUD_URL',
@@ -51,6 +54,14 @@ export const resolveConfigEnv = (config: Config, profile?: string, defaults?: Co
       fail(path, 'Expected an environment reference, such as { $env: "VARIABLE_NAME" }. Literal values are not allowed.');
     }
     if (isEnvReference(value)) {
+      // Checked before the name, so the message names the supported pattern instead of the reference shape.
+      if (isBaked(path)) {
+        fail(
+          path,
+          'Environment references are not allowed here because the resolved value is baked into the build. ' +
+            "Put the variable name in options and read it through the adapter factory's `env` argument."
+        );
+      }
       if (typeof value.$env !== 'string' || !ENV_NAME.test(value.$env)) {
         fail(path, 'Invalid environment variable name. Use letters, digits, and underscores, starting with a letter or underscore.');
       }

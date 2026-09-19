@@ -140,6 +140,30 @@ test('literal guards reject JSON and JS secrets without printing their values', 
   }
 });
 
+test('asset storage options reject references and keep variable names', (t) => {
+  const { load } = fixture(t);
+  env(t, { TEST_ASSET_SECRET: 'never-bake-this-secret' });
+  const rejected = [
+    { secretKey: fromEnv('TEST_ASSET_SECRET') },
+    { creds: { secretKey: { $env: 'TEST_ASSET_SECRET' } } },
+    { creds: [{ $env: 'TEST_ASSET_SECRET' }] },
+  ];
+  for (const options of rejected) {
+    assert.throws(
+      () => load({ runtime: { registry: { assetStorage: { adapter: 'custom', options } } } }),
+      (error) => {
+        assert.ok(error instanceof HandoffConfigError);
+        assert.ok(!error.message.includes('never-bake-this-secret'));
+        return true;
+      }
+    );
+  }
+  const config = load({
+    runtime: { registry: { assetStorage: { adapter: 'custom', options: { bucket: 'design-assets', secretKeyEnv: 'TEST_ASSET_SECRET' } } } },
+  });
+  assert.deepEqual(resolveAssetStorageFromConfig(config).options, { bucket: 'design-assets', secretKeyEnv: 'TEST_ASSET_SECRET' });
+});
+
 test('functions survive and primitive values have the expected types', (t) => {
   const { load } = fixture(t);
   env(t, { TEST_PORT: '4010', TEST_FLAG: 'true', TEST_ID: '12345' });
