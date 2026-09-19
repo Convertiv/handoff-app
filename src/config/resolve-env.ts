@@ -6,13 +6,6 @@ import { HandoffConfigError } from './errors';
 
 export const DEFERRED_PATHS = new Set(['runtime.registry.databaseUrl', 'runtime.registry.assetStorage.token']);
 const SECRET_PATHS = new Set(['dev_access_token', 'devAccessToken', 'runtime.registryConnection.accessToken']);
-const REMOVED_PATHS = new Set([
-  'runtime.registry.databaseUrlEnv',
-  'runtime.registry.apiTokenEnv',
-  'runtime.registry.assetStorage.tokenEnv',
-  'runtime.registryConnection.urlEnv',
-  'runtime.registryConnection.accessTokenEnv',
-]);
 /** Path prefixes whose resolved contents are JSON-baked into the bundle, so a reference would bake its value. */
 const BAKED_PATHS = ['runtime.registry.assetStorage.options'];
 const isBaked = (path: string): boolean => BAKED_PATHS.some((baked) => path === baked || path.startsWith(`${baked}.`));
@@ -47,7 +40,6 @@ export const resolveConfigEnv = (config: Config, profile?: string, defaults?: Co
     throw new HandoffConfigError(`Config "${path}" (profile "${profile ?? 'default'}"): ${message}`);
   };
   const walk = (value: unknown, path: string, seed?: unknown): unknown => {
-    if (REMOVED_PATHS.has(path)) fail(path, 'This property was removed. Use an environment reference on the corresponding value property.');
     const deferred = DEFERRED_PATHS.has(path);
     const secret = SECRET_PATHS.has(path);
     if ((secret || deferred) && value !== undefined && !isEnvReference(value)) {
