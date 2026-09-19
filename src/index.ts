@@ -596,9 +596,6 @@ class Handoff {
     return this._mainConfigFilePath;
   }
 
-  /**
-   * Gets the selected config profile if one was selected.
-   */
   getProfile(): string | undefined {
     return this._profile;
   }

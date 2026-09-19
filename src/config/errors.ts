@@ -1,4 +1,4 @@
-/** Raised when an explicitly requested config file cannot be used. */
+/** Raised when configuration cannot be loaded or resolved. */
 export class HandoffConfigError extends Error {
   constructor(message: string) {
     super(message);

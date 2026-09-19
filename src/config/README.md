@@ -89,6 +89,3 @@ adapter factory's `env` argument at runtime. A per-environment literal belongs i
 `ResolvedConfig` narrows eager properties by hand. Adding an eager property requires its `Config`
 member and resolved narrowing. A secret also needs a `SECRET_PATHS` entry for untyped configs.
 Adding a deferred property requires its member and a `DEFERRED_PATHS` entry.
-
-Focused regression checks: after the package build, run `node --test tests/config-env.test.cjs`.
-These cover config loading in both modes; they do not replace consumer deployment checks.

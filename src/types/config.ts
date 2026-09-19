@@ -142,7 +142,7 @@ export interface HandoffRuntimeConfig {
   };
   /** Registry-mode host settings. Env-var values are stored as names, never as secrets. */
   registry?: {
-    /** Name of the env var holding the database URL. @default "DATABASE_URL" */
+    /** Environment reference to the database URL. @default fromEnv('DATABASE_URL') */
     databaseUrl?: RuntimeEnvReference<string>;
     database?: {
       /**
@@ -166,7 +166,7 @@ export interface HandoffRuntimeConfig {
       adapter?: 'database' | 'vercel-blob' | 'custom';
       /** For `adapter: "custom"` - server-only module path default-exporting a `defineAssetStorage` adapter. */
       module?: string;
-      /** For `adapter: "vercel-blob"` - env var name holding the Blob read/write token. @default "BLOB_READ_WRITE_TOKEN" */
+      /** For `adapter: "vercel-blob"` - environment reference to the Blob read/write token. @default fromEnv('BLOB_READ_WRITE_TOKEN') */
       token?: RuntimeEnvReference<string>;
       /** Max bytes kept inline in the database `bytea` column (larger uploads are rejected). @default 4194304 */
       maxInlineBytes?: number;
