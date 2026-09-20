@@ -56,7 +56,9 @@ export const composePatternHtml = (
       }
     }
 
-    const doc = parse(html);
+    // React SSR separates adjacent text children with `<!-- -->`. The parser drops comments by
+    // default, which would make every composed React fragment fail to hydrate.
+    const doc = parse(html, { comment: true });
     const suffix = `_p${i}`;
     const namespacedRootId = `root${suffix}`;
     const namespacedPropsId = `__APP_PROPS__${suffix}`;

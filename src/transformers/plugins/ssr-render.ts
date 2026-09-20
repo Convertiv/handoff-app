@@ -195,7 +195,7 @@ function generateClientHydrationSource(
  * artifact cannot be loaded.
  * @param componentId - Component identifier
  * @param previewTitle - Title for the preview
- * @param renderedHtml - Server-rendered HTML content
+ * @param renderedHtml - Server-rendered HTML, embedded verbatim so the client can hydrate it
  * @param props - Component props as JSON
  * @returns Complete HTML document
  */
@@ -399,15 +399,15 @@ export function ssrRenderPlugin(
         const previewRender = componentData.previews[previewKey].render;
         const PreviewComponent = (typeof previewRender === 'function' ? previewRender : ReactComponent) as ReactComponent;
 
-        // Server-side render the component
+        // The markup must reach the document exactly as rendered. Formatting it adds text nodes React
+        // does not expect, so it discards the server markup and re-renders the preview on the client.
         const serverRenderedHtml = ReactDOMServer.renderToString(React.createElement(PreviewComponent, previewProps));
-        const formattedHtml = await formatHtml(serverRenderedHtml);
 
         finalHtml = generateHtmlDocument(
           componentId,
           previewKey,
           componentData.previews[previewKey].title,
-          formattedHtml,
+          serverRenderedHtml,
           previewProps,
           sharedArtifacts,
           componentArtifacts
@@ -436,7 +436,7 @@ export function ssrRenderPlugin(
         });
       }
 
-      // Format final HTML and update component data
+      // The previews are already emitted, so this formats only the docs code view.
       finalHtml = await formatHtml(finalHtml);
       componentData.format = 'react';
       componentData.preview = '';
