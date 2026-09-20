@@ -55,8 +55,15 @@
 	--radius-md: calc(var(--radius) - 2px);
 	--radius-sm: calc(var(--radius) - 4px);
 
+	--color-ai-from: hsl(var(--ai-from));
+	--color-ai-via: hsl(var(--ai-via));
+	--color-ai-to: hsl(var(--ai-to));
+
 	--animate-accordion-down: accordion-down 0.2s ease-out;
 	--animate-accordion-up: accordion-up 0.2s ease-out;
+	--animate-ai-orbit: ai-orbit 5s linear infinite;
+	--animate-ai-breathe: ai-breathe 4s ease-in-out infinite;
+	--animate-ai-shimmer: ai-shimmer 1.6s linear infinite;
 
 	@keyframes accordion-down {
 		from {
@@ -72,6 +79,31 @@
 		}
 		to {
 			height: 0;
+		}
+	}
+	/* Drives the conic border of the assistant's controls. */
+	@keyframes ai-orbit {
+		to {
+			transform: rotate(360deg);
+		}
+	}
+	/* The idle glow behind the assistant mark. */
+	@keyframes ai-breathe {
+		0%,
+		100% {
+			opacity: 0.35;
+		}
+		50% {
+			opacity: 0.8;
+		}
+	}
+	/* Sweeps a highlight across a tool row while that tool is still running. */
+	@keyframes ai-shimmer {
+		from {
+			background-position: 200% 0;
+		}
+		to {
+			background-position: -200% 0;
 		}
 	}
 }
@@ -126,6 +158,9 @@
 		--sidebar-accent-foreground: 240 5.9% 10%;
 		--sidebar-border: 220 13% 91%;
 		--sidebar-ring: 217.2 91.2% 59.8%;
+		--ai-from: 258 90% 62%;
+		--ai-via: 217 91% 60%;
+		--ai-to: 190 95% 50%;
 	}
 
 	.dark {
@@ -156,6 +191,16 @@
 		--sidebar-accent-foreground: 240 4.8% 95.9%;
 		--sidebar-border: 240 3.7% 15.9%;
 		--sidebar-ring: 217.2 91.2% 59.8%;
+		--ai-from: 262 90% 74%;
+		--ai-via: 214 95% 72%;
+		--ai-to: 187 95% 62%;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	/* Matches the variants too — the header's sweep is `group-hover:animate-ai-orbit`. */
+	[class*='animate-ai-'] {
+		animation: none;
 	}
 }
 
