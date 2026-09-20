@@ -50,6 +50,13 @@
       "when": 1788980586467,
       "tag": "0006_add_component_source_format",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789827999294,
+      "tag": "0007_add_ai_keys",
+      "breakpoints": true
     }
   ]
 }

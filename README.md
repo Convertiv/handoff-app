@@ -677,6 +677,86 @@ for Claude Code, Cursor and VS Code behind the plug icon in the header. By hand:
 }
 ```
 
+## AI assistant
+
+The documentation app can answer questions about the design system. The
+assistant reads through the same MCP tools, so every answer comes from the
+catalog and links to the pages and components it read. Open it from the search
+control in the header, or with `⌘K`.
+
+The deployment chooses the provider:
+
+```ts
+runtime: {
+  ai: {
+    connections: [
+      // Service key: the deployment pays for every reader.
+      {
+        id: 'gateway',
+        label: 'Acme LiteLLM',
+        baseUrl: 'https://llm.acme.internal/v1',
+        apiKey: fromEnv('LITELLM_API_KEY'),
+        models: ['gpt-4o', 'claude-sonnet-4-5', 'grok-4'],
+      },
+      // No credential: the endpoint needs none.
+      { id: 'local', label: 'Ollama', baseUrl: 'http://127.0.0.1:11434/v1', models: ['llama3.1'] },
+      // User key: the config fixes the endpoint and models. Each reader adds their own key.
+      {
+        id: 'openai',
+        label: 'OpenAI',
+        baseUrl: 'https://api.openai.com/v1',
+        credential: 'user',
+        models: ['gpt-4o', 'o3'],
+      },
+    ],
+    defaultModel: 'gateway/claude-sonnet-4-5',
+  },
+},
+```
+
+The `ai` block turns the assistant on, and `ai: { enabled: false }` turns it
+back off. Like `runtime.mcp`, that flag is baked at build time, so a build
+without it serves no chat route and shows no control.
+
+**The declared connections are the whole surface.** A reader can only add a key
+for a connection the config already declares, so the server never calls a URL a
+reader chose. Without a `credential: 'user'` connection, there is no
+reader-facing setting.
+
+Every connection speaks the OpenAI-compatible `/chat/completions` API. This does
+not limit which models a reader can use. Ollama serves an OpenAI-compatible API
+at `/v1`, and LiteLLM, OpenRouter, vLLM, LM Studio and Azure OpenAI each front
+Anthropic, Google and xAI models. A provider that fits nothing else names a
+server-only module that default-exports `defineAiProvider()`, the way
+`runtime.registry.assetStorage.module` does.
+
+### Reader keys
+
+A connection marked `credential: 'user'` asks each reader for their own key,
+under Account → AI providers. Keys are encrypted with `HANDOFF_AI_KEY_SECRET`,
+not hashed, because the server must send them to the provider. Set that variable
+to a random value of at least 32 characters. A key is write-only across the API:
+after a save, a read reports only that a key is in place.
+
+This applies to registry mode only. A workspace has one user, whose config file
+and `.env` are their user layer, so a workspace supplies a key through `apiKey`.
+
+### Changing connections without a rebuild
+
+The connection list is deployment data, not build shape, so a registry can
+change it without a rebuild. `HANDOFF_AI_CONNECTIONS` holds a JSON array, read
+at request time and merged over the baked list by `id`. It names each key
+instead of holding its value:
+
+```json
+[{ "id": "gateway", "label": "Acme LiteLLM", "baseUrl": "https://llm.acme.internal/v1",
+   "apiKeyEnv": "LITELLM_API_KEY", "models": ["gpt-4o"] }]
+```
+
+Spend control belongs to the gateway. LiteLLM and OpenRouter both enforce
+budgets and rate limits per key. The assistant caps only how many steps one
+question can take.
+
 ## Configuration
 
 Configuration is read from `handoff.config.ts`, `.js`, `.cjs`, or `.json`, in
@@ -700,6 +780,8 @@ Useful environment variables:
 | `PORT` | Standalone registry server port |
 | `HOSTNAME` | Standalone registry bind hostname |
 | `BLOB_READ_WRITE_TOKEN` | Credential for the Vercel Blob asset adapter |
+| `HANDOFF_AI_KEY_SECRET` | Encrypts reader-supplied AI provider keys, at least 32 characters |
+| `HANDOFF_AI_CONNECTIONS` | JSON array of AI connections, merged over the baked list by `id` |
 | `HANDOFF_OUTPUT_DIR` | Override the fetched output directory |
 | `HANDOFF_SITES_DIR` | Override the build output directory |
 | `HANDOFF_WORKING_PATH` | Directory holding `handoff.config.ts`; defaults to the current directory |

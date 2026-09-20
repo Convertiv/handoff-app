@@ -3,6 +3,7 @@ import { Menu, Monitor, Moon, Sun, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { AiAssistantMobileTrigger } from '../../components/AiAssistant/AiAssistantProvider';
 import { McpConfigMobile } from '../../components/McpIntegration/McpConfigDialog';
 import { Button } from '../../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet';
@@ -52,6 +53,7 @@ export function MobileNav() {
           </SheetTrigger>
         </SheetHeader>
         <div className="mt-8 flex flex-col space-y-4">
+          <AiAssistantMobileTrigger />
           {menu &&
             menu.map((section) => {
               const isActive = trimSlashes(router.asPath).startsWith(trimSlashes(section.path));

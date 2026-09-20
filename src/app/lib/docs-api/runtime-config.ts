@@ -1,12 +1,9 @@
 import fs from 'fs-extra';
 import path from 'path';
 import type { RuntimeMode } from '@handoff/types/config';
-import {
-  DEFAULT_DATABASE_URL_ENV,
-  DEFAULT_REGISTRY_DRIVER,
-  type RegistryDatabaseDriver,
-} from '@handoff/registry/db/driver';
+import { DEFAULT_DATABASE_URL_ENV, DEFAULT_REGISTRY_DRIVER, type RegistryDatabaseDriver } from '@handoff/registry/db/driver';
 import { DEFAULT_ASSET_STORAGE_ADAPTER, type AssetStorageSettings } from '@handoff/registry/asset-storage/resolve';
+import { mergeAiConnections, parseAiConnections, type AiSettings } from '@handoff/ai/connections';
 
 /**
  * Server-side runtime resolution for the docs read API.
@@ -35,6 +32,12 @@ export interface ServerRuntimeConfig {
   mode: RuntimeMode;
   /** Whether this build serves `/api/mcp/`. Config-only, baked at build time. */
   mcp: boolean;
+  /**
+   * The AI assistant: whether this build serves it, and the connections it can reach. `enabled` is
+   * baked; the connection list is resolved per request so a deployment can change it without a
+   * rebuild.
+   */
+  ai: AiSettings;
   registry: ServerRegistryRuntimeConfig;
   /**
    * Asset storage selection for registry mode (provider + non-secret options + env-var names). Secret
@@ -49,6 +52,7 @@ let cached: ServerRuntimeConfig | null = null;
 const defaults = (): ServerRuntimeConfig => ({
   mode: 'workspace',
   mcp: true,
+  ai: { enabled: false, connections: [] },
   registry: {
     driver: DEFAULT_REGISTRY_DRIVER,
     databaseUrlEnv: DEFAULT_DATABASE_URL_ENV,
@@ -79,14 +83,26 @@ const assetStorageFromEnv = (): AssetStorageSettings => {
   };
 };
 
+/**
+ * Resolve the AI settings from the baked flag and connection list, then merge the
+ * deployment-supplied `HANDOFF_AI_CONNECTIONS` over it by id.
+ *
+ * `HANDOFF_AI_CONNECTIONS` is read dynamically rather than as a literal `process.env` reference: the
+ * baked values in `next.config.mjs` are inlined at build time, so a name in that block can never
+ * carry a deploy-time value. That is why the baked list uses its own `HANDOFF_AI_BAKED_CONNECTIONS`.
+ */
+const aiFromEnv = (): AiSettings => ({
+  enabled: process.env.HANDOFF_AI_ENABLED?.trim() === 'true',
+  connections: mergeAiConnections(
+    parseAiConnections(process.env.HANDOFF_AI_BAKED_CONNECTIONS),
+    parseAiConnections(process.env['HANDOFF_AI_CONNECTIONS'])
+  ),
+  defaultModel: process.env.HANDOFF_AI_DEFAULT_MODEL?.trim() || undefined,
+});
+
 /** Absolute path of the server-only runtime config persisted next to `client.config.json`. */
 const serverRuntimeConfigPath = (): string =>
-  path.resolve(
-    process.env.HANDOFF_MODULE_PATH ?? '',
-    '.handoff',
-    process.env.HANDOFF_PROJECT_ID ?? '',
-    'runtime.server.json'
-  );
+  path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', '.handoff', process.env.HANDOFF_PROJECT_ID ?? '', 'runtime.server.json');
 
 /**
  * Resolve the server-side runtime config from the values baked into the bundle at build time
@@ -107,6 +123,7 @@ const fromEnv = (): ServerRuntimeConfig | null => {
   return {
     mode: mode === 'registry' ? 'registry' : 'workspace',
     mcp: process.env.HANDOFF_MCP_ENABLED?.trim() !== 'false',
+    ai: aiFromEnv(),
     registry: {
       driver: process.env.HANDOFF_REGISTRY_DRIVER?.trim() === 'neon' ? 'neon' : 'pg',
       databaseUrlEnv,
@@ -141,12 +158,11 @@ export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
           ? parsed.registry.databaseUrlEnv.trim()
           : DEFAULT_DATABASE_URL_ENV;
       const assetStorage: AssetStorageSettings =
-        parsed?.assetStorage && typeof parsed.assetStorage === 'object'
-          ? parsed.assetStorage
-          : { adapter: DEFAULT_ASSET_STORAGE_ADAPTER };
+        parsed?.assetStorage && typeof parsed.assetStorage === 'object' ? parsed.assetStorage : { adapter: DEFAULT_ASSET_STORAGE_ADAPTER };
       cached = {
         mode: parsed?.mode === 'registry' ? 'registry' : 'workspace',
         mcp: parsed?.mcp !== false,
+        ai: aiFromEnv(),
         registry: {
           driver: parsed?.registry?.driver === 'neon' ? 'neon' : 'pg',
           databaseUrlEnv,

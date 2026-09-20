@@ -15,7 +15,13 @@ import {
   validateConfig,
 } from './config';
 import pipeline, { buildComponents, buildPatterns } from './pipeline';
-import { ALL_KIND_ORDER, ENTITY_WIRE_KIND, isRegistryEntityKind, REGISTRY_ENTITY_KINDS, type RegistryEntityKind } from './registry/content-kinds';
+import {
+  ALL_KIND_ORDER,
+  ENTITY_WIRE_KIND,
+  isRegistryEntityKind,
+  REGISTRY_ENTITY_KINDS,
+  type RegistryEntityKind,
+} from './registry/content-kinds';
 import type { TransferEntityKind } from './registry/transfer';
 import { createFilesystemStore, type HandoffStore } from './store';
 import processComponents, { ComponentSegment } from './transformers/preview/component/builder';
@@ -231,7 +237,7 @@ class Handoff {
     this.exportsDirectory = config.exportsOutputDirectory ?? this.exportsDirectory;
     this.sitesDirectory = config.sitesOutputDirectory ?? this.exportsDirectory;
     [this.runtimeConfig, this._configFilePaths, this._configFileIndex] = initRuntimeConfig(this);
-    if(this.config.app.base_path && !process.env.HANDOFF_APP_BASE_PATH) {
+    if (this.config.app.base_path && !process.env.HANDOFF_APP_BASE_PATH) {
       process.env.HANDOFF_APP_BASE_PATH = this.config.app.base_path ?? '';
     }
     return this;
@@ -707,6 +713,8 @@ export type {
   AssetStorageInput,
   AssetStorageReadResult,
 } from './registry/asset-storage/types';
+export { defineAiProvider } from './ai/define';
+export type { AiProvider, AiProviderContext, AiProviderFactory } from './ai/types';
 
 // Export transformers and types from handoff-core
 export { Transformers as CoreTransformers, TransformerUtils as CoreTransformerUtils, Types as CoreTypes } from 'handoff-core';

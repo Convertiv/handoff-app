@@ -24,12 +24,30 @@ const handoffTracingRoot = path.resolve('%HANDOFF_TRACING_ROOT%');
 // by a variable dynamic import at runtime, which nft cannot statically trace, so force it (and its
 // resolvable deps) into the registry bundle. Empty/unset for the built-in database/Vercel adapters.
 const handoffAssetStorageModule = '%HANDOFF_ASSET_STORAGE_MODULE%';
-const resolveAssetStorageInclude = () => {
-  if (handoffBuildTarget !== 'registry' || !handoffAssetStorageModule || handoffAssetStorageModule.startsWith('%HANDOFF_')) {
+
+// Custom AI provider modules, for the same reason: a connection with `module` instead of a base URL
+// is loaded by a variable dynamic import. A JSON array, since the config can declare several.
+const handoffAiProviderModules = '%HANDOFF_AI_PROVIDER_MODULES%';
+
+const toAbsoluteProjectPath = (target) => (path.isAbsolute(target) ? target : path.resolve(handoffWorkingPath, target));
+
+const resolveServerModuleIncludes = () => {
+  if (handoffBuildTarget !== 'registry') {
     return undefined;
   }
-  const abs = path.isAbsolute(handoffAssetStorageModule) ? handoffAssetStorageModule : path.resolve(handoffWorkingPath, handoffAssetStorageModule);
-  return { '/api/**': [abs] };
+  const modules = [];
+  if (handoffAssetStorageModule && !handoffAssetStorageModule.startsWith('%HANDOFF_')) {
+    modules.push(handoffAssetStorageModule);
+  }
+  if (handoffAiProviderModules && !handoffAiProviderModules.startsWith('%HANDOFF_')) {
+    try {
+      const parsed = JSON.parse(handoffAiProviderModules);
+      if (Array.isArray(parsed)) modules.push(...parsed.filter((entry) => typeof entry === 'string' && entry));
+    } catch {
+      // A malformed list must not sink the build; the assertion after assembly reports what is missing.
+    }
+  }
+  return modules.length ? { '/api/**': modules.map(toAbsoluteProjectPath) } : undefined;
 };
 
 const resolveOutputMode = (target) => {
@@ -61,9 +79,10 @@ const nextConfig = {
   // Registry-only; static export, which legitimately produces these files, is untouched.
   outputFileTracingExcludes:
     handoffBuildTarget === 'registry' ? { '**': ['**/export-detail.json', '**/.next/export/**'] } : undefined,
-  // Force a configured custom asset-storage module into the registry trace (dynamic import is opaque
-  // to nft). Its SDK deps are additionally asserted via `getRequiredRegistryRuntimeModules`.
-  outputFileTracingIncludes: resolveAssetStorageInclude(),
+  // Force configured server-only modules (custom asset storage, custom AI providers) into the
+  // registry trace — a dynamic import is opaque to nft. Their SDK deps are additionally asserted via
+  // `getRequiredRegistryRuntimeModules`.
+  outputFileTracingIncludes: resolveServerModuleIncludes(),
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   trailingSlash: true,
@@ -114,6 +133,15 @@ const nextConfig = {
     // Whether this build serves `/api/mcp/`. Both the route and the header UI read this, so a
     // disabled build hides the affordance instead of showing it fail against a 404.
     HANDOFF_MCP_ENABLED: '%HANDOFF_MCP_ENABLED%',
+    // Whether this build serves the docs AI assistant. Config-only and baked, like the MCP flag, so
+    // a build without it leaves out both `/api/ai/*` and the header control.
+    HANDOFF_AI_ENABLED: '%HANDOFF_AI_ENABLED%',
+    // The connection list `runtime.ai.connections` declared (env-var *names* and non-secret options
+    // only). Deliberately not named `HANDOFF_AI_CONNECTIONS`: Next inlines every name in this block
+    // at build time, which would shadow the deployment-supplied list of that name that the server
+    // reads at request time and merges over this one.
+    HANDOFF_AI_BAKED_CONNECTIONS: '%HANDOFF_AI_BAKED_CONNECTIONS%',
+    HANDOFF_AI_DEFAULT_MODEL: '%HANDOFF_AI_DEFAULT_MODEL%',
     HANDOFF_REGISTRY_DRIVER: '%HANDOFF_REGISTRY_DRIVER%',
     HANDOFF_REGISTRY_DATABASE_URL_ENV: '%HANDOFF_REGISTRY_DATABASE_URL_ENV%',
     // Asset storage selection (provider + non-secret options + env-var names). Secret values (Blob

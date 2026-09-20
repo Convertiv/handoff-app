@@ -85,6 +85,8 @@
     "tailwindConfig": "./tailwind.config.ts"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.53",
+    "@ai-sdk/react": "^4.0.110",
     "@clack/prompts": "^0.7.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@neondatabase/serverless": "^1.1.0",
@@ -115,6 +117,7 @@
     "@types/ws": "^8.18.1",
     "@vercel/blob": "^1.1.1",
     "@vitejs/plugin-react": "^4.5.2",
+    "ai": "^7.0.107",
     "archiver": "^5.3.1",
     "chalk": "^4.1.2",
     "chokidar": "^3.5.3",

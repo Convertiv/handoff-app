@@ -11,6 +11,9 @@ const navGroups = [
     links: [
       { href: '/account', label: 'Profile' },
       { href: '/account/tokens', label: 'Access tokens' },
+      // Only meaningful where a connection declares `credential: 'user'`; the page itself says so
+      // when none does, rather than the nav guessing at a build-time value the browser cannot read.
+      ...(process.env.HANDOFF_AI_ENABLED === 'true' ? [{ href: '/account/ai', label: 'AI providers' }] : []),
     ],
   },
   {

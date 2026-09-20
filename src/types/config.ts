@@ -115,6 +115,61 @@ export type RuntimeMode = 'workspace' | 'registry';
 /** Format used when synthesizing local workspace declarations. */
 export type DeclarationFormat = 'ts' | 'js' | 'cjs';
 
+/** How a connection's credential is supplied. Declared, never inferred from a missing key. */
+export type AiCredentialKind = 'service' | 'user' | 'none';
+
+/**
+ * One AI connection the deployment declares. Connections are the whole surface: a reader can add a
+ * key for a declared connection and nothing else, so the server never calls a URL a reader chose.
+ *
+ * Every connection speaks the OpenAI-compatible `/chat/completions` API. A provider that fits
+ * nothing else names a server-only `module` instead of a `baseUrl`.
+ */
+export interface HandoffAiConnection {
+  /** Stable id. A model is addressed as `<id>/<model>`. */
+  id: string;
+  /** Name shown to a reader in the model picker and on the account page. */
+  label: string;
+  /** OpenAI-compatible base URL, such as `https://api.openai.com/v1`. Omit only when `module` is set. */
+  baseUrl?: string;
+  /**
+   * Server-only module path default-exporting a `defineAiProvider()` result, for a provider that is
+   * not OpenAI-compatible. It must be its own file so the build can trace it into the deployed
+   * registry.
+   */
+  module?: string;
+  /**
+   * Environment reference to the deployment's own key. Its presence makes the connection a service
+   * key: the deployment pays and every reader can use it. The name is baked; the value is read at
+   * request time and never leaves the server.
+   */
+  apiKey?: RuntimeEnvReference<string>;
+  /**
+   * Set to `'user'` when each reader supplies their own key. Without it, a connection that needs a
+   * reader's key looks like one that needs none, and the reader gets a raw 401 instead of an
+   * instruction.
+   */
+  credential?: 'user';
+  /** The models this connection offers. A reader cannot use a model that is not listed. */
+  models?: string[];
+  /** Non-secret options passed to a `module` provider. JSON-baked, so environment references are rejected. */
+  options?: Record<string, unknown>;
+}
+
+/**
+ * The AI assistant block. Presence of the block opts the build in, and `enabled: false` turns it
+ * off. Like `mcp`, `enabled` is config-only and baked at build time, so a build without it leaves
+ * out both the chat route and the header control rather than showing a control that fails.
+ */
+export interface HandoffAiConfig {
+  /** @default true when the `ai` block is present */
+  enabled?: boolean;
+  /** Declared connections. Merged by `id` with any supplied through `HANDOFF_AI_CONNECTIONS`. */
+  connections?: HandoffAiConnection[];
+  /** The `<connectionId>/<model>` used when a reader has not picked one. */
+  defaultModel?: string;
+}
+
 /**
  * User-facing `runtime` configuration block. A single optional block that selects the runtime
  * mode and carries mode-specific host/connection settings.
@@ -135,6 +190,8 @@ export interface HandoffRuntimeConfig {
    * @default true
    */
   mcp?: boolean;
+  /** The docs AI assistant. Omit the block to leave it out of the build. See {@link HandoffAiConfig}. */
+  ai?: HandoffAiConfig;
   /** Workspace-mode settings. */
   workspace?: {
     entries?: ConfigEntries;
@@ -402,8 +459,15 @@ export interface ClientRuntimeConfig {
 /** Values available after config loading. Deferred references retain their names. */
 export type ResolvedConfig = Omit<
   Config,
-  'dev_access_token' | 'devAccessToken' | 'figma_project_id' | 'figmaProjectId' |
-  'exportsOutputDirectory' | 'sitesOutputDirectory' | 'useVariables' | 'app' | 'runtime'
+  | 'dev_access_token'
+  | 'devAccessToken'
+  | 'figma_project_id'
+  | 'figmaProjectId'
+  | 'exportsOutputDirectory'
+  | 'sitesOutputDirectory'
+  | 'useVariables'
+  | 'app'
+  | 'runtime'
 > & {
   dev_access_token?: string | null;
   devAccessToken?: string | null;
@@ -418,7 +482,10 @@ export type ResolvedConfig = Omit<
   };
 };
 
-export type ClientConfig = Pick<ResolvedConfig, 'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'> & {
+export type ClientConfig = Pick<
+  ResolvedConfig,
+  'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'
+> & {
   runtime: ClientRuntimeConfig;
 };
 
