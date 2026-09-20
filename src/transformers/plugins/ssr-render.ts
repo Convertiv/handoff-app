@@ -25,7 +25,7 @@ import {
   type SharedArtifactPresence,
 } from '../preview/component/shared-artifacts';
 import { TransformComponentTokensResult } from '../preview/types';
-import { DEFAULT_CLIENT_BUILD_CONFIG, createReactResolvePlugin } from '../utils/build';
+import { DEFAULT_CLIENT_BUILD_CONFIG, createReactResolvePlugin, withStyleLoaders } from '../utils/build';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { loadSchemaFromComponent, loadSchemaFromFile } from '../utils/schema-loader';
@@ -138,13 +138,31 @@ async function loadComponentSchemaAndModule(
  * @param componentExport - Export holding the implementation; the default export when absent
  * @returns Client-side hydration source code
  */
-function generateClientHydrationSource(componentId: string, componentPath: string, componentExport?: string): string {
+function generateClientHydrationSource(
+  componentId: string,
+  componentPath: string,
+  componentExport?: string,
+  declarationPath?: string
+): string {
   const importClause = componentExport && componentExport !== 'default' ? `{ ${componentExport} as Component }` : 'Component';
+  // A function cannot travel in the JSON props, so the client re-reads `render` from the module that
+  // defines it. Conditional, so an unaffected component does not ship its declaration's imports.
+  const declarationImport = declarationPath ? `import * as previewDeclaration from '${normalizePath(declarationPath)}';` : '';
+  const resolveComponent = declarationPath
+    ? `(mount) => {
+      const previewKey = mount.getAttribute('data-handoff-preview');
+      const render = previewKey ? previewDeclaration[previewKey]?.render : undefined;
+      return typeof render === 'function' ? render : Component;
+    }`
+    : '() => Component';
 
   return `
     import React from 'react';
     import { hydrateRoot } from 'react-dom/client';
     import ${importClause} from '${normalizePath(componentPath)}';
+    ${declarationImport}
+
+    const resolveComponent = ${resolveComponent};
 
     const parseProps = (propsId) => {
       const raw = propsId ? document.getElementById(propsId)?.textContent : '{}';
@@ -157,12 +175,14 @@ function generateClientHydrationSource(componentId: string, componentPath: strin
 
     const standaloneRoot = document.getElementById('${PLUGIN_CONSTANTS.ROOT_ELEMENT_ID}');
     if (standaloneRoot && !standaloneRoot.hasAttribute('data-handoff-component')) {
-      hydrateRoot(standaloneRoot, <Component {...parseProps('${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}')} />);
+      const StandaloneComponent = resolveComponent(standaloneRoot);
+      hydrateRoot(standaloneRoot, <StandaloneComponent {...parseProps('${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}')} />);
     }
 
     const patternMounts = document.querySelectorAll('[data-handoff-component=' + JSON.stringify('${componentId}') + ']');
     patternMounts.forEach((mount) => {
-      hydrateRoot(mount, <Component {...parseProps(mount.getAttribute('data-handoff-props'))} />);
+      const MountComponent = resolveComponent(mount);
+      hydrateRoot(mount, <MountComponent {...parseProps(mount.getAttribute('data-handoff-props'))} />);
     });
   `;
 }
@@ -181,6 +201,7 @@ function generateClientHydrationSource(componentId: string, componentPath: strin
  */
 function generateHtmlDocument(
   componentId: string,
+  previewKey: string,
   previewTitle: string,
   renderedHtml: string,
   props: any,
@@ -220,7 +241,7 @@ function generateHtmlDocument(
     <title>${previewTitle}</title>
   </head>
   <body>
-    <div id="${PLUGIN_CONSTANTS.ROOT_ELEMENT_ID}">${renderedHtml}</div>
+    <div id="${PLUGIN_CONSTANTS.ROOT_ELEMENT_ID}" data-handoff-preview="${previewKey}">${renderedHtml}</div>
   </body>
 </html>`;
 }
@@ -314,7 +335,15 @@ export function ssrRenderPlugin(
       // `component/<id>.client.js` artifact. The hydration source only imports the component and
       // reads props from the in-document `__APP_PROPS__` element, so it is identical across every
       // preview of this component.
-      const clientHydrationSource = generateClientHydrationSource(componentId, componentPath, componentData.componentExport);
+      const declarationPath = Object.values(componentData.previews ?? {}).some((preview) => typeof preview.render === 'function')
+        ? componentData.entries?.declaration
+        : undefined;
+      const clientHydrationSource = generateClientHydrationSource(
+        componentId,
+        componentPath,
+        componentData.componentExport,
+        declarationPath
+      );
       const clientBuildConfig = {
         ...DEFAULT_CLIENT_BUILD_CONFIG,
         logLevel: 'silent' as const,
@@ -326,9 +355,10 @@ export function ssrRenderPlugin(
         plugins: [createReactResolvePlugin(handoff.workingPath, handoff.modulePath)],
       };
 
-      const finalClientBuildConfig = handoff.config?.hooks?.clientBuildConfig
+      const hookedClientBuildConfig = handoff.config?.hooks?.clientBuildConfig
         ? handoff.config.hooks.clientBuildConfig(clientBuildConfig)
         : clientBuildConfig;
+      const finalClientBuildConfig = withStyleLoaders(hookedClientBuildConfig);
 
       let clientBundleJs: string;
       try {
@@ -365,13 +395,17 @@ export function ssrRenderPlugin(
       // Generate previews for each variation
       for (const previewKey in componentData.previews) {
         const previewProps = componentData.previews[previewKey].values;
+        // Rendered as a component rather than called, so a preview can use hooks and own state.
+        const previewRender = componentData.previews[previewKey].render;
+        const PreviewComponent = (typeof previewRender === 'function' ? previewRender : ReactComponent) as ReactComponent;
 
         // Server-side render the component
-        const serverRenderedHtml = ReactDOMServer.renderToString(React.createElement(ReactComponent, previewProps));
+        const serverRenderedHtml = ReactDOMServer.renderToString(React.createElement(PreviewComponent, previewProps));
         const formattedHtml = await formatHtml(serverRenderedHtml);
 
         finalHtml = generateHtmlDocument(
           componentId,
+          previewKey,
           componentData.previews[previewKey].title,
           formattedHtml,
           previewProps,

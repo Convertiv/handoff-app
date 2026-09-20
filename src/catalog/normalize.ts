@@ -101,6 +101,8 @@ export const normalizeCatalogItem = (moduleExports: Record<string, unknown>, opt
   entries[entryKey] = path.resolve(directory, source.file);
   // Existing builders consume template as the primary build input for every renderer.
   entries.template = entries[entryKey];
+  // The renderer and the hydration bundle both read a preview `render` from the declaration.
+  if (options.declarationPath) entries.declaration = options.declarationPath;
   // A wrong renderer builds a broken preview without failing on its own, so a mismatch is fatal.
   // `config/runtime.ts` turns the throw into a skipped item that retries on the next save.
   const claim = sourceForFile(source.file);

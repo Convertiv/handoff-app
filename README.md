@@ -74,17 +74,19 @@ The declaration supplies stable identity, documentation metadata, source entries
 
 ### React
 
-Handoff finds the implementation file from its import, so you do not need to repeat the path.
+Handoff finds the implementation file from its import, so you do not need to repeat the path, and
+builds the item's CSS from the stylesheets that import chain pulls in, descendants included.
 Previews are named exports. `Preview<typeof item>` gives them the implementation's argument type.
 
 ```tsx
 // components/example/Component.tsx
 export type ComponentProps = {
   label: string;
+  onSelect?: () => void;
 };
 
-export default function Component({ label }: ComponentProps) {
-  return <div>{label}</div>;
+export default function Component({ label, onSelect }: ComponentProps) {
+  return <div onClick={onSelect}>{label}</div>;
 }
 ```
 
@@ -111,6 +113,20 @@ export const Default = {
 ```
 
 The export name is the preview name. Use `name` to set a different display title.
+
+Arguments are serialized, so a preview that needs an icon, a callback, JSX children, or its own
+state declares `render` instead. It renders as a component, so a capitalized name lets it use hooks, and the item keeps
+documenting the implementation rather than a wrapper. Name a declaration that holds JSX
+`example.handoff.tsx`.
+
+```tsx
+export const Interactive = {
+  render: function Interactive() {
+    const [label, setLabel] = useState('Example');
+    return <Component label={label} onSelect={() => setLabel('Selected')} />;
+  },
+} satisfies ComponentPreview;
+```
 
 ### Handlebars
 

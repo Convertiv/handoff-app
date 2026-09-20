@@ -275,6 +275,9 @@ export interface Config {
 
     /**
      * Optional hook to override the SSR build configuration used in the ssrRenderPlugin
+     *
+     * Stylesheet loaders are re-applied after this hook, so a `.css`/`.scss`/`.sass` import stays out
+     * of the JavaScript graph whatever the hook returns.
      * @param config - The default esbuild configuration
      * @returns Modified esbuild configuration
      * @example
@@ -289,6 +292,9 @@ export interface Config {
 
     /**
      * Optional hook to override the client-side build configuration used in the ssrRenderPlugin
+     *
+     * Stylesheet loaders are re-applied after this hook, so a `.css`/`.scss`/`.sass` import stays out
+     * of the JavaScript graph whatever the hook returns.
      * @param config - The default esbuild configuration
      * @returns Modified esbuild configuration
      * @example

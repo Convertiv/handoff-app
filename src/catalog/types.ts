@@ -53,6 +53,14 @@ export type CatalogPreview<TArgs = Record<string, unknown>> = {
   args?: TArgs;
   usage?: string;
   url?: string;
+  /**
+   * Renders this preview in place of the implementation, for props it cannot carry as data: an icon
+   * component, a callback, JSX children, or state the preview owns.
+   *
+   * Rendered as a component with `args`, so it can use hooks. The item still documents the
+   * implementation, so a wrapper never becomes the published API.
+   */
+  render?: (args: TArgs) => unknown;
 };
 
 /**

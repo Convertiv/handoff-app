@@ -115,6 +115,8 @@ export type ComponentObject = {
     story?: string;
     /** Optional path to schema file (if available) */
     schema?: string;
+    /** Declaration file path; a preview `render` is read from it at build and hydration time. */
+    declaration?: string;
     /** Optional path to templates directory */
     templates?: string;
   };
@@ -192,6 +194,8 @@ export type TransformComponentTokensResult = {
     story?: string;
     schema?: string;
     templates?: string;
+    /** See `ComponentObject.entries.declaration`. */
+    declaration?: string;
   };
   renderer?: RendererKind;
   /** See `ComponentObject.sourceFormat`. Distinct from `format`, the preview's code language. */
@@ -212,6 +216,11 @@ export type OptionalPreviewRender = {
   values: { [key: string]: string | string[] | any };
   url: string;
   usage?: string;
+  /**
+   * Build-time only: the server renders it and the client re-reads it from the declaration module.
+   * `JSON.stringify` drops it from published artifacts.
+   */
+  render?: (args: Record<string, any>) => unknown;
   /** Optional source preview/story key used to derive this preview */
   sourcePreview?: string;
 };

@@ -1,6 +1,6 @@
 import esbuild from 'esbuild';
 import { ModuleEvaluationResult } from '../types';
-import { DEFAULT_SSR_BUILD_CONFIG } from './build';
+import { DEFAULT_SSR_BUILD_CONFIG, withStyleLoaders } from './build';
 
 function createModuleBuildConfig(entryPath: string, handoff: any): esbuild.BuildOptions {
   const defaultBuildConfig: esbuild.BuildOptions = {
@@ -8,9 +8,11 @@ function createModuleBuildConfig(entryPath: string, handoff: any): esbuild.Build
     entryPoints: [entryPath],
   };
 
-  return handoff.config?.hooks?.ssrBuildConfig
+  const hookedBuildConfig = handoff.config?.hooks?.ssrBuildConfig
     ? handoff.config.hooks.ssrBuildConfig(defaultBuildConfig)
     : defaultBuildConfig;
+
+  return withStyleLoaders(hookedBuildConfig);
 }
 
 function evaluateBuiltModule(code: string): ModuleEvaluationResult {

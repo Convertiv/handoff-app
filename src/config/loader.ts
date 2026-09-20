@@ -1,4 +1,5 @@
 import esbuild from 'esbuild';
+import { STYLE_IMPORT_LOADERS } from '../transformers/utils/build';
 import fs from 'fs-extra';
 import mergeWith from 'lodash/mergeWith';
 import { createRequire } from 'module';
@@ -67,6 +68,7 @@ const evaluateTypeScriptConfig = (filePath: string, handoffModulePath: string): 
     target: 'node16',
     logLevel: 'silent',
     external: ['handoff-app'],
+    loader: STYLE_IMPORT_LOADERS,
   });
 
   const code = buildResult.outputFiles?.[0]?.text;

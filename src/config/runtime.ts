@@ -1,4 +1,5 @@
 import esbuild from 'esbuild';
+import { STYLE_IMPORT_LOADERS } from '../transformers/utils/build';
 import fs from 'fs-extra';
 import { createRequire } from 'module';
 import path from 'path';
@@ -35,7 +36,8 @@ type DeclarationResolution = {
   fileName: string;
 };
 
-const DECLARATION_EXTENSIONS = ['ts', 'js', 'cjs'] as const;
+/** `.tsx`/`.jsx` are accepted so a preview can write its `render` as JSX. */
+const DECLARATION_EXTENSIONS = ['tsx', 'ts', 'jsx', 'js', 'cjs'] as const;
 
 const getDeclarationFiles = (componentBaseName: string): string[] =>
   DECLARATION_EXTENSIONS.map((ext) => `${componentBaseName}.handoff.${ext}`);
@@ -46,7 +48,7 @@ const findPreferredDeclaration = (componentDir: string, componentBaseName: strin
   if (exactMatch) return exactMatch;
 
   const allFiles = fs.existsSync(componentDir) ? fs.readdirSync(componentDir) : [];
-  const declarationFiles = allFiles.filter((file) => /\.handoff\.(ts|js|cjs)$/.test(file)).sort((a, b) => a.localeCompare(b));
+  const declarationFiles = allFiles.filter((file) => /\.handoff\.(tsx|ts|jsx|js|cjs)$/.test(file)).sort((a, b) => a.localeCompare(b));
 
   if (!declarationFiles.length) return undefined;
 
@@ -74,6 +76,7 @@ const evaluateDeclaration = (filePath: string, handoffModulePath: string): any =
     logLevel: 'silent',
     jsx: 'automatic',
     external: ['react', 'react-dom', 'handoff-app'],
+    loader: STYLE_IMPORT_LOADERS,
   });
 
   const code = buildResult.outputFiles?.[0]?.text;
@@ -219,7 +222,7 @@ export const initRuntimeConfig = (
     if (!declaration) {
       const declarationFiles = getDeclarationFiles(itemBaseName);
       Logger.warn(
-        `Missing catalog declaration (use .handoff.ts, .handoff.js, or .handoff.cjs; see UPGRADE.md#catalog-items): ${path.resolve(itemPath, declarationFiles.join(' or '))}`
+        `Missing catalog declaration (use .handoff.tsx, .handoff.ts, .handoff.jsx, .handoff.js, or .handoff.cjs; see UPGRADE.md#catalog-items): ${path.resolve(itemPath, declarationFiles.join(' or '))}`
       );
       continue;
     }

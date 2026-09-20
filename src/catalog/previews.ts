@@ -5,15 +5,17 @@ import type { CatalogPreview } from './types';
 
 /**
  * A declaration module exports more than previews: the item itself, the implementation it
- * re-exports, helper values. Accept only a plain object that owns `args` or `name`, so an exported
- * component or helper is never mistaken for a preview.
+ * re-exports, helper values. Accept only a plain object that owns one of the preview fields, so an
+ * exported component or helper is never mistaken for a preview.
  *
  * `getCsfStoryEntries` does not fit here: on a CSF file every named export is a story, and on a
  * declaration file it is not.
  */
+const PREVIEW_KEYS = ['args', 'name', 'render'] as const;
+
 const isPreviewDeclaration = (value: unknown): boolean => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  return Object.prototype.hasOwnProperty.call(value, 'args') || Object.prototype.hasOwnProperty.call(value, 'name');
+  return PREVIEW_KEYS.some((key) => Object.prototype.hasOwnProperty.call(value, key));
 };
 
 /** Matches an exported binding, an export list, or a CommonJS export assignment. */
@@ -104,6 +106,7 @@ export const createCatalogPreviews = (
       values: { ...(preview.args ?? {}) },
       url: preview.url ?? '',
       ...(preview.usage ? { usage: preview.usage } : {}),
+      ...(typeof preview.render === 'function' ? { render: preview.render as OptionalPreviewRender['render'] } : {}),
     };
   }
 
