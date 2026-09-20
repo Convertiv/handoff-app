@@ -97,7 +97,7 @@
 			opacity: 0.8;
 		}
 	}
-	/* Sweeps a highlight across a tool row while that tool is still running. */
+	/* Moves a highlight across a tool row while the tool still runs. */
 	@keyframes ai-shimmer {
 		from {
 			background-position: 200% 0;
@@ -198,7 +198,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-	/* Matches the variants too — the header's sweep is `group-hover:animate-ai-orbit`. */
+	/* This also matches the variants. The sweep in the header is `group-hover:animate-ai-orbit`. */
 	[class*='animate-ai-'] {
 		animation: none;
 	}

@@ -23,12 +23,15 @@ import { useAiConnections } from './useAiConnections';
  * Controlled by {@link AiAssistantProvider}, which owns both the availability gate and the `⌘K`
  * shortcut, so the header and the mobile nav open the same conversation.
  *
- * The panel keeps a fixed height rather than growing with the transcript: a chat that resizes on
- * every streamed token drags the composer around under the reader's hands.
+ * The panel keeps a fixed height and does not grow with the transcript. A panel that resizes on
+ * every streamed token moves the composer while the reader types.
  */
 const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
 
-/** Grows with the question up to this many pixels, then scrolls — past it the transcript is gone. */
+/**
+ * The composer grows with the question up to this many pixels, then scrolls. A taller one leaves the
+ * transcript no room.
+ */
 const COMPOSER_MAX_HEIGHT = 128;
 
 /** Every page and component the tools read during this answer, deduplicated across its parts. */
@@ -40,7 +43,6 @@ const sourcesOf = (message: UIMessage): { url: string; title: string }[] => {
   return [...seen].map(([url, title]) => ({ url, title }));
 };
 
-/** The assistant's own avatar, reused by every answer and by the thinking placeholder. */
 const AnswerMark: React.FC<{ busy?: boolean }> = ({ busy = false }) => (
   <span className="relative mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md p-px">
     {busy ? <AiEdge motion="always" /> : <span aria-hidden="true" className="absolute inset-0 bg-border" />}
@@ -51,8 +53,8 @@ const AnswerMark: React.FC<{ busy?: boolean }> = ({ busy = false }) => (
 );
 
 /**
- * One tool call, as a quiet row under the answer. A call still in flight carries a travelling
- * highlight, which is the only progress signal the transport gives us before its output lands.
+ * A call that is still in flight carries a moving highlight. That highlight is the only progress
+ * signal the transport gives before the output arrives.
  */
 const ToolRow: React.FC<{ label: string; running: boolean }> = ({ label, running }) => (
   <div
@@ -76,9 +78,10 @@ const Answer: React.FC<{ message: UIMessage }> = ({ message }) => {
         {message.parts.map((part, index) => {
           if (part.type === 'text') {
             return (
-              // Typography's inline code carries literal backticks through `::before`/`::after`,
-              // which the assistant hits constantly — it answers about props and token names. Wide
-              // output (a props table) scrolls inside the answer rather than widening the panel.
+              // Tailwind Typography puts literal backticks around inline code with `::before` and
+              // `::after`. The assistant hits this in almost every answer, because it answers about
+              // props and token names. Wide output, such as a props table, scrolls inside the answer
+              // and does not widen the panel.
               <div
                 key={index}
                 className="prose prose-sm max-w-none overflow-x-auto dark:prose-invert prose-code:before:content-none prose-code:after:content-none"
@@ -98,9 +101,8 @@ const Answer: React.FC<{ message: UIMessage }> = ({ message }) => {
         {sources.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-1">
             {/*
-              A new tab even though these are this site's own pages: the conversation lives in the
-              dialog and nowhere else, so following a source in place would throw the answer away to
-              read what it cited. The icon has been promising a new tab all along.
+              A new tab, although these are pages of this same site. The conversation lives in the
+              dialog and nowhere else, so a source opened in place throws the answer away.
             */}
             {sources.map((source) => (
               <Link
@@ -122,11 +124,9 @@ const Answer: React.FC<{ message: UIMessage }> = ({ message }) => {
 };
 
 /**
- * Whether an answer has anything on screen yet.
- *
- * The transport opens the assistant's message as soon as the request is accepted, carrying only
- * bookkeeping parts (`step-start` and the like) that render to nothing. An answer in that state is
- * an avatar above an empty column, which is the stray mark that used to sit over the waiting row.
+ * The transport opens the assistant's message as soon as the request is accepted. That message first
+ * carries only bookkeeping parts, such as `step-start`, which show nothing. An answer in that state
+ * draws an avatar above an empty column, so the transcript leaves it out until it has content.
  */
 const hasAnswerContent = (message: UIMessage): boolean =>
   message.parts.some(
@@ -139,8 +139,8 @@ const hasAnswerContent = (message: UIMessage): boolean =>
 
 const Conversation: React.FC<{ messages: UIMessage[]; thinking: boolean }> = ({ messages, thinking }) => {
   const visible = messages.filter((message) => message.role === 'user' || hasAnswerContent(message));
-  // One mark at a time: the waiting row stands in for the answer until the answer has something of
-  // its own to show — a first tool call or the first token — and hands over the moment it does.
+  // One mark at a time. The waiting row stands in for the answer until the answer has a first tool
+  // call or a first token of its own.
   const waiting = thinking && visible[visible.length - 1]?.role !== 'assistant';
 
   return (
@@ -166,7 +166,6 @@ const Conversation: React.FC<{ messages: UIMessage[]; thinking: boolean }> = ({ 
   );
 };
 
-/** The first thing a reader sees: what this is, and nothing else to read past it. */
 const EmptyState: React.FC = () => (
   <div className="flex h-full flex-col items-center justify-center px-6 py-10 text-center">
     <div className="relative mb-5">
@@ -183,7 +182,7 @@ const EmptyState: React.FC = () => (
   </div>
 );
 
-/** Shown instead of the conversation when no model is reachable for this reader. */
+/** Takes the place of the conversation when no model is reachable for this reader. */
 const Unavailable: React.FC<{ canAddKeys: boolean; failed: boolean }> = ({ canAddKeys, failed }) => (
   <div className="flex h-full flex-col items-center justify-center px-6 py-10 text-center">
     <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border bg-muted/50">
@@ -216,8 +215,8 @@ export const AiAssistantDialog: React.FC<{ open: boolean; onOpenChange: (open: b
   const composerRef = React.useRef<HTMLTextAreaElement>(null);
   const transcriptRef = React.useRef<HTMLDivElement>(null);
 
-  // Bumping this is what starts a fresh conversation: `useChat` builds a new `Chat` whenever its
-  // `id` changes, so the transcript, the error and the status all belong to the discarded one.
+  // `useChat` builds a new `Chat` each time its `id` changes. The transcript, the error and the
+  // status stay with the discarded instance.
   const [conversation, setConversation] = React.useState(0);
 
   const { messages, sendMessage, status, stop, error } = useChat({
@@ -243,16 +242,16 @@ export const AiAssistantDialog: React.FC<{ open: boolean; onOpenChange: (open: b
   };
 
   /**
-   * Drop the conversation and start over, without reloading the page.
+   * Start a new conversation without a page reload.
    *
-   * Closing the panel deliberately keeps the transcript, so a reader who reopens it still has the
-   * last answer. That makes this the only way to clear one.
+   * A close of the panel keeps the transcript on purpose, so a reader who opens it again still has
+   * the last answer. This control is the only way to clear one.
    *
-   * Replacing the chat rather than emptying it also settles an answer still streaming: `useChat`
-   * aborts the instance it discards, and the discarded instance keeps whatever the transport was
-   * midway through writing. Clearing the message list in place would race that write.
+   * A replacement chat also settles an answer that still streams: `useChat` aborts the instance it
+   * discards, and that instance keeps whatever the transport wrote midway. An in-place clear of the
+   * message list races that write.
    *
-   * The chosen model survives, because picking one again is work the reader already did.
+   * The chosen model survives, because the reader already did the work to pick one.
    */
   const startFresh = () => {
     setConversation((current) => current + 1);
@@ -263,8 +262,8 @@ export const AiAssistantDialog: React.FC<{ open: boolean; onOpenChange: (open: b
   // A reset control on an empty panel is noise, and an error outlives the messages that caused it.
   const canStartFresh = messages.length > 0 || Boolean(error);
 
-  // The composer is a textarea so a long question wraps instead of scrolling sideways; it has to be
-  // measured after every change because there is no intrinsic auto-height.
+  // The composer is a textarea, so a long question wraps and does not scroll sideways. A textarea
+  // has no automatic height, so it needs a measurement after every change.
   React.useLayoutEffect(() => {
     const composer = composerRef.current;
     if (!composer) return;
@@ -272,8 +271,8 @@ export const AiAssistantDialog: React.FC<{ open: boolean; onOpenChange: (open: b
     composer.style.height = `${Math.min(composer.scrollHeight, COMPOSER_MAX_HEIGHT)}px`;
   }, [input]);
 
-  // Follow the answer as it streams. The scroll is deferred by a frame because the panel is
-  // portalled and animated: on the open that mounts it, the transcript has no scroll height yet.
+  // Follow the answer as it streams. The scroll waits one frame: the panel is portalled and
+  // animated, so on the open that mounts it, the transcript has no scroll height yet.
   React.useEffect(() => {
     if (!open) return;
     const frame = requestAnimationFrame(() => {
@@ -286,7 +285,7 @@ export const AiAssistantDialog: React.FC<{ open: boolean; onOpenChange: (open: b
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[min(660px,82vh)] flex-col gap-0 overflow-hidden rounded-xl p-0 shadow-2xl sm:max-w-[720px]">
-        {/* The assistant's signature: the one line of colour on an otherwise monochrome surface. */}
+        {/* The assistant's signature: the one line of color on an otherwise monochrome surface. */}
         <span aria-hidden="true" className="bg-linear-to-r via-ai-via absolute inset-x-0 top-0 h-px from-transparent to-transparent" />
 
         <DialogHeader className="shrink-0 space-y-0 border-b px-4 py-2.5 pr-12">
@@ -301,9 +300,8 @@ export const AiAssistantDialog: React.FC<{ open: boolean; onOpenChange: (open: b
               <span className="truncate">Ask the design system</span>
             </DialogTitle>
             {/*
-              A soft chip rather than an outlined box: it shares this corner with the close control,
-              and two competing rectangles there read as a toolbar the header does not have. The
-              surface is what carries it at rest, so nothing but weight separates it from the title.
+              A soft chip and not an outlined box. It shares this corner with the close control, and
+              two competing rectangles there read as a toolbar that the header does not have.
             */}
             {canStartFresh && (
               <button
@@ -346,7 +344,6 @@ export const AiAssistantDialog: React.FC<{ open: boolean; onOpenChange: (open: b
               value={input}
               onChange={(event) => setInput(event.target.value)}
               onKeyDown={(event) => {
-                // Enter sends; the modifier keeps the newline, which is what every other chat does.
                 if (event.key === 'Enter' && !event.shiftKey) {
                   event.preventDefault();
                   ask(input);

@@ -3,14 +3,14 @@ import * as React from 'react';
 import { cn } from '../../lib/utils';
 
 /**
- * The assistant's glyph: a large four-point spark with a smaller one trailing it.
+ * The assistant's glyph: a large four-point spark with a smaller one behind it.
  *
- * It is drawn here rather than taken from the icon set because it is the one mark in the app that
- * carries the AI accent ramp — every other icon is monochrome, and that contrast is what makes the
- * assistant's controls read as the assistant at a glance.
+ * We draw it here instead of the icon set, because it is the one mark in the app that carries the AI
+ * accent ramp. Every other icon is monochrome, and that contrast is what makes the assistant's
+ * controls recognizable at a glance.
  *
- * The gradient needs an id that is unique per instance; two marks on one page would otherwise share
- * (and fight over) a single `<defs>` entry.
+ * Each instance needs its own gradient id. Two marks on one page otherwise share one `<defs>` entry,
+ * and the second overwrites the first.
  */
 export const AiMark: React.FC<{ className?: string; muted?: boolean }> = ({ className, muted = false }) => {
   const gradientId = `ai-mark-${React.useId()}`;
@@ -35,17 +35,17 @@ export const AiMark: React.FC<{ className?: string; muted?: boolean }> = ({ clas
 /**
  * The gradient outline shared by the assistant's surfaces.
  *
- * It sits inside a `relative overflow-hidden` parent that carries the radius and a one-pixel pad;
- * the parent's own child then covers everything but that pad, leaving a hairline.
+ * It sits inside a `relative overflow-hidden` parent that carries the radius and a one-pixel pad.
+ * The parent's own child then covers everything but that pad, which leaves a hairline.
  *
  * At rest that hairline is a still gradient. `motion` says whether a conic sweep also turns over it:
  *
- * - `none` — the default, and what the header and the dialog's own header wear. Chrome that is on
- *   screen the whole time should not be moving the whole time.
- * - `hover` — the sweep fades in and turns only while the enclosing `group` is hovered.
- * - `always` — reserved for the one place the motion means something: an answer still being worked on.
+ * - `none` — the default, and what the app header and the dialog header use. Chrome that stays on
+ *   screen must not move the whole time.
+ * - `hover` — the sweep fades in and turns only while a pointer is over the enclosing `group`.
+ * - `always` — the one place where the motion carries meaning: an answer that is still in progress.
  *
- * `-inset-` has to exceed the parent so the square conic still covers the corners as it turns.
+ * `-inset-` must exceed the parent, so that the square conic still covers the corners as it turns.
  */
 export const AiEdge: React.FC<{ motion?: 'none' | 'hover' | 'always'; className?: string }> = ({ motion = 'none', className }) => (
   <>

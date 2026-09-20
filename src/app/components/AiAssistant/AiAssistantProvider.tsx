@@ -68,12 +68,11 @@ const AiAssistant: React.FC<{ children: React.ReactNode; available: boolean }> =
 };
 
 /**
- * The chord the handler above listens for, spelled for the keyboard in front of the reader.
+ * The keyboard shortcut label, written for the keyboard in front of the reader.
  *
- * It has to settle *after* mount rather than during render. This app is prerendered — a static
- * export is HTML sitting on a CDN — so anything read off `navigator` while rendering disagrees with
- * the markup React is hydrating. The prerendered HTML therefore carries the Apple form, and every
- * other platform corrects it on the first effect.
+ * The value must settle after mount, not during render. This app is prerendered, so a value read
+ * from `navigator` during render disagrees with the markup that React hydrates. The prerendered
+ * HTML carries the Apple form, and every other platform corrects it in the first effect.
  */
 const useShortcutLabel = (): string => {
   const [label, setLabel] = React.useState('⌘K');
@@ -86,14 +85,13 @@ const useShortcutLabel = (): string => {
 };
 
 /**
- * The header control: a pill outlined in a gradient hairline, with the assistant mark beside its
- * label. At rest nothing moves — this sits in the chrome of every page, and ambient motion there is
- * a distraction rather than a signal. Hover is what lights it: the sweep turns, a halo wakes behind
- * it, and the mark rotates.
+ * The header control.
  *
- * It deliberately no longer looks like a search field. This opens a conversation, not a result list,
- * and the previous search-shaped control both mis-sold that and duplicated an affordance the app
- * does not otherwise offer.
+ * Nothing moves at rest. This control sits in the chrome of every page, where constant motion is a
+ * distraction and not a signal. The motion belongs to hover.
+ *
+ * It must not look like a search field. This control opens a conversation, not a result list, and
+ * the app has no search to confuse it with.
  */
 export function AiAssistantTrigger() {
   const assistant = useAiAssistant();
@@ -125,8 +123,7 @@ export function AiAssistantTrigger() {
 
 /**
  * The same entry point for the mobile nav. It must sit inside that nav's sheet: the assistant is a
- * dialog, so the sheet has to close as it opens rather than the two stacking and fighting over
- * focus.
+ * dialog, so the sheet must close as the dialog opens. If both stay open, they fight over focus.
  */
 export function AiAssistantMobileTrigger() {
   const assistant = useAiAssistant();
