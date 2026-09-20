@@ -436,9 +436,9 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
 
       // Case 3: args present (with or without preview base) -> create synthetic preview
       let resolvedValues: Record<string, any> = {};
+      const basePreview = ref.preview ? component.previews?.[ref.preview] : undefined;
 
       if (ref.preview) {
-        const basePreview = component.previews?.[ref.preview];
         if (basePreview) {
           resolvedValues = { ...basePreview.values };
         } else {
@@ -457,6 +457,8 @@ const injectPatternPreviews = (result: RuntimeConfig): void => {
         values: resolvedValues,
         url: '',
         sourcePreview: ref.preview,
+        // The ref overrides arguments, not how the preview renders, so a base `render` still applies.
+        ...(basePreview?.render ? { render: basePreview.render } : {}),
       };
 
       ref.resolvedPreview = syntheticKey;

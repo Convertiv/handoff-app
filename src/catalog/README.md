@@ -30,6 +30,9 @@ owns `fromCSF`, because CSF is a source format of React rather than a framework.
 The renderer entry points call `createCatalogItem` with their renderer. The pattern entry point calls it without a renderer.
 `define.ts` handles the shared `implementation` forms: a helper's `{ format, file }`, a file path, or an imported component.
 
+An entry point re-exports only the preview shape its renderer honors: `react.ts` exports `CatalogPreview` with `render`,
+`handlebars.ts` narrows it to reject `render`, and `pattern.ts` exports neither.
+
 A new renderer needs:
 
 - A `RENDERERS` row in `renderers.ts`

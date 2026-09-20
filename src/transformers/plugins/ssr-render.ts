@@ -394,10 +394,13 @@ export function ssrRenderPlugin(
 
       // Generate previews for each variation
       for (const previewKey in componentData.previews) {
-        const previewProps = componentData.previews[previewKey].values;
+        const preview = componentData.previews[previewKey];
+        const previewProps = preview.values;
+        // A synthetic pattern preview is not a named export, so the client looks up its
+        // `sourcePreview` instead. A preview without one has no `render` either.
+        const hydrationPreviewKey = preview.sourcePreview ?? previewKey;
         // Rendered as a component rather than called, so a preview can use hooks and own state.
-        const previewRender = componentData.previews[previewKey].render;
-        const PreviewComponent = (typeof previewRender === 'function' ? previewRender : ReactComponent) as ReactComponent;
+        const PreviewComponent = (typeof preview.render === 'function' ? preview.render : ReactComponent) as ReactComponent;
 
         // The markup must reach the document exactly as rendered. Formatting it adds text nodes React
         // does not expect, so it discards the server markup and re-renders the preview on the client.
@@ -405,8 +408,8 @@ export function ssrRenderPlugin(
 
         finalHtml = generateHtmlDocument(
           componentId,
-          previewKey,
-          componentData.previews[previewKey].title,
+          hydrationPreviewKey,
+          preview.title,
           serverRenderedHtml,
           previewProps,
           sharedArtifacts,
