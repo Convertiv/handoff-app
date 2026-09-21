@@ -172,6 +172,45 @@ const runNextBuild = async (appPath: string, target: BuildTarget, errorLabel: st
 export const getRegistryBuildOutputPath = (handoff: Handoff): string =>
   path.resolve(handoff.workingPath, handoff.sitesDirectory, 'registry');
 
+const commonAncestorPath = (paths: string[]): string => {
+  const [first, ...rest] = paths.map((entry) => path.resolve(entry).split(path.sep));
+  let shared = first;
+  for (const candidate of rest) {
+    const next: string[] = [];
+    for (let index = 0; index < Math.min(shared.length, candidate.length) && shared[index] === candidate[index]; index += 1) {
+      next.push(shared[index]);
+    }
+    shared = next;
+  }
+  return shared.join(path.sep) || path.sep;
+};
+
+/**
+ * Root for Next's file tracing. Every traced path in the standalone bundle is relative to this root.
+ *
+ * The tracer copies only the files inside this root. It must contain the staged app (see
+ * {@link getAppPath}), or Next emits no standalone bundle. It must also contain every
+ * `node_modules` that the required runtime dependencies resolve from, or the bundle cannot start
+ * (see {@link assertRegistryRuntimeDepsTraced}).
+ *
+ * `workingPath` satisfies both conditions only when handoff-app is installed in the same package as
+ * the config, and nothing is hoisted above it.
+ */
+export const resolveRegistryTracingRoot = (handoff: Handoff): string => {
+  const anchors = [path.resolve(handoff.workingPath), path.resolve(handoff.modulePath)];
+  // Resolve each module instead of assuming its location. A hoisted or linked dependency otherwise
+  // drops out of the trace.
+  for (const moduleName of getRequiredRegistryRuntimeModules(handoff)) {
+    try {
+      const resolved = require.resolve(`${moduleName}/package.json`, { paths: [handoff.modulePath, handoff.workingPath] });
+      anchors.push(fs.realpathSync(path.dirname(resolved)));
+    } catch {
+      // The assertion after assembly reports a module that does not resolve.
+    }
+  }
+  return commonAncestorPath(anchors);
+};
+
 /**
  * Performs cleanup of the application directory by removing the existing app directory if it exists.
  */
@@ -251,6 +290,8 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const escapedProjectId = escapeForSingleQuotedJsString(handoffProjectId);
   const escapedWorkingPath = escapeForSingleQuotedJsString(handoffWorkingPath);
   const escapedModulePath = escapeForSingleQuotedJsString(handoffModulePath);
+  // Baked here so the template and the assembly step use the same root.
+  const escapedTracingRoot = escapeForSingleQuotedJsString(resolveRegistryTracingRoot(handoff));
   const escapedExportPath = escapeForSingleQuotedJsString(handoffExportPath);
   const escapedWebsocketPort = escapeForSingleQuotedJsString(String(handoffWebsocketPort));
   // Resolved runtime mode + registry connection inputs (names only) baked into the Next bundle so the
@@ -271,6 +312,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_APP_BASE_PATH%': escapedAppBasePath,
     '%HANDOFF_WORKING_PATH%': escapedWorkingPath,
     '%HANDOFF_MODULE_PATH%': escapedModulePath,
+    '%HANDOFF_TRACING_ROOT%': escapedTracingRoot,
     '%HANDOFF_EXPORT_PATH%': escapedExportPath,
     '%HANDOFF_WEBSOCKET_PORT%': escapedWebsocketPort,
     '%HANDOFF_RUNTIME_MODE%': escapedRuntimeMode,
@@ -575,14 +617,11 @@ const assembleRegistryStandalone = async (
 ): Promise<string> => {
   await fs.copy(standaloneRoot, entryDir, { overwrite: true });
 
-  // Locate the server entry within the assembled package. Standalone tracing is rooted at the
-  // consumer project root (`workingPath`, see next.config.mjs), so every traced file is laid out at
-  // its path *relative to `workingPath`*. The staged app lives at `<workingPath>/node_modules/
-  // handoff-app/.handoff/<projectId>`, so the server entry lands nested at that same relative path
-  // *underneath* the traced `node_modules`. Resolve it deterministically; the recursive fallback
-  // skips `node_modules` (so it cannot find this nested entry) and only covers a hypothetical
-  // non-nested layout.
-  const relAppDir = path.relative(handoff.workingPath, appPath);
+  // Locate the server entry in the assembled package. Traced files keep their path relative to the
+  // tracing root, so the server entry nests under the traced `node_modules`. The recursive fallback
+  // skips `node_modules`, so it covers only a non-nested layout.
+  const tracingRoot = resolveRegistryTracingRoot(handoff);
+  const relAppDir = path.relative(tracingRoot, appPath);
   let serverDir = path.resolve(entryDir, relAppDir);
   if (!fs.existsSync(path.join(serverDir, 'server.js'))) {
     const located = findStandaloneServerDir(entryDir);
@@ -605,7 +644,7 @@ const assembleRegistryStandalone = async (
     // so we must NOT remove the first path segment (`node_modules`) — that would delete every traced
     // dependency. Remove only the `.handoff` staging container (the parent of the staged app dir),
     // leaving `node_modules/` and the real `node_modules/handoff-app/` package intact.
-    const stagingContainer = path.resolve(entryDir, path.relative(handoff.workingPath, path.dirname(appPath)));
+    const stagingContainer = path.resolve(entryDir, path.relative(tracingRoot, path.dirname(appPath)));
     if (path.basename(stagingContainer) === '.handoff' && fs.existsSync(stagingContainer)) {
       await fs.remove(stagingContainer);
     }
@@ -630,6 +669,17 @@ const assembleRegistryStandalone = async (
       await fs.copy(src, path.join(entryDir, configFile), { overwrite: true });
     }
   }
+
+  // Next copies the `package.json` of the tracing root into the bundle without change. The generated
+  // `server.js` is CommonJS, so an ESM manifest stops the bundle from starting. That manifest also
+  // names scripts and dev dependencies that the bundle does not ship.
+  const manifestPath = path.join(entryDir, 'package.json');
+  const inheritedManifest: Record<string, unknown> = (await fs.pathExists(manifestPath))
+    ? await fs.readJson(manifestPath).catch(() => ({}))
+    : {};
+  delete inheritedManifest.scripts;
+  delete inheritedManifest.devDependencies;
+  await fs.writeJson(manifestPath, { ...inheritedManifest, type: 'commonjs' }, { spaces: 2 });
 
   // Fail loudly at build time if the trace did not capture the runtime deps, rather than shipping a
   // broken artifact that only crashes on an isolated deploy. Covers both deliverables (this is the
@@ -710,8 +760,10 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
   const standaloneRoot = path.resolve(appPath, '.next', 'standalone');
   if (!fs.existsSync(standaloneRoot)) {
     throw new Error(
-      `Registry build did not produce a standalone bundle at "${standaloneRoot}". Ensure the registry ` +
-        'build target sets Next `output: "standalone"`.'
+      `Registry build did not produce a standalone bundle at "${standaloneRoot}". Next emits one only ` +
+        `when the app being built sits inside \`outputFileTracingRoot\` (resolved here to ` +
+        `"${resolveRegistryTracingRoot(handoff)}"), so check that the staged app at "${appPath}" is ` +
+        'inside that root, and that the registry build target still sets Next `output: "standalone"`.'
     );
   }
 

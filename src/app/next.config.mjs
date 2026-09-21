@@ -18,6 +18,7 @@ const resolveBasePath = (rawBasePath) => {
 //   - otherwise  → a normal server (workspace `next dev`/`start`).
 const handoffBuildTarget = process.env.HANDOFF_BUILD_TARGET;
 const handoffWorkingPath = path.resolve('%HANDOFF_WORKING_PATH%');
+const handoffTracingRoot = path.resolve('%HANDOFF_TRACING_ROOT%');
 
 // A configured custom asset-storage adapter module (relative to the consumer project). It is loaded
 // by a variable dynamic import at runtime, which nft cannot statically trace, so force it (and its
@@ -49,11 +50,10 @@ const resolveOutputMode = (target) => {
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: resolveOutputMode(handoffBuildTarget),
-  // The tracer only copies files inside its root, so root it at the consumer project — the common
-  // ancestor of the staged app (`node_modules/handoff-app/.handoff/<projectId>`) and the runtime deps
-  // hoisted to the top-level `node_modules`. Rooting at the package dir would trace an empty
-  // `node_modules` and ship a non-bootable bundle. Registry-only; workspace dev/static is unchanged.
-  outputFileTracingRoot: handoffBuildTarget === 'registry' ? handoffWorkingPath : undefined,
+  // Rooted at the common ancestor of the staged app and the `node_modules` that the runtime
+  // dependencies resolve from. The builder bakes this value (`resolveRegistryTracingRoot`), so the
+  // assembly step uses the same root. This applies to the registry target only.
+  outputFileTracingRoot: handoffBuildTarget === 'registry' ? handoffTracingRoot : undefined,
   // nft speculatively traces the export-only paths the app references (`export-detail.json` and the
   // materializer's `.next/export/**` targets) as runtime deps. They never exist in a `standalone`
   // build, and `copyTracedFiles` copies traced files with no existence guard, so leaving them in
