@@ -49,36 +49,45 @@ export function withStyleLoaders<T extends esbuild.BuildOptions>(config: T): T {
 }
 
 /**
- * Records each imported stylesheet once, in first-import order.
+ * Stylesheets of the module graph in cascade order: every import of a module before the module
+ * itself, siblings in source order.
  *
- * Only the discovery build needs a plugin; elsewhere the `empty` loader is enough and a plugin would
- * rule out the synchronous callers.
+ * This is the order a bundler emits CSS in, and the cascade depends on it. A component that
+ * overrides a rule of a component it imports ties that rule on specificity, so the later of the
+ * two wins. esbuild's `onLoad` callbacks do not give this order: they fire roughly breadth-first,
+ * which puts a component's own stylesheet ahead of the ones it imports and reverses every such
+ * override.
  */
-function createStyleCollectorPlugin(collected: string[]): esbuild.Plugin {
-  const seen = new Set<string>();
+function orderStyleImports(metafile: esbuild.Metafile, entryPath: string): string[] {
+  const entryKey = Object.keys(metafile.inputs).find((key) => path.resolve(key) === entryPath);
+  if (!entryKey) return [];
 
-  return {
-    name: 'handoff-style-collector',
-    setup(build) {
-      build.onLoad({ filter: new RegExp(`\\.(${STYLE_EXTENSIONS.map((e) => e.slice(1)).join('|')})$`) }, (args) => {
-        if (!seen.has(args.path)) {
-          seen.add(args.path);
-          collected.push(args.path);
-        }
-        return { contents: '', loader: 'js' };
-      });
-    },
+  const ordered: string[] = [];
+  const visited = new Set<string>();
+
+  const visit = (key: string) => {
+    if (visited.has(key)) return;
+    visited.add(key);
+
+    for (const imported of metafile.inputs[key]?.imports ?? []) {
+      if (!imported.external && metafile.inputs[imported.path]) visit(imported.path);
+    }
+
+    if (STYLE_EXTENSIONS.includes(path.extname(key))) ordered.push(path.resolve(key));
   };
+
+  visit(entryKey);
+
+  return ordered;
 }
 
 /**
- * Stylesheet paths imported anywhere in a component's module graph, in first-import order.
+ * Stylesheet paths imported anywhere in a component's module graph, in cascade order.
  *
  * An unbuildable graph yields an empty list rather than throwing, leaving the CSS step with the
  * declared entry.
  */
 export async function collectStyleImports(entryPath: string, handoff: any): Promise<string[]> {
-  const collected: string[] = [];
   const baseConfig: esbuild.BuildOptions = {
     ...DEFAULT_SSR_BUILD_CONFIG,
     entryPoints: [entryPath],
@@ -87,15 +96,14 @@ export async function collectStyleImports(entryPath: string, handoff: any): Prom
   const hookedConfig = handoff?.config?.hooks?.ssrBuildConfig ? handoff.config.hooks.ssrBuildConfig(baseConfig) : baseConfig;
 
   try {
-    await esbuild.build({
-      ...withStyleLoaders(hookedConfig),
-      plugins: [...(hookedConfig.plugins ?? []), createStyleCollectorPlugin(collected)],
-    });
+    // The `empty` loader keeps stylesheets out of the JavaScript, and the metafile still records
+    // them as inputs, so the graph carries the order.
+    const result = await esbuild.build({ ...withStyleLoaders(hookedConfig), metafile: true });
+
+    return result.metafile ? orderStyleImports(result.metafile, entryPath) : [];
   } catch {
     return [];
   }
-
-  return collected;
 }
 
 /**

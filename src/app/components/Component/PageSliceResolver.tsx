@@ -44,6 +44,7 @@ export const PageSliceResolver: React.FC<PageSliceResolverProps> = ({
           showPreview={slice.showPreview}
           showCodeHighlight={slice.showCodeHighlight}
           defaultHeight={slice.defaultHeight}
+          defaultWidth={slice.defaultWidth}
           filterBy={slice.filterBy}
           codeHighlight={codeHighlight}
         />

@@ -1,3 +1,4 @@
+import { PreviewWidth } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types/preview';
 import { Filter, evaluateFilter } from '@handoff/utils/filter';
 import React from 'react';
@@ -13,6 +14,7 @@ export interface ComponentDisplaySliceProps {
   showPreview?: boolean;
   showCodeHighlight?: boolean;
   defaultHeight?: string;
+  defaultWidth?: PreviewWidth;
   filterBy?: Filter;
   codeHighlight?: boolean;
 }
@@ -38,6 +40,7 @@ const ComponentDisplaySlice: React.FC<ComponentDisplaySliceProps> = ({
   showPreview = true,
   showCodeHighlight,
   defaultHeight,
+  defaultWidth,
   filterBy,
   codeHighlight = true,
 }) => {
@@ -68,6 +71,7 @@ const ComponentDisplaySlice: React.FC<ComponentDisplaySliceProps> = ({
           title={title}
           component={filteredPreview}
           defaultHeight={finalDefaultHeight}
+          defaultWidth={defaultWidth}
           onPreviewChange={onPreviewChange}
         />
       )}

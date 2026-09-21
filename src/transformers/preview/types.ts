@@ -18,6 +18,9 @@ export interface BasePageSlice {
   type: PageSliceType;
 }
 
+/** A fluid preview renders at the width the reader's stage has, so it is never scaled down. */
+export type PreviewWidth = 'fluid' | number;
+
 export interface BestPracticesPageSlice extends BasePageSlice {
   type: 'BEST_PRACTICES';
 }
@@ -27,6 +30,8 @@ export interface ComponentDisplayPageSlice extends BasePageSlice {
   showPreview?: boolean;
   showCodeHighlight?: boolean;
   defaultHeight?: string;
+  /** Viewport width for the preview, in pixels. Defaults to 'fluid'. */
+  defaultWidth?: PreviewWidth;
   filterBy?: Filter;
 }
 
