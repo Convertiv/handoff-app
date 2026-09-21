@@ -1,17 +1,17 @@
 'use client';
 
-import { DefaultChatTransport, getToolOrDynamicToolName, isDynamicToolUIPart, isToolUIPart, type UIMessage } from 'ai';
 import { useChat } from '@ai-sdk/react';
-import { ArrowUp, ArrowUpRight, ExternalLink, SquarePen, Square } from 'lucide-react';
+import { DefaultChatTransport, getToolOrDynamicToolName, isDynamicToolUIPart, isToolUIPart, type UIMessage } from 'ai';
+import { ArrowUp, ArrowUpRight, ExternalLink, Square, SquarePen } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { cn } from '../../lib/utils';
 import { MarkdownComponents } from '../Markdown/MarkdownComponents';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { cn } from '../../lib/utils';
 import { AiEdge, AiMark } from './AiMark';
 import { toolCallLabel } from './toolLabel';
 import { useAiConnections } from './useAiConnections';
@@ -370,8 +370,8 @@ export const AiAssistantDialog: React.FC<{ open: boolean; onOpenChange: (open: b
                   </SelectContent>
                 </Select>
               ) : (
-                <span className="px-1.5 text-xs text-muted-foreground/60">
-                  {hasModel ? 'Enter to send · Shift + Enter for a new line' : ''}
+                <span className="px-1.5 text-xs text-muted-foreground">
+                  {connections.models[0] ? `${connections.models[0].label} · ${connections.models[0].model}` : ''}
                 </span>
               )}
               {busy ? (
