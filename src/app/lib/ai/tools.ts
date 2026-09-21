@@ -47,6 +47,12 @@ const sourcesOf = (toolName: string, payload: unknown): AiSource[] => {
     const id = text(record.id);
     return id ? [{ url: componentUrl(id), title: text(record.title) ?? id }] : [];
   }
+  // A preview links to the component's docs page, which is where a reader sees it rendered.
+  if (toolName === 'handoff_get_component_preview') {
+    const component = asRecord(record.component);
+    const id = component && text(component.id);
+    return id ? [{ url: componentUrl(id), title: text(component.title) ?? id }] : [];
+  }
   if (toolName === 'handoff_get_page') {
     const url = text(record.url);
     return url ? [{ url, title: text(record.title) ?? url }] : [];

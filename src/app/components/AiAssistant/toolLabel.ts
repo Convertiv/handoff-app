@@ -8,8 +8,10 @@ export const toolCallLabel = (toolName: string, input: unknown): string => {
       return value('query') ? `Searched components for “${value('query')}”` : 'Listed components';
     case 'handoff_get_component':
       return `Read component ${value('id') ?? ''}`.trim();
+    case 'handoff_get_component_preview':
+      return `Read ${value('id') ?? 'component'} preview ${value('preview') ?? ''}`.trim();
     case 'handoff_get_tokens':
-      return value('id') ? `Read tokens for ${value('id')}` : 'Read design tokens';
+      return value('set') ? `Read tokens for ${value('set')}` : 'Read design tokens';
     case 'handoff_search_pages':
       return value('query') ? `Searched pages for “${value('query')}”` : 'Listed pages';
     case 'handoff_get_page':
