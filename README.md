@@ -55,15 +55,108 @@ npm run validate
 
 ## Project layout
 
+Every command runs against a working directory: the directory holding
+`handoff.config.ts`. Generated output is written there.
+
 ```text
-my-handoff-project/
+<working directory>/
 ├─ handoff.config.ts
 ├─ .env
 ├─ components/
 ├─ patterns/
 ├─ pages/
 ├─ exported/       # fetched tokens and assets; commit this directory
-└─ out/            # build output; gitignored
+├─ public/api/     # generated docs API; gitignored
+├─ out/            # build output; gitignored
+├─ .vercel/        # `--package vercel` output; gitignored
+└─ .handoff/       # saved CLI login; gitignored
+```
+
+In a repository of its own, which is what `init` scaffolds, the working
+directory is the repository root.
+
+### Adding Handoff to an existing application
+
+Declarations sit beside the components they document, so the catalog points
+into the application source:
+
+```ts
+catalog: { include: ['src/components', 'src/blocks'] },
+```
+
+**`handoff-app` must be a dependency of the package holding those
+`*.handoff.ts` files.** They import `handoff-app/react`, which resolves from the
+directory of the declaration, not from the directory of the config. Under npm a
+missing dependency is usually hidden by hoisting. Under pnpm it is not: the
+affected items are skipped with `Could not resolve "handoff-app/react"` and the
+build still exits 0.
+
+Two `tsconfig.json` files do different jobs:
+
+- The config nearest the declarations type checks them. For files in `src/`
+  that is the one at the project root. An editor reads the nearest config only,
+  so a config in another directory that includes `src/` does not count, and
+  neither the editor nor the application build reports errors in a declaration.
+- The config at the working directory generates the property tables. Without
+  it, Handoff warns `TypeScript config not found` and every table is empty.
+
+Both files are needed when the working directory is not the project root.
+
+Three placements work, all keeping one dependency tree so the catalog renders
+the real components against the same React instance. A separate install with its
+own `node_modules` outside that tree is not supported.
+
+**Handoff in a subdirectory — recommended.** Nothing in the application changes.
+`handoff-app` is a dependency of the application package, and
+`HANDOFF_WORKING_PATH` keeps the generated directories in `handoff/`:
+
+```json
+{ "scripts": { "handoff:dev": "HANDOFF_WORKING_PATH=handoff handoff-app start" } }
+```
+
+An inline variable does not work in an npm script on Windows, where `cross-env`
+is used instead.
+
+**Handoff in the project root.** The working directory is the project root, so
+one `tsconfig.json` does both jobs. Handoff writes to `public/api`, so a bundler
+already serving static files from `public/` must be pointed elsewhere:
+
+```ts
+// vite.config.ts
+export default defineConfig({
+  publicDir: 'static',
+});
+```
+
+Without that change the generated documentation API is copied into the
+production build of the application. A Next.js application cannot use this
+placement: `sitesOutputDirectory` moves `out/` away from its export directory,
+but its `public` directory is a fixed convention with no setting to move it.
+
+**Handoff as a workspace package.** For a repository that is already a
+workspace. `handoff/` gets its own `package.json` and scripts, generated output
+lands in `handoff/`, and the root forwards to it:
+
+```json
+{
+  "workspaces": ["handoff"],
+  "scripts": { "handoff:dev": "npm run dev --workspace handoff" }
+}
+```
+
+The dependency rule is easiest to get wrong here: the declarations in `src/`
+belong to the application package, not to the workspace, so both packages
+declare `handoff-app`.
+
+### pnpm
+
+`build` and `build --package vercel` work with the default pnpm layout.
+`build --target registry` cannot follow pnpm symlinks when it traces its runtime
+dependencies into a standalone bundle, so it needs a flat layout:
+
+```yaml
+# pnpm-workspace.yaml
+nodeLinker: hoisted
 ```
 
 ## Catalog items
@@ -609,6 +702,7 @@ Useful environment variables:
 | `BLOB_READ_WRITE_TOKEN` | Credential for the Vercel Blob asset adapter |
 | `HANDOFF_OUTPUT_DIR` | Override the fetched output directory |
 | `HANDOFF_SITES_DIR` | Override the build output directory |
+| `HANDOFF_WORKING_PATH` | Directory holding `handoff.config.ts`; defaults to the current directory |
 | `HANDOFF_APP_PORT` | Workspace documentation server port |
 | `HANDOFF_WEBSOCKET_PORT` | Workspace live-reload server port |
 
