@@ -42,7 +42,7 @@ export function AuthShell({ children, title, description, wide = false, hideNav 
       </Head>
       <div className="min-h-screen bg-background">
         <header className="border-b">
-          <div className="container mx-auto flex h-16 max-w-[1200px] items-center justify-between px-6">
+          <div className="container mx-auto flex h-17 max-w-[1200px] items-center justify-between px-6">
             {hideNav ? (
               <span className="flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
