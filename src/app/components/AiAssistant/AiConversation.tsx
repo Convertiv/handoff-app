@@ -1,7 +1,7 @@
 'use client';
 
 import { getToolOrDynamicToolName, isDynamicToolUIPart, isToolUIPart, type UIMessage } from 'ai';
-import { ArrowUp, ArrowUpRight, Square, SquarePen } from 'lucide-react';
+import { ArrowUp, ArrowUpRight, Square, SquarePen, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -101,13 +101,38 @@ const ToolRow: React.FC<{ label: string; running: boolean }> = ({ label, running
       running && 'animate-ai-shimmer bg-[linear-gradient(90deg,transparent,hsl(var(--ai-via)/0.18),transparent)] bg-[length:200%_100%]'
     )}
   >
-    <AiMark className="h-3 w-3 shrink-0" muted={!running} />
+    <Wrench aria-hidden="true" className="h-3 w-3 shrink-0" />
     <span className="truncate">{label}</span>
   </div>
 );
 
-const Answer: React.FC<{ message: UIMessage }> = ({ message }) => {
+/** A quiet progress signal for time that has no tool activity or answer text of its own. */
+const WorkingDots: React.FC = () => (
+  <span role="status" className="inline-flex h-6 items-center gap-1">
+    <span className="sr-only">The assistant is working.</span>
+    {[0, 1, 2].map((index) => (
+      <span
+        key={index}
+        aria-hidden="true"
+        className="animate-ai-dot h-1.5 w-1.5 rounded-full bg-muted-foreground opacity-35"
+        style={{ animationDelay: `${index * 160}ms` }}
+      />
+    ))}
+  </span>
+);
+
+const hasTextContent = (message: UIMessage): boolean =>
+  message.parts.some((part) => part.type === 'text' && part.text.trim().length > 0);
+
+const hasRunningTool = (message: UIMessage): boolean =>
+  message.parts.some(
+    (part) =>
+      (isToolUIPart(part) || isDynamicToolUIPart(part)) && part.state !== 'output-available' && part.state !== 'output-error'
+  );
+
+const Answer: React.FC<{ message: UIMessage; waitingForText: boolean }> = ({ message, waitingForText }) => {
   const sources = sourcesOf(message);
+  const showWorkingDots = waitingForText && !hasTextContent(message) && !hasRunningTool(message);
 
   return (
     <div className="flex gap-3">
@@ -136,6 +161,7 @@ const Answer: React.FC<{ message: UIMessage }> = ({ message }) => {
           }
           return null;
         })}
+        {showWorkingDots && <WorkingDots />}
         {sources.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-1">
             {/*
@@ -165,13 +191,12 @@ const Answer: React.FC<{ message: UIMessage }> = ({ message }) => {
  * draws an avatar above an empty column, so the transcript leaves it out until it has content.
  */
 const hasAnswerContent = (message: UIMessage): boolean =>
-  message.parts.some(
-    (part) =>
-      (part.type === 'text' && part.text.trim().length > 0) || part.type === 'source-url' || isToolUIPart(part) || isDynamicToolUIPart(part)
-  );
+  hasTextContent(message) ||
+  message.parts.some((part) => part.type === 'source-url' || isToolUIPart(part) || isDynamicToolUIPart(part));
 
 const Conversation: React.FC<{ messages: UIMessage[]; thinking: boolean }> = ({ messages, thinking }) => {
   const visible = messages.filter((message) => message.role === 'user' || hasAnswerContent(message));
+  const activeMessage = messages[messages.length - 1];
   // One mark at a time. The waiting row stands in for the answer until the answer has a first tool
   // call or a first token of its own.
   const waiting = thinking && visible[visible.length - 1]?.role !== 'assistant';
@@ -186,13 +211,13 @@ const Conversation: React.FC<{ messages: UIMessage[]; thinking: boolean }> = ({ 
             </p>
           </div>
         ) : (
-          <Answer key={message.id} message={message} />
+          <Answer key={message.id} message={message} waitingForText={thinking && message.id === activeMessage?.id} />
         )
       )}
       {waiting && (
         <div className="flex items-center gap-3">
-          <AnswerMark busy />
-          <span className="text-sm text-muted-foreground">Reading the design system…</span>
+          <AnswerMark />
+          <WorkingDots />
         </div>
       )}
     </div>
@@ -287,7 +312,7 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
     !busy &&
     !error &&
     lastMessage?.role === 'assistant' &&
-    !lastMessage.parts.some((part) => part.type === 'text' && part.text.trim().length > 0);
+    !hasTextContent(lastMessage);
 
   // The composer is a textarea, so a long question wraps and does not scroll sideways. A textarea
   // has no automatic height, so it needs a measurement after every change.
