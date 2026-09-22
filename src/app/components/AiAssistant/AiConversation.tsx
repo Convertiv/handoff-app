@@ -370,7 +370,7 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
         </div>
       </div>
 
-      <div ref={transcriptRef} onScroll={onTranscriptScroll} className="min-h-0 flex-1 overflow-y-auto px-4 py-5">
+      <div ref={transcriptRef} onScroll={onTranscriptScroll} className="min-h-0 flex-1 overflow-y-auto px-4 pb-10 pt-5">
         {messages.length > 0 ? (
           <Conversation messages={messages} thinking={busy} />
         ) : connections.loading ? null : hasModel ? (
@@ -386,13 +386,13 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
         {error && <p className="mt-4 text-sm text-destructive">{error.message}</p>}
       </div>
 
-      <div className="shrink-0 border-t px-3 py-3">
+      <div className="pointer-events-none relative z-10 -mt-10 shrink-0 bg-linear-to-t from-background from-65% to-transparent px-3 pb-3 pt-10">
         <form
           onSubmit={(event) => {
             event.preventDefault();
             ask(input);
           }}
-          className="focus-within:border-ai-via/60 rounded-xl border bg-background transition-colors"
+          className="focus-within:border-ai-via/60 pointer-events-auto rounded-2xl border bg-background/95 shadow-[0_8px_28px_-10px_rgba(15,23,42,0.25)] backdrop-blur-sm transition-[border-color,box-shadow] dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.7)]"
         >
           <textarea
             ref={composerRef}
