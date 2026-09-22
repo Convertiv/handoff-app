@@ -66,7 +66,9 @@ export const writeDock = (state: DockState): void => {
  */
 export const dockWidthScript = `(function(){try{
 var s=JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})||'null');
-if(!s||!s.open||window.innerWidth<${DOCK_BREAKPOINT})return;
+if(!s||!s.open)return;
+document.documentElement.dataset.aiDockOpen='true';
+if(window.innerWidth<${DOCK_BREAKPOINT})return;
 var w=s.minified?${RAIL_WIDTH}:Math.min(${MAX_WIDTH},Math.max(${MIN_WIDTH},Math.round(s.width)||${DEFAULT_WIDTH}),Math.max(${MIN_WIDTH},Math.round(window.innerWidth*${MAX_VIEWPORT_SHARE})));
 document.documentElement.style.setProperty(${JSON.stringify(DOCK_WIDTH_VAR)},w+'px');
 }catch(e){}})();`;

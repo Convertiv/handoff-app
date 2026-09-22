@@ -222,6 +222,26 @@
 		padding-right 0.2s ease-out;
 }
 
+.ai-assistant-trigger {
+	display: inline-flex;
+	flex-shrink: 0;
+	max-width: 9rem;
+	overflow: hidden;
+	opacity: 1;
+	transition:
+		max-width 0.2s ease-out,
+		margin-right 0.2s ease-out,
+		opacity 0.2s ease-out;
+}
+
+.ai-assistant-trigger[data-open='true'],
+[data-ai-dock-open='true'] .ai-assistant-trigger {
+	pointer-events: none;
+	margin-right: -1rem;
+	max-width: 0;
+	opacity: 0;
+}
+
 [data-ai-dock-resizing] .ai-dock-inset,
 [data-ai-dock-resizing] .ai-dock {
 	transition: none;
@@ -234,7 +254,8 @@
 	}
 
 	.ai-dock-inset,
-	.ai-dock {
+	.ai-dock,
+	.ai-assistant-trigger {
 		transition: none;
 	}
 }

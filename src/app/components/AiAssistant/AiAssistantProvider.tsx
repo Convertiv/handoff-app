@@ -72,14 +72,14 @@ const AiAssistant: React.FC<{ children: React.ReactNode; available: boolean | un
 
   const value = React.useMemo<AiAssistantApi>(
     () => ({
-      isOpen: dock.open && !dock.minified,
+      isOpen: dock.open,
       open: () => change({ open: true, minified: false }),
       toggle: () =>
         setDock((current) =>
           current.open && !current.minified ? { ...current, open: false } : { ...current, open: true, minified: false }
         ),
     }),
-    [change, dock.open, dock.minified]
+    [change, dock.open]
   );
 
   React.useEffect(() => {
@@ -102,7 +102,10 @@ const AiAssistant: React.FC<{ children: React.ReactNode; available: boolean | un
   React.useEffect(() => {
     if (available === undefined) return;
     if (available && !restored) return;
-    document.documentElement.style.setProperty(DOCK_WIDTH_VAR, `${available && !isMobile ? dockWidth(dock) : 0}px`);
+    const root = document.documentElement;
+    root.style.setProperty(DOCK_WIDTH_VAR, `${available && !isMobile ? dockWidth(dock) : 0}px`);
+    if (available && dock.open) root.dataset.aiDockOpen = 'true';
+    else delete root.dataset.aiDockOpen;
   }, [available, restored, isMobile, dock]);
 
   React.useEffect(() => {
@@ -159,26 +162,28 @@ export function AiAssistantTrigger() {
   if (!assistant) return null;
 
   return (
-    <button
-      type="button"
-      onClick={assistant.toggle}
-      title="Ask the design system"
-      aria-expanded={assistant.isOpen}
-      className="outline-hidden focus-visible:ring-ai-via/50 group relative inline-flex h-8 shrink-0 items-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-    >
-      <span
-        aria-hidden="true"
-        className="bg-linear-to-r from-ai-from via-ai-via to-ai-to pointer-events-none absolute -inset-1 rounded-full opacity-0 blur-md transition-opacity duration-500 group-hover:opacity-40"
-      />
-      <span className="relative flex h-full items-center overflow-hidden rounded-full p-px">
-        <AiEdge motion="hover" className="opacity-70 transition-opacity duration-500 group-hover:opacity-100" />
-        <span className="relative flex h-full items-center gap-2 rounded-full bg-background px-3">
-          <AiMark className="h-3.5 w-3.5 transition-transform duration-500 group-hover:rotate-90" />
-          <span className="text-sm font-medium">Ask</span>
-          <kbd className="rounded-sm border bg-muted px-1 font-mono text-[10px] leading-[14px] text-muted-foreground">{shortcut}</kbd>
+    <span className="ai-assistant-trigger" data-open={assistant.isOpen} inert={assistant.isOpen}>
+      <button
+        type="button"
+        onClick={assistant.toggle}
+        title="Ask the design system"
+        aria-expanded={assistant.isOpen}
+        className="outline-hidden focus-visible:ring-ai-via/50 group relative inline-flex h-8 shrink-0 items-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      >
+        <span
+          aria-hidden="true"
+          className="bg-linear-to-r from-ai-from via-ai-via to-ai-to pointer-events-none absolute -inset-1 rounded-full opacity-0 blur-md transition-opacity duration-500 group-hover:opacity-40"
+        />
+        <span className="relative flex h-full items-center overflow-hidden rounded-full p-px">
+          <AiEdge motion="hover" className="opacity-70 transition-opacity duration-500 group-hover:opacity-100" />
+          <span className="relative flex h-full items-center gap-2 rounded-full bg-background px-3">
+            <AiMark className="h-3.5 w-3.5 transition-transform duration-500 group-hover:rotate-90" />
+            <span className="text-sm font-medium">Ask</span>
+            <kbd className="rounded-sm border bg-muted px-1 font-mono text-[10px] leading-[14px] text-muted-foreground">{shortcut}</kbd>
+          </span>
         </span>
-      </span>
-    </button>
+      </button>
+    </span>
   );
 }
 
