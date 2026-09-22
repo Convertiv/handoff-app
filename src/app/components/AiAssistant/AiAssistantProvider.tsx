@@ -2,31 +2,44 @@
 
 import { useSession } from 'next-auth/react';
 import * as React from 'react';
+
+import { useIsMobile } from '../../hooks/use-mobile';
 import { SheetClose } from '../ui/sheet';
-import { AiAssistantDialog } from './AiAssistantDialog';
+import { AiAssistantPanel } from './AiAssistantPanel';
 import { AiEdge, AiMark } from './AiMark';
+import { DEFAULT_DOCK, DOCK_WIDTH_VAR, clampWidth, dockWidth, readDock, writeDock, type DockState } from './dockState';
 
 /**
- * Availability and open state for the docs assistant.
+ * Availability and dock state for the docs assistant.
  *
  * Availability comes from values baked in at build time (the `env` block in `next.config.mjs`): a
  * static export has no API routes, and a build without `runtime.ai` has no chat route. The triggers
  * are gated on the same values, so such a build shows no affordance rather than one that fails.
  *
  * The header hides its controls below the `@2xl` container width, so the mobile nav needs a trigger
- * of its own. Both open the one dialog this provider renders, which is also what `⌘K` (`Ctrl K`
- * away from Apple keyboards) reaches.
+ * of its own. Both reach the one panel this provider renders, which is also what `⌘K` (`Ctrl K`
+ * away from Apple keyboards) toggles.
  *
  * Registry mode adds a second condition: the chat route authorizes on the session, so a signed-out
  * reader sees no control rather than one that answers 401.
+ *
+ * Mounted in `_app`, above the page tree. That position is what makes the pinned panel possible:
+ * every page builds its own `Layout`, so anything inside one is unmounted by the next soft
+ * navigation, along with the conversation in it.
  */
 const isAvailable = process.env.HANDOFF_AI_ENABLED === 'true' && process.env.HANDOFF_BUILD_TARGET !== 'static';
 const isRegistryRuntime = process.env.HANDOFF_RUNTIME_MODE === 'registry';
 
-const AiAssistantContext = React.createContext<{ open: () => void } | null>(null);
+interface AiAssistantApi {
+  isOpen: boolean;
+  open: () => void;
+  toggle: () => void;
+}
+
+const AiAssistantContext = React.createContext<AiAssistantApi | null>(null);
 
 /** The opener, or `null` where this build has no assistant. */
-export const useAiAssistant = (): { open: () => void } | null => React.useContext(AiAssistantContext);
+export const useAiAssistant = (): AiAssistantApi | null => React.useContext(AiAssistantContext);
 
 export const AiAssistantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   isAvailable && isRegistryRuntime ? (
@@ -35,34 +48,81 @@ export const AiAssistantProvider: React.FC<{ children: React.ReactNode }> = ({ c
     <AiAssistant available={isAvailable}>{children}</AiAssistant>
   );
 
-/** `useSession` needs the registry session provider, which only registry mode mounts. */
+/**
+ * `useSession` needs the registry session provider, which only registry mode mounts.
+ *
+ * A loading session reports `undefined` and not `false`: the inline script may already have reserved
+ * the dock's column, and a `false` here would take it back and give it again once the session lands.
+ */
 const RegistryAiAssistantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { data: session } = useSession();
-  return <AiAssistant available={Boolean(session?.user)}>{children}</AiAssistant>;
+  const { data: session, status } = useSession();
+  return <AiAssistant available={status === 'loading' ? undefined : Boolean(session?.user)}>{children}</AiAssistant>;
 };
 
-const AiAssistant: React.FC<{ children: React.ReactNode; available: boolean }> = ({ children, available }) => {
-  const [open, setOpen] = React.useState(false);
-  const value = React.useMemo(() => ({ open: () => setOpen(true) }), []);
+const AiAssistant: React.FC<{ children: React.ReactNode; available: boolean | undefined }> = ({ children, available }) => {
+  const isMobile = useIsMobile();
+  const [dock, setDock] = React.useState<DockState>(DEFAULT_DOCK);
+  // Read after mount: the server cannot see it, and a first render that disagreed would fail
+  // hydration.
+  const [restored, setRestored] = React.useState(false);
+
+  const change = React.useCallback((next: Partial<DockState>) => {
+    setDock((current) => ({ ...current, ...next, width: clampWidth(next.width ?? current.width) }));
+  }, []);
+
+  const value = React.useMemo<AiAssistantApi>(
+    () => ({
+      isOpen: dock.open && !dock.minified,
+      open: () => change({ open: true, minified: false }),
+      toggle: () =>
+        setDock((current) =>
+          current.open && !current.minified ? { ...current, open: false } : { ...current, open: true, minified: false }
+        ),
+    }),
+    [change, dock.open, dock.minified]
+  );
 
   React.useEffect(() => {
-    if (!available) return;
+    if (available !== true) return;
+    setDock(readDock());
+    setRestored(true);
+  }, [available]);
+
+  React.useEffect(() => {
+    if (restored) writeDock(dock);
+  }, [restored, dock]);
+
+  /**
+   * The column the page leaves free.
+   *
+   * Nothing is written while the stored state is still out: the inline script in `_document` has
+   * already put the right value there, and an intermediate `0px` would reflow the page. A reader
+   * with no assistant must take the column back, because the script cannot see a signed-out session.
+   */
+  React.useEffect(() => {
+    if (available === undefined) return;
+    if (available && !restored) return;
+    document.documentElement.style.setProperty(DOCK_WIDTH_VAR, `${available && !isMobile ? dockWidth(dock) : 0}px`);
+  }, [available, restored, isMobile, dock]);
+
+  React.useEffect(() => {
+    if (available !== true) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
-        setOpen((current) => !current);
+        value.toggle();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [available]);
+  }, [available, value]);
 
-  if (!available) return <>{children}</>;
+  if (available !== true) return <>{children}</>;
 
   return (
     <AiAssistantContext.Provider value={value}>
       {children}
-      <AiAssistantDialog open={open} onOpenChange={setOpen} />
+      {restored && <AiAssistantPanel state={dock} isMobile={isMobile} onChange={change} />}
     </AiAssistantContext.Provider>
   );
 };
@@ -101,13 +161,14 @@ export function AiAssistantTrigger() {
   return (
     <button
       type="button"
-      onClick={assistant.open}
+      onClick={assistant.toggle}
       title="Ask the design system"
-      className="group relative inline-flex h-8 shrink-0 items-center rounded-full outline-hidden focus-visible:ring-2 focus-visible:ring-ai-via/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+      aria-expanded={assistant.isOpen}
+      className="outline-hidden focus-visible:ring-ai-via/50 group relative inline-flex h-8 shrink-0 items-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
     >
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute -inset-1 rounded-full bg-linear-to-r from-ai-from via-ai-via to-ai-to opacity-0 blur-md transition-opacity duration-500 group-hover:opacity-40"
+        className="bg-linear-to-r from-ai-from via-ai-via to-ai-to pointer-events-none absolute -inset-1 rounded-full opacity-0 blur-md transition-opacity duration-500 group-hover:opacity-40"
       />
       <span className="relative flex h-full items-center overflow-hidden rounded-full p-px">
         <AiEdge motion="hover" className="opacity-70 transition-opacity duration-500 group-hover:opacity-100" />
@@ -123,7 +184,7 @@ export function AiAssistantTrigger() {
 
 /**
  * The same entry point for the mobile nav. It must sit inside that nav's sheet: the assistant is a
- * dialog, so the sheet must close as the dialog opens. If both stay open, they fight over focus.
+ * sheet of its own on a narrow viewport, and two open sheets fight over focus.
  */
 export function AiAssistantMobileTrigger() {
   const assistant = useAiAssistant();
@@ -134,7 +195,7 @@ export function AiAssistantMobileTrigger() {
       <button
         type="button"
         onClick={assistant.open}
-        className="group relative flex w-full items-center overflow-hidden rounded-lg p-px text-left outline-hidden focus-visible:ring-2 focus-visible:ring-ai-via/50"
+        className="outline-hidden focus-visible:ring-ai-via/50 group relative flex w-full items-center overflow-hidden rounded-lg p-px text-left focus-visible:ring-2"
       >
         <AiEdge motion="hover" className="opacity-70 transition-opacity duration-500 group-hover:opacity-100" />
         <span className="relative flex w-full items-center gap-2.5 rounded-[7px] bg-background px-3 py-2.5">

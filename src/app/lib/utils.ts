@@ -14,6 +14,19 @@ export const toAbsolutePath = (input: string): string => {
   return `/${trimSlashes(input)}`;
 };
 
+/**
+ * A server-built path with the app's base path removed, so `next/link` does not re-apply it. Menu
+ * items and tool sources already carry the prefix; with no base path this returns the route as is.
+ */
+export const stripBasePath = (input: string): string => {
+  const base = trimSlashes(process.env.HANDOFF_APP_BASE_PATH ?? '');
+  let rel = input.replace(/^\/+/, '');
+  if (base && (rel === base || rel.startsWith(`${base}/`))) {
+    rel = rel.slice(base.length).replace(/^\/+/, '');
+  }
+  return `/${rel}`;
+};
+
 export const normalizePathForMatch = (input: string): string => {
   const [pathname] = input.split(/[?#]/);
   return trimSlashes(pathname);

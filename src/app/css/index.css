@@ -62,7 +62,6 @@
 	--animate-accordion-down: accordion-down 0.2s ease-out;
 	--animate-accordion-up: accordion-up 0.2s ease-out;
 	--animate-ai-orbit: ai-orbit 5s linear infinite;
-	--animate-ai-breathe: ai-breathe 4s ease-in-out infinite;
 	--animate-ai-shimmer: ai-shimmer 1.6s linear infinite;
 
 	@keyframes accordion-down {
@@ -85,16 +84,6 @@
 	@keyframes ai-orbit {
 		to {
 			transform: rotate(360deg);
-		}
-	}
-	/* The idle glow behind the assistant mark. */
-	@keyframes ai-breathe {
-		0%,
-		100% {
-			opacity: 0.35;
-		}
-		50% {
-			opacity: 0.8;
 		}
 	}
 	/* Moves a highlight across a tool row while the tool still runs. */
@@ -197,10 +186,42 @@
 	}
 }
 
+/*
+  The docked assistant and the column the page leaves for it.
+
+  `--ai-dock-width` is the single source for both, so the panel and the page can never disagree and
+  one transition moves both. It is `0px` with the dock closed, or on a viewport too narrow to carry
+  a column. An inline script in `_document` sets it before the first paint, so a reader who left the
+  dock open does not watch the page reflow after hydration.
+
+  A resize drag writes the variable on every pointer move, so the transition is dropped for the drag
+  or the page eases along behind the pointer.
+*/
+.ai-dock-inset {
+	padding-right: var(--ai-dock-width, 0px);
+}
+
+.ai-dock-inset,
+.ai-dock {
+	transition:
+		width 0.2s ease-out,
+		padding-right 0.2s ease-out;
+}
+
+[data-ai-dock-resizing] .ai-dock-inset,
+[data-ai-dock-resizing] .ai-dock {
+	transition: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	/* This also matches the variants. The sweep in the header is `group-hover:animate-ai-orbit`. */
 	[class*='animate-ai-'] {
 		animation: none;
+	}
+
+	.ai-dock-inset,
+	.ai-dock {
+		transition: none;
 	}
 }
 

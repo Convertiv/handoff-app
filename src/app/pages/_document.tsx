@@ -1,8 +1,12 @@
 import Document, { Head, Html, Main, NextScript } from 'next/document';
 import Script from 'next/script';
+import { dockWidthScript } from '../components/AiAssistant/dockState';
 import { getClientRuntimeConfig } from '../components/util';
 
 const config = getClientRuntimeConfig();
+
+// A build with no assistant must not reserve a column for state an earlier build left behind.
+const hasAssistant = process.env.HANDOFF_AI_ENABLED === 'true' && process.env.HANDOFF_BUILD_TARGET !== 'static';
 
 class MyDocument extends Document {
   render() {
@@ -11,6 +15,8 @@ class MyDocument extends Document {
         <Head>
           <link rel="shortcut icon" href={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/favicon.ico`} />
           <link rel="icon" sizes="16x16 32x32 64x64" href={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/favicon.ico`} />
+          {/* Blocking on purpose: it reserves the assistant's column before the first paint. */}
+          {hasAssistant && <script dangerouslySetInnerHTML={{ __html: dockWidthScript }} />}
           {config?.app?.google_tag_manager && (
             <Script id="google-tag-manager" strategy="afterInteractive">
               {`
