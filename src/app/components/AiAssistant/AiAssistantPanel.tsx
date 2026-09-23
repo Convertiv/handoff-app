@@ -1,14 +1,12 @@
 'use client';
 
-import { PanelRightClose, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '../../lib/utils';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '../ui/sheet';
 import { AiConversation } from './AiConversation';
-import { AiEdge, AiMark } from './AiMark';
 import { DOCK_WIDTH_VAR, fitWidth, MAX_WIDTH, MIN_WIDTH, type DockState } from './dockState';
-import { useAiChat } from './useAiChat';
 
 /**
  * Where the conversation sits: a column pinned to the right of the page, not a modal, so the reader
@@ -30,28 +28,6 @@ const IconButton: React.FC<{ label: string; onClick: () => void; children: React
   >
     {children}
   </button>
-);
-
-/** The collapsed dock. It reports an arriving answer, which the hidden transcript cannot. */
-const Rail: React.FC<{ busy: boolean; onExpand: () => void; onClose: () => void }> = ({ busy, onExpand, onClose }) => (
-  <div className="flex h-full flex-col items-center gap-1 py-3">
-    <button
-      type="button"
-      onClick={onExpand}
-      title="Open the assistant"
-      aria-label="Open the assistant"
-      aria-expanded={false}
-      className="focus-visible:ring-ai-via/50 outline-hidden group relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg p-px focus-visible:ring-2"
-    >
-      <AiEdge motion={busy ? 'always' : 'hover'} />
-      <span className="relative flex h-full w-full items-center justify-center rounded-[7px] bg-background">
-        <AiMark className="h-4 w-4" />
-      </span>
-    </button>
-    <IconButton label="Close the assistant" onClick={onClose}>
-      <X className="h-4 w-4" />
-    </IconButton>
-  </div>
 );
 
 /**
@@ -111,11 +87,9 @@ export const AiAssistantPanel: React.FC<{
   isMobile: boolean;
   onChange: (next: Partial<DockState>) => void;
 }> = ({ state, isMobile, onChange }) => {
-  const { status } = useAiChat();
   // Keep the scroll position and an unsent draft across a close, without costing a reader who never
   // opens the assistant anything.
   const [everOpened, setEverOpened] = React.useState(state.open);
-  const busy = status === 'submitted' || status === 'streaming';
   const close = () => onChange({ open: false });
 
   React.useEffect(() => {
@@ -155,33 +129,20 @@ export const AiAssistantPanel: React.FC<{
         state.open && 'border-l shadow-[-1px_0_3px_0_rgba(0,0,0,0.06)]'
       )}
     >
-      {/*
-        Mounted behind the rail, so collapsing keeps the scroll position and an unsent draft. Held at
-        the open width and pinned to the trailing edge, so a narrowing panel slides the conversation
-        out instead of reflowing the transcript on every frame of the close.
-      */}
+      {/* Kept mounted after the first open, so closing preserves the scroll position and an unsent draft. */}
       {everOpened && (
-        <div
-          className={cn('absolute inset-y-0 right-0 flex min-h-0 flex-col', state.minified && 'hidden')}
-          style={{ width: `${state.width}px` }}
-        >
+        <div className="absolute inset-y-0 right-0 flex min-h-0 flex-col" style={{ width: `${state.width}px` }}>
           <AiConversation
-            active={state.open && !state.minified}
+            active={state.open}
             controls={
-              <>
-                <IconButton label="Collapse the assistant" onClick={() => onChange({ minified: true })}>
-                  <PanelRightClose className="h-4 w-4" />
-                </IconButton>
-                <IconButton label="Close the assistant" onClick={close}>
-                  <X className="h-4 w-4" />
-                </IconButton>
-              </>
+              <IconButton label="Close the assistant" onClick={close}>
+                <X className="h-4 w-4" />
+              </IconButton>
             }
           />
         </div>
       )}
-      {state.minified && <Rail busy={busy} onExpand={() => onChange({ minified: false })} onClose={close} />}
-      {state.open && !state.minified && <ResizeHandle width={state.width} onCommit={(width) => onChange({ width })} />}
+      {state.open && <ResizeHandle width={state.width} onCommit={(width) => onChange({ width })} />}
     </aside>
   );
 };

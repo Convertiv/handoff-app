@@ -16,10 +16,8 @@ function MyApp({ Component, pageProps }: AppProps) {
         <NavProvider initialNav={pageProps.navData} currentSectionId={pageProps.currentSectionId}>
           {/* Above the page tree: every page builds its own Layout, which a soft navigation replaces. */}
           <AiAssistantProvider>
-            <div className="ai-dock-inset">
-              {/* @ts-ignore */}
-              <Component {...pageProps} />
-            </div>
+            {/* @ts-ignore */}
+            <Component {...pageProps} />
           </AiAssistantProvider>
         </NavProvider>
       </RegistryInstallGate>

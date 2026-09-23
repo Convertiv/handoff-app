@@ -1,7 +1,5 @@
 /** The shape of the docked assistant, kept per reader in `localStorage` the way the side nav is. */
 
-/** Wide enough for one 32px control with even padding. */
-export const RAIL_WIDTH = 52;
 export const MIN_WIDTH = 320;
 export const MAX_WIDTH = 720;
 export const DEFAULT_WIDTH = 420;
@@ -13,15 +11,24 @@ export const DOCK_BREAKPOINT = 768;
 export const DOCK_WIDTH_VAR = '--ai-dock-width';
 
 const STORAGE_KEY = 'handoff:ai:dock';
+const NON_DOCS_ROUTES = ['/cli/device', '/install', '/login', '/reset-password'] as const;
+const NON_DOCS_ROUTE_PREFIXES = ['/account'] as const;
+
+/** The assistant answers from the docs catalog, so application and authentication routes omit it. */
+export const isAiAssistantRoute = (pathname: string): boolean => {
+  const normalized = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
+  return (
+    !NON_DOCS_ROUTES.some((route) => normalized === route) &&
+    !NON_DOCS_ROUTE_PREFIXES.some((route) => normalized === route || normalized.startsWith(`${route}/`))
+  );
+};
 
 export interface DockState {
   open: boolean;
-  /** Open, but collapsed to the rail. */
-  minified: boolean;
   width: number;
 }
 
-export const DEFAULT_DOCK: DockState = { open: false, minified: false, width: DEFAULT_WIDTH };
+export const DEFAULT_DOCK: DockState = { open: false, width: DEFAULT_WIDTH };
 
 const MAX_VIEWPORT_SHARE = 0.5;
 
@@ -34,7 +41,7 @@ export const clampWidth = (width: number): number => Math.min(MAX_WIDTH, Math.ma
 export const fitWidth = (width: number): number =>
   Math.min(clampWidth(width), Math.max(MIN_WIDTH, Math.round(window.innerWidth * MAX_VIEWPORT_SHARE)));
 
-export const dockWidth = (state: DockState): number => (!state.open ? 0 : state.minified ? RAIL_WIDTH : clampWidth(state.width));
+export const dockWidth = (state: DockState): number => (state.open ? clampWidth(state.width) : 0);
 
 export const readDock = (): DockState => {
   try {
@@ -42,7 +49,6 @@ export const readDock = (): DockState => {
     if (!stored || typeof stored !== 'object') return DEFAULT_DOCK;
     return {
       open: Boolean(stored.open),
-      minified: Boolean(stored.minified),
       width: fitWidth(Number(stored.width) || DEFAULT_WIDTH),
     };
   } catch {
@@ -65,10 +71,16 @@ export const writeDock = (state: DockState): void => {
  * then reflows. `next-themes` avoids its theme flash the same way.
  */
 export const dockWidthScript = `(function(){try{
+var p=location.pathname;
+var b=${JSON.stringify((process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/\/+$/, ''))};
+if(b&&p.indexOf(b)===0&&(p.length===b.length||p.charAt(b.length)==='/'))p=p.slice(b.length)||'/';
+while(p.length>1&&p.charAt(p.length-1)==='/')p=p.slice(0,-1);
+var hidden=${JSON.stringify(NON_DOCS_ROUTES)}.indexOf(p)!==-1||${JSON.stringify(NON_DOCS_ROUTE_PREFIXES)}.some(function(r){return p===r||p.indexOf(r+'/')===0});
+if(hidden)return;
 var s=JSON.parse(localStorage.getItem(${JSON.stringify(STORAGE_KEY)})||'null');
 if(!s||!s.open)return;
 document.documentElement.dataset.aiDockOpen='true';
 if(window.innerWidth<${DOCK_BREAKPOINT})return;
-var w=s.minified?${RAIL_WIDTH}:Math.min(${MAX_WIDTH},Math.max(${MIN_WIDTH},Math.round(s.width)||${DEFAULT_WIDTH}),Math.max(${MIN_WIDTH},Math.round(window.innerWidth*${MAX_VIEWPORT_SHARE})));
+var w=Math.min(${MAX_WIDTH},Math.max(${MIN_WIDTH},Math.round(s.width)||${DEFAULT_WIDTH}),Math.max(${MIN_WIDTH},Math.round(window.innerWidth*${MAX_VIEWPORT_SHARE})));
 document.documentElement.style.setProperty(${JSON.stringify(DOCK_WIDTH_VAR)},w+'px');
 }catch(e){}})();`;

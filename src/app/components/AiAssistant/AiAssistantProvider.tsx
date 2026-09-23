@@ -1,13 +1,14 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
 import * as React from 'react';
 
 import { useIsMobile } from '../../hooks/use-mobile';
 import { SheetClose } from '../ui/sheet';
 import { AiAssistantPanel } from './AiAssistantPanel';
 import { AiEdge, AiMark } from './AiMark';
-import { DEFAULT_DOCK, DOCK_WIDTH_VAR, clampWidth, dockWidth, readDock, writeDock, type DockState } from './dockState';
+import { DEFAULT_DOCK, DOCK_WIDTH_VAR, clampWidth, dockWidth, isAiAssistantRoute, readDock, writeDock, type DockState } from './dockState';
 
 /**
  * Availability and dock state for the docs assistant.
@@ -41,12 +42,19 @@ const AiAssistantContext = React.createContext<AiAssistantApi | null>(null);
 /** The opener, or `null` where this build has no assistant. */
 export const useAiAssistant = (): AiAssistantApi | null => React.useContext(AiAssistantContext);
 
-export const AiAssistantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =>
-  isAvailable && isRegistryRuntime ? (
-    <RegistryAiAssistantProvider>{children}</RegistryAiAssistantProvider>
+export const AiAssistantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const router = useRouter();
+  const visible = isAiAssistantRoute(router.pathname);
+  const page = <div className={visible ? 'ai-dock-inset' : undefined}>{children}</div>;
+
+  return isAvailable && isRegistryRuntime ? (
+    <RegistryAiAssistantProvider visible={visible}>{page}</RegistryAiAssistantProvider>
   ) : (
-    <AiAssistant available={isAvailable}>{children}</AiAssistant>
+    <AiAssistant available={isAvailable} visible={visible}>
+      {page}
+    </AiAssistant>
   );
+};
 
 /**
  * `useSession` needs the registry session provider, which only registry mode mounts.
@@ -54,12 +62,20 @@ export const AiAssistantProvider: React.FC<{ children: React.ReactNode }> = ({ c
  * A loading session reports `undefined` and not `false`: the inline script may already have reserved
  * the dock's column, and a `false` here would take it back and give it again once the session lands.
  */
-const RegistryAiAssistantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const RegistryAiAssistantProvider: React.FC<{ children: React.ReactNode; visible: boolean }> = ({ children, visible }) => {
   const { data: session, status } = useSession();
-  return <AiAssistant available={status === 'loading' ? undefined : Boolean(session?.user)}>{children}</AiAssistant>;
+  return (
+    <AiAssistant available={status === 'loading' ? undefined : Boolean(session?.user)} visible={visible}>
+      {children}
+    </AiAssistant>
+  );
 };
 
-const AiAssistant: React.FC<{ children: React.ReactNode; available: boolean | undefined }> = ({ children, available }) => {
+const AiAssistant: React.FC<{ children: React.ReactNode; available: boolean | undefined; visible: boolean }> = ({
+  children,
+  available,
+  visible,
+}) => {
   const isMobile = useIsMobile();
   const [dock, setDock] = React.useState<DockState>(DEFAULT_DOCK);
   // Read after mount: the server cannot see it, and a first render that disagreed would fail
@@ -73,11 +89,8 @@ const AiAssistant: React.FC<{ children: React.ReactNode; available: boolean | un
   const value = React.useMemo<AiAssistantApi>(
     () => ({
       isOpen: dock.open,
-      open: () => change({ open: true, minified: false }),
-      toggle: () =>
-        setDock((current) =>
-          current.open && !current.minified ? { ...current, open: false } : { ...current, open: true, minified: false }
-        ),
+      open: () => change({ open: true }),
+      toggle: () => setDock((current) => ({ ...current, open: !current.open })),
     }),
     [change, dock.open]
   );
@@ -100,16 +113,22 @@ const AiAssistant: React.FC<{ children: React.ReactNode; available: boolean | un
    * with no assistant must take the column back, because the script cannot see a signed-out session.
    */
   React.useEffect(() => {
+    if (!visible) {
+      const root = document.documentElement;
+      root.style.setProperty(DOCK_WIDTH_VAR, '0px');
+      delete root.dataset.aiDockOpen;
+      return;
+    }
     if (available === undefined) return;
     if (available && !restored) return;
     const root = document.documentElement;
     root.style.setProperty(DOCK_WIDTH_VAR, `${available && !isMobile ? dockWidth(dock) : 0}px`);
     if (available && dock.open) root.dataset.aiDockOpen = 'true';
     else delete root.dataset.aiDockOpen;
-  }, [available, restored, isMobile, dock]);
+  }, [available, restored, isMobile, dock, visible]);
 
   React.useEffect(() => {
-    if (available !== true) return;
+    if (available !== true || !visible) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
@@ -118,9 +137,9 @@ const AiAssistant: React.FC<{ children: React.ReactNode; available: boolean | un
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [available, value]);
+  }, [available, value, visible]);
 
-  if (available !== true) return <>{children}</>;
+  if (available !== true || !visible) return <>{children}</>;
 
   return (
     <AiAssistantContext.Provider value={value}>
@@ -177,7 +196,7 @@ export function AiAssistantTrigger() {
         <span className="relative flex h-full items-center overflow-hidden rounded-full p-px">
           <AiEdge motion="hover" className="opacity-70 transition-opacity duration-500 group-hover:opacity-100" />
           <span className="relative flex h-full items-center gap-2 rounded-full bg-background px-3">
-            <AiMark className="h-3.5 w-3.5 transition-transform duration-500 group-hover:rotate-90" />
+            <AiMark className="h-4 w-4 transition-transform duration-500 group-hover:rotate-90" />
             <span className="text-sm font-medium">Ask</span>
             <kbd className="rounded-sm border bg-muted px-1 font-mono text-[10px] leading-[14px] text-muted-foreground">{shortcut}</kbd>
           </span>

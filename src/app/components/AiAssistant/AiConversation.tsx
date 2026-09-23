@@ -1,7 +1,7 @@
 'use client';
 
 import { getToolOrDynamicToolName, isDynamicToolUIPart, isToolUIPart, type UIMessage } from 'ai';
-import { ArrowUp, ArrowUpRight, Square, SquarePen, Wrench } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Square, SquarePen, Wrench } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -9,6 +9,7 @@ import remarkGfm from 'remark-gfm';
 
 import { cn, stripBasePath } from '../../lib/utils';
 import { MarkdownComponents } from '../Markdown/MarkdownComponents';
+import { Button } from '../ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AiEdge, AiMark } from './AiMark';
 import { toolCallLabel } from './toolLabel';
@@ -21,7 +22,7 @@ import { useAiConnections } from './useAiConnections';
  *
  * The conversation alone. {@link AiAssistantPanel} decides where it sits and passes that frame's
  * controls in through `controls`. The messages live in {@link useAiChat}, above both, so they
- * outlast a page navigation, a collapse to the rail and a reload.
+ * outlast a page navigation, a close and a reload.
  */
 
 /** Openers that name what the assistant can reach, because the tools answer from this catalog. */
@@ -407,9 +408,9 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
             rows={1}
             placeholder={hasModel ? 'Ask about a component, token or guideline…' : 'The assistant is unavailable'}
             disabled={!hasModel}
-            className="outline-hidden block w-full resize-none bg-transparent px-3.5 pb-1 pt-3 text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed"
+            className="outline-hidden block w-full resize-none bg-transparent px-4 pb-2 pt-4 text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed"
           />
-          <div className="flex items-center justify-between gap-2 px-2 pb-2">
+          <div className="flex items-center justify-between gap-3 px-3 pb-3">
             {connections.models.length > 1 ? (
               <Select value={selectedModel ?? undefined} onValueChange={chooseModel}>
                 <SelectTrigger className="h-7 w-auto min-w-0 gap-1 border-0 px-1.5 text-xs text-muted-foreground shadow-none">
@@ -438,17 +439,16 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
                 <Square className="h-3 w-3 fill-current" />
               </button>
             ) : (
-              <button
+              <Button
                 type="submit"
-                title="Ask"
+                size="sm"
+                title="Send"
                 disabled={!input.trim() || !hasModel}
-                className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-lg p-px transition-opacity disabled:opacity-40"
+                className="group shrink-0 [&_svg]:size-3.5"
               >
-                <span aria-hidden="true" className="bg-linear-to-br from-ai-from via-ai-via to-ai-to absolute inset-0 rounded-lg" />
-                <span className="relative flex h-full w-full items-center justify-center rounded-[7px] bg-gray-900 text-white">
-                  <ArrowUp className="h-3.5 w-3.5" />
-                </span>
-              </button>
+                Send
+                <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
+              </Button>
             )}
           </div>
         </form>
