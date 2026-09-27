@@ -1,3 +1,4 @@
+import type { ClientConfig } from '@handoff/types/config';
 import { Bot, CircleUserRound, KeyRound, Users, type LucideIcon } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -33,23 +34,24 @@ const navGroups: { label: string; links: NavLink[] }[] = [
 
 interface AccountLayoutProps {
   children: ReactNode;
+  config?: ClientConfig;
   title: string;
   description?: string;
 }
 
-export function AccountLayout({ children, title, description }: AccountLayoutProps) {
+export function AccountLayout({ children, config, title, description }: AccountLayoutProps) {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
     return <AuthShell title={title}>{null}</AuthShell>;
   }
 
   return (
-    <RegistryAccountLayout title={title} description={description}>
+    <RegistryAccountLayout config={config} title={title} description={description}>
       {children}
     </RegistryAccountLayout>
   );
 }
 
-function RegistryAccountLayout({ children, title, description }: AccountLayoutProps) {
+function RegistryAccountLayout({ children, config, title, description }: AccountLayoutProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const role = (session?.user as { role?: string } | undefined)?.role;
@@ -64,7 +66,7 @@ function RegistryAccountLayout({ children, title, description }: AccountLayoutPr
   }, [router, session, status]);
 
   return (
-    <AuthShell title={title} wide>
+    <AuthShell config={config} title={title} wide>
       {status === 'loading' || !session?.user ? (
         <p className="py-20 text-center text-sm text-muted-foreground">Loading account…</p>
       ) : (

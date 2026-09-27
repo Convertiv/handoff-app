@@ -1,3 +1,6 @@
+import type { ClientConfig } from '@handoff/types/config';
+import type { GetStaticProps } from 'next';
+import { getClientRuntimeConfig } from '../../components/util';
 import { Check, KeyRound, Trash2 } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
@@ -26,15 +29,17 @@ interface AiKeyConnection {
   configured: boolean;
 }
 
-export default function AiKeysPage() {
+export const getStaticProps: GetStaticProps = async () => ({ props: { config: getClientRuntimeConfig() } });
+
+export default function AiKeysPage({ config }: { config: ClientConfig }) {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
     return <AccountLayout title="AI providers">{null}</AccountLayout>;
   }
 
-  return <RegistryAiKeysPage />;
+  return <RegistryAiKeysPage config={config} />;
 }
 
-function RegistryAiKeysPage() {
+function RegistryAiKeysPage({ config }: { config: ClientConfig }) {
   const { data: session } = useSession();
   const [connections, setConnections] = useState<AiKeyConnection[]>([]);
   const [pending, setPending] = useState<string | null>(null);
@@ -101,7 +106,7 @@ function RegistryAiKeysPage() {
   };
 
   return (
-    <AccountLayout title="AI providers" description="Add your own keys for the AI providers this site uses.">
+    <AccountLayout config={config} title="AI providers" description="Add your own keys for the AI providers this site uses.">
       <div className="space-y-6">
         {error && (
           <Alert variant="destructive">

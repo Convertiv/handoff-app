@@ -1,3 +1,6 @@
+import type { ClientConfig } from '@handoff/types/config';
+import type { GetStaticProps } from 'next';
+import { getClientRuntimeConfig } from '../components/util';
 import { CheckCircle2, CircleAlert, Mail, RefreshCw, UserRound } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -66,7 +69,9 @@ const normalizeChecks = (status: InstallStatus): PreflightCheck[] => {
   ];
 };
 
-export default function InstallPage() {
+export const getStaticProps: GetStaticProps = async () => ({ props: { config: getClientRuntimeConfig() } });
+
+export default function InstallPage({ config }: { config: ClientConfig }) {
   const router = useRouter();
   const [step, setStep] = useState<InstallStep>('preflight');
   const [checks, setChecks] = useState<PreflightCheck[]>([]);
@@ -161,7 +166,7 @@ export default function InstallPage() {
   };
 
   return (
-    <AuthShell title="Install registry" description="Configure the first Handoff Registry administrator." hideNav>
+    <AuthShell config={config} title="Install registry" description="Configure the first Handoff Registry administrator." hideNav>
       <div className="mb-8">
         <p className="text-sm font-medium text-muted-foreground">Registry installation</p>
         <div className="mt-3 grid grid-cols-3 gap-2" aria-label="Installation progress">

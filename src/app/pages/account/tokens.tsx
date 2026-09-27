@@ -1,3 +1,6 @@
+import type { ClientConfig } from '@handoff/types/config';
+import type { GetStaticProps } from 'next';
+import { getClientRuntimeConfig } from '../../components/util';
 import { AccountLayout } from '../../components/Auth/AccountLayout';
 import { authApiUrl, readApiError } from '../../components/Auth/api';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
@@ -29,15 +32,17 @@ const formatDate = (value?: string | null) => {
   return Number.isNaN(date.valueOf()) ? value : date.toLocaleDateString();
 };
 
-export default function TokensPage() {
+export const getStaticProps: GetStaticProps = async () => ({ props: { config: getClientRuntimeConfig() } });
+
+export default function TokensPage({ config }: { config: ClientConfig }) {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
     return <AccountLayout title="Access tokens">{null}</AccountLayout>;
   }
 
-  return <RegistryTokensPage />;
+  return <RegistryTokensPage config={config} />;
 }
 
-function RegistryTokensPage() {
+function RegistryTokensPage({ config }: { config: ClientConfig }) {
   const { data: session } = useSession();
   const role = (session?.user as { role?: string } | undefined)?.role;
   const [tokens, setTokens] = useState<AccessToken[]>([]);
@@ -115,7 +120,11 @@ function RegistryTokensPage() {
   };
 
   return (
-    <AccountLayout title="Access tokens" description="Create and revoke credentials for the CLI, CI jobs, and integrations.">
+    <AccountLayout
+      config={config}
+      title="Access tokens"
+      description="Create and revoke credentials for the CLI, CI jobs, and integrations."
+    >
       <div className="space-y-6">
         <Card>
           <CardHeader>

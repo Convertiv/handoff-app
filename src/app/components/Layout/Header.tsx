@@ -10,7 +10,7 @@ import { useConfigContext } from '../context/ConfigContext';
 import { AuthControls } from '../Auth/AuthControls';
 import { RuntimeModeBadge } from './RuntimeModeBadge';
 
-export function Header() {
+export function Header({ hideNav = false }: { hideNav?: boolean }) {
   const context = useConfigContext();
   const [isScrolled, setIsScrolled] = useState(false);
   const runtimeMode = context.config?.runtime?.mode ?? 'workspace';
@@ -27,6 +27,8 @@ export function Header() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const logo = <img className="max-h-5" src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />;
+
   return (
     <div
       className={cn(
@@ -37,21 +39,23 @@ export function Header() {
       <header className="border-grid container mx-auto w-full max-w-[1500px] bg-transparent px-8">
         <div className="mx-auto flex items-center justify-between @container">
           <div className="flex items-center gap-3">
-            <Link href="/">
-              <img className="max-h-5" src={`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/logo.svg`} alt={context.config?.app?.title} />
-            </Link>
+            {hideNav ? logo : <Link href="/">{logo}</Link>}
             {!isStaticSnapshot && <RuntimeModeBadge mode={runtimeMode} />}
           </div>
-          <div className="hidden items-center gap-4 @2xl:flex">
-            <MainNav />
-            <AiAssistantTrigger />
-            <McpConfigDialog />
-            {runtimeMode === 'registry' ? <AuthControls /> : null}
-            <ModeToggle />
-          </div>
-          <div className="flex items-center gap-4 @2xl:hidden">
-            <MobileNav />
-          </div>
+          {hideNav ? null : (
+            <>
+              <div className="hidden items-center gap-4 @2xl:flex">
+                <MainNav />
+                <AiAssistantTrigger />
+                <McpConfigDialog />
+                {runtimeMode === 'registry' ? <AuthControls /> : null}
+                <ModeToggle />
+              </div>
+              <div className="flex items-center gap-4 @2xl:hidden">
+                <MobileNav />
+              </div>
+            </>
+          )}
         </div>
       </header>
     </div>

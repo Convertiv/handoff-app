@@ -1,3 +1,6 @@
+import type { ClientConfig } from '@handoff/types/config';
+import type { GetStaticProps } from 'next';
+import { getClientRuntimeConfig } from '../../components/util';
 import { AuthShell } from '../../components/Auth/AuthShell';
 import { authApiUrl, readApiError } from '../../components/Auth/api';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
@@ -13,15 +16,17 @@ import { FormEvent, useEffect, useState } from 'react';
 
 const normalizeCode = (value: string) => value.replace(/\s/g, '').toUpperCase();
 
-export default function DeviceApprovalPage() {
+export const getStaticProps: GetStaticProps = async () => ({ props: { config: getClientRuntimeConfig() } });
+
+export default function DeviceApprovalPage({ config }: { config: ClientConfig }) {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
     return <AuthShell title="Authorize CLI">{null}</AuthShell>;
   }
 
-  return <RegistryDeviceApprovalPage />;
+  return <RegistryDeviceApprovalPage config={config} />;
 }
 
-function RegistryDeviceApprovalPage() {
+function RegistryDeviceApprovalPage({ config }: { config: ClientConfig }) {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [userCode, setUserCode] = useState('');
@@ -60,7 +65,7 @@ function RegistryDeviceApprovalPage() {
   const callbackUrl = `/cli/device${router.asPath.includes('?') ? router.asPath.slice(router.asPath.indexOf('?')) : ''}`;
 
   return (
-    <AuthShell title="Authorize CLI">
+    <AuthShell config={config} title="Authorize CLI">
       <Card>
         <CardHeader>
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted">

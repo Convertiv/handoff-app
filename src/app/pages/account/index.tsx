@@ -1,3 +1,6 @@
+import type { ClientConfig } from '@handoff/types/config';
+import type { GetStaticProps } from 'next';
+import { getClientRuntimeConfig } from '../../components/util';
 import { AccountLayout } from '../../components/Auth/AccountLayout';
 import { authApiUrl, readApiError } from '../../components/Auth/api';
 import { Alert, AlertDescription } from '../../components/ui/alert';
@@ -18,15 +21,17 @@ interface AccountUser {
   status?: 'invited' | 'active' | 'deactivated';
 }
 
-export default function AccountPage() {
+export const getStaticProps: GetStaticProps = async () => ({ props: { config: getClientRuntimeConfig() } });
+
+export default function AccountPage({ config }: { config: ClientConfig }) {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
     return <AccountLayout title="Profile">{null}</AccountLayout>;
   }
 
-  return <RegistryAccountPage />;
+  return <RegistryAccountPage config={config} />;
 }
 
-function RegistryAccountPage() {
+function RegistryAccountPage({ config }: { config: ClientConfig }) {
   const { data: session } = useSession();
   const [user, setUser] = useState<AccountUser | null>(null);
   const [name, setName] = useState('');
@@ -82,7 +87,7 @@ function RegistryAccountPage() {
     .toUpperCase();
 
   return (
-    <AccountLayout title="Profile" description="Manage how your account appears in this registry.">
+    <AccountLayout config={config} title="Profile" description="Manage how your account appears in this registry.">
       <div className="space-y-5">
         {message ? (
           <Alert variant={message.error ? 'destructive' : 'green'}>

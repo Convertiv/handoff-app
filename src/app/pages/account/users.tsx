@@ -1,3 +1,6 @@
+import type { ClientConfig } from '@handoff/types/config';
+import type { GetStaticProps } from 'next';
+import { getClientRuntimeConfig } from '../../components/util';
 import { AccountLayout } from '../../components/Auth/AccountLayout';
 import { authApiUrl, readApiError } from '../../components/Auth/api';
 import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
@@ -29,15 +32,17 @@ interface MutationResult {
   message?: string;
 }
 
-export default function UsersPage() {
+export const getStaticProps: GetStaticProps = async () => ({ props: { config: getClientRuntimeConfig() } });
+
+export default function UsersPage({ config }: { config: ClientConfig }) {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
     return <AccountLayout title="Users">{null}</AccountLayout>;
   }
 
-  return <RegistryUsersPage />;
+  return <RegistryUsersPage config={config} />;
 }
 
-function RegistryUsersPage() {
+function RegistryUsersPage({ config }: { config: ClientConfig }) {
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const currentUser = session?.user as (typeof session.user & { id?: string; role?: string }) | undefined;
@@ -153,7 +158,7 @@ function RegistryUsersPage() {
   };
 
   return (
-    <AccountLayout title="Users" description="Invite people and manage their access to this registry.">
+    <AccountLayout config={config} title="Users" description="Invite people and manage their access to this registry.">
       <div className="space-y-6">
         <Card>
           <CardHeader>
