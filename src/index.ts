@@ -713,6 +713,8 @@ export type {
   AssetStorageInput,
   AssetStorageReadResult,
 } from './registry/asset-storage/types';
+export { defineEmailProvider } from './registry/email/define';
+export type { EmailMessage, EmailProvider, EmailProviderContext, EmailProviderFactory } from './registry/email/types';
 export { defineAiProvider } from './ai/define';
 export type { AiProvider, AiProviderContext, AiProviderFactory } from './ai/types';
 

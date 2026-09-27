@@ -119,6 +119,60 @@ export type DeclarationFormat = 'ts' | 'js' | 'cjs';
 export type AiCredentialKind = 'service' | 'user' | 'none';
 
 /**
+ * An email option: a literal, baked into the build, or an environment reference, read by the deployed
+ * app at request time.
+ */
+export type HandoffEmailOption<T> = T | RuntimeEnvReference<T>;
+
+interface HandoffEmailBase {
+  /** Sender address, such as `Handoff <no-reply@example.com>`. Use a profile for per-environment values. */
+  from?: string;
+}
+
+/** Send through the Resend HTTP API. */
+export interface HandoffResendEmail extends HandoffEmailBase {
+  /** @default "resend" */
+  provider?: 'resend';
+  options?: {
+    /** Environment reference to the Resend API key. @default fromEnv('RESEND_API_KEY') */
+    apiKey?: RuntimeEnvReference<string>;
+  };
+}
+
+/** Send through an SMTP server, such as Amazon SES, SendGrid, Postmark, Mailgun or Microsoft 365. */
+export interface HandoffSmtpEmail extends HandoffEmailBase {
+  provider: 'smtp';
+  options: {
+    host: HandoffEmailOption<string>;
+    /** @default 465, or 587 when `secure` is false */
+    port?: HandoffEmailOption<number>;
+    /**
+     * Use TLS from the start of the connection. When false, the connection upgrades with STARTTLS if
+     * the server offers it. @default true, or false when `port` is set to a port other than 465
+     */
+    secure?: HandoffEmailOption<boolean>;
+    user?: HandoffEmailOption<string>;
+    /** Environment reference to the SMTP password. */
+    password?: RuntimeEnvReference<string>;
+  };
+}
+
+/** Send through a server-only module that default-exports a `defineEmailProvider()` result. */
+export interface HandoffCustomEmail extends HandoffEmailBase {
+  provider: 'custom';
+  /** Server-only module path. It must be its own file so the build can trace it into the deployed registry. */
+  module: string;
+  /**
+   * Options passed to the provider factory. Literals are baked. Environment references are resolved
+   * at request time. `apiKey` and `password` must be environment references.
+   */
+  options?: Record<string, unknown>;
+}
+
+/** Registry email settings. `provider` selects the shape of `options`. */
+export type HandoffEmailConfig = HandoffResendEmail | HandoffSmtpEmail | HandoffCustomEmail;
+
+/**
  * One AI connection the deployment declares. Connections are the whole surface: a reader can add a
  * key for a declared connection and nothing else, so the server never calls a URL a reader chose.
  *
@@ -231,15 +285,10 @@ export interface HandoffRuntimeConfig {
       options?: Record<string, unknown>;
     };
     /**
-     * Invitation and password-reset email, sent through Resend. Email stays off until `from` is set
-     * and the API key variable has a value; invitation links are then shown to an administrator.
+     * Invitation and password-reset email. Email stays off until `from` is set and the required
+     * options of the provider have values. Until then, invitation links are shown to an administrator.
      */
-    email?: {
-      /** Sender address, such as `Handoff <no-reply@example.com>`. Use a profile for per-environment values. */
-      from?: string;
-      /** Environment reference to the Resend API key. @default fromEnv('RESEND_API_KEY') */
-      apiKey?: RuntimeEnvReference<string>;
-    };
+    email?: HandoffEmailConfig;
   };
   /**
    * Connected-workspace settings pointing at a remote registry. A connected workspace is

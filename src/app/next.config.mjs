@@ -26,6 +26,9 @@ const handoffTracingRoot = path.resolve('%HANDOFF_TRACING_ROOT%');
 // resolvable deps) into the registry bundle. Empty/unset for the built-in database/Vercel adapters.
 const handoffAssetStorageModule = '%HANDOFF_ASSET_STORAGE_MODULE%';
 
+// A custom email provider module, for the same reason.
+const handoffEmailModule = '%HANDOFF_EMAIL_MODULE%';
+
 // Custom AI provider modules, for the same reason: a connection with `module` instead of a base URL
 // is loaded by a variable dynamic import. A JSON array, since the config can declare several.
 const handoffAiProviderModules = '%HANDOFF_AI_PROVIDER_MODULES%';
@@ -42,6 +45,9 @@ const resolveServerModuleIncludes = () => {
   const modules = [];
   if (handoffAssetStorageModule && !handoffAssetStorageModule.startsWith('%HANDOFF_')) {
     modules.push(handoffAssetStorageModule);
+  }
+  if (handoffEmailModule && !handoffEmailModule.startsWith('%HANDOFF_')) {
+    modules.push(handoffEmailModule);
   }
   if (handoffAiProviderModules && !handoffAiProviderModules.startsWith('%HANDOFF_')) {
     try {
@@ -83,7 +89,7 @@ const nextConfig = {
   // Registry-only; static export, which legitimately produces these files, is untouched.
   outputFileTracingExcludes:
     handoffBuildTarget === 'registry' ? { '**': ['**/export-detail.json', '**/.next/export/**'] } : undefined,
-  // Force configured server-only modules (custom asset storage, custom AI providers) into the
+  // Force configured server-only modules (custom asset storage, email and AI providers) into the
   // registry trace — a dynamic import is opaque to nft. Their SDK deps are additionally asserted via
   // `getRequiredRegistryRuntimeModules`.
   outputFileTracingIncludes: resolveServerModuleIncludes(),
@@ -158,9 +164,12 @@ const nextConfig = {
     HANDOFF_ASSET_STORAGE_TOKEN_ENV: '%HANDOFF_ASSET_STORAGE_TOKEN_ENV%',
     HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES: '%HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES%',
     HANDOFF_ASSET_STORAGE_OPTIONS: '%HANDOFF_ASSET_STORAGE_OPTIONS%',
-    // Registry email sender and the env-var *name* of the Resend API key, read at request time.
+    // Registry email provider, sender, module, and options JSON. Option references keep only their
+    // env-var names; the values are read at request time.
+    HANDOFF_EMAIL_PROVIDER: '%HANDOFF_EMAIL_PROVIDER%',
     HANDOFF_EMAIL_FROM: '%HANDOFF_EMAIL_FROM%',
-    HANDOFF_EMAIL_API_KEY_ENV: '%HANDOFF_EMAIL_API_KEY_ENV%',
+    HANDOFF_EMAIL_MODULE: '%HANDOFF_EMAIL_MODULE%',
+    HANDOFF_EMAIL_OPTIONS: '%HANDOFF_EMAIL_OPTIONS%',
   },
   images: {
     unoptimized: true,

@@ -504,8 +504,8 @@ environment.
 
 #### Optional email delivery
 
-Invitation and password-reset emails are sent through Resend when a sender is
-set in `handoff.config.ts`:
+Invitation and password-reset emails are sent when a sender is set in
+`handoff.config.ts`. Resend is the default provider:
 
 ```ts
 runtime: {
@@ -517,11 +517,50 @@ runtime: {
 },
 ```
 
-The Resend API key is supplied through `RESEND_API_KEY`, or through the
-variable named by `email.apiKey: fromEnv('...')`. Use a profile to set a
-different sender per environment. Without email, invitation links are shown
-once to an administrator for manual delivery, and password reset is
-unavailable.
+The Resend API key is read from `RESEND_API_KEY`. To use a different variable,
+set `options: { apiKey: fromEnv('...') }`.
+
+Any SMTP server can send the emails, for example Amazon SES, SendGrid,
+Postmark, Mailgun or Microsoft 365:
+
+```ts
+email: {
+  from: 'Handoff <no-reply@example.com>',
+  provider: 'smtp',
+  options: {
+    host: fromEnv('SMTP_HOST'),
+    port: 465,
+    user: fromEnv('SMTP_USER'),
+    password: fromEnv('SMTP_PASSWORD'),
+  },
+},
+```
+
+Port 465 is the default and uses TLS. With `port: 587`, the connection
+upgrades with STARTTLS.
+
+For another service, set `provider: 'custom'` and `module` to a server-only
+file that default-exports `defineEmailProvider()`. The factory gets `options`
+with their environment references resolved:
+
+```ts
+import { defineEmailProvider } from 'handoff-app';
+
+export default defineEmailProvider(({ options }) => ({
+  async send({ from, to, subject, html, text }) {
+    // Deliver the message. Throw an error if it is not accepted.
+  },
+}));
+```
+
+A literal in `options` is baked into the build. A `fromEnv()` reference is
+read by the deployed registry at request time, so its value can change without
+a rebuild. `apiKey` and `password` must be `fromEnv()` references. A profile
+that sets a different `provider` starts with new `options`.
+
+Use a profile to set a different sender per environment. Without email,
+invitation links are shown once to an administrator for manual delivery, and
+password reset is unavailable.
 
 ### 3. Installation
 

@@ -1,12 +1,62 @@
+import { isEnvReference } from '@handoff/config/from-env';
+import { createResendProvider } from '@handoff/registry/email/adapters/resend';
+import { createSmtpProvider } from '@handoff/registry/email/adapters/smtp';
+import { resolveEmailOptions, type EmailProviderKind, type EmailSettings } from '@handoff/registry/email/resolve';
+import type { EmailProvider, EmailProviderFactory } from '@handoff/registry/email/types';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
+import { importServerModule } from '../server-module';
 
-const emailSettings = (): { from: string; apiKey: string } | null => {
-  const { from, apiKeyEnv } = getServerRuntimeConfig().email;
-  const apiKey = process.env[apiKeyEnv]?.trim();
-  return from && apiKey ? { from, apiKey } : null;
+/** Options a provider needs before email counts as configured. */
+const REQUIRED_OPTIONS: Record<EmailProviderKind, readonly string[]> = { resend: ['apiKey'], smtp: ['host'], custom: [] };
+
+/**
+ * The settings that still need a value, named as the administrator sets them: the config key, or the
+ * env var that an option references.
+ */
+export const missingRegistryEmailSettings = (): string[] => {
+  const settings = getServerRuntimeConfig().email;
+  const options = resolveEmailOptions(settings.options, process.env);
+  const missing = settings.from ? [] : ['runtime.registry.email.from'];
+  if (settings.provider === 'custom' && !settings.module) missing.push('runtime.registry.email.module');
+  for (const key of REQUIRED_OPTIONS[settings.provider]) {
+    if (options[key] !== undefined) continue;
+    const authored = settings.options[key];
+    missing.push(isEnvReference(authored) ? authored.$env : `runtime.registry.email.options.${key}`);
+  }
+  return missing;
 };
 
-export const registryEmailIsConfigured = (): boolean => emailSettings() !== null;
+export const registryEmailIsConfigured = (): boolean => missingRegistryEmailSettings().length === 0;
+
+/** The provider name for messages shown to an administrator. */
+export const registryEmailProviderName = (): string => {
+  const { provider } = getServerRuntimeConfig().email;
+  return provider === 'resend' ? 'Resend' : provider === 'smtp' ? 'SMTP' : 'the custom email provider';
+};
+
+let customProvider: Promise<EmailProvider> | null = null;
+
+/** Load the custom module once and coerce its default export (provider object or factory) to a provider. */
+const loadCustomProvider = async (settings: EmailSettings, options: Record<string, unknown>): Promise<EmailProvider> => {
+  const mod = await importServerModule(settings.module!);
+  const exported = mod?.default ?? mod;
+  const provider: unknown =
+    typeof exported === 'function' ? await (exported as EmailProviderFactory)({ options, env: process.env }) : exported;
+  if (typeof (provider as Partial<EmailProvider> | null)?.send !== 'function') {
+    throw new Error(`Custom email provider module "${settings.module}" must default-export a defineEmailProvider() provider.`);
+  }
+  return provider as EmailProvider;
+};
+
+const getEmailProvider = (settings: EmailSettings, options: Record<string, unknown>): Promise<EmailProvider> => {
+  if (settings.provider === 'resend') return Promise.resolve(createResendProvider(options));
+  if (settings.provider === 'smtp') return Promise.resolve(createSmtpProvider(options));
+  customProvider ??= loadCustomProvider(settings, options).catch((error) => {
+    customProvider = null;
+    throw error;
+  });
+  return customProvider;
+};
 
 const escapeHtml = (value: string): string =>
   value.replace(/[&<>"']/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]!);
@@ -44,30 +94,18 @@ const renderHtml = ({ heading, message, actionLabel, actionUrl }: AuthEmail): st
 const renderText = ({ heading, message, actionLabel, actionUrl }: AuthEmail): string =>
   `${heading}\n\n${message}\n\n${actionLabel}: ${actionUrl}\n\n${FOOTNOTE}\n`;
 
-/** Send through Resend. Returns false when email is not configured or delivery fails; failures are logged. */
+/** Send through the configured provider. Returns false, and logs the failure, when email is not configured or delivery fails. */
 export const sendRegistryAuthEmail = async (email: AuthEmail): Promise<boolean> => {
-  const settings = emailSettings();
-  if (!settings) return false;
+  if (!registryEmailIsConfigured()) return false;
+  const settings = getServerRuntimeConfig().email;
+  const options = resolveEmailOptions(settings.options, process.env);
 
   try {
-    const response = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${settings.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        from: settings.from,
-        to: [email.to],
-        subject: email.subject,
-        html: renderHtml(email),
-        text: renderText(email),
-      }),
-    });
-    if (response.ok) return true;
-    console.error(`Resend rejected the email (HTTP ${response.status}).`, await response.text());
+    const provider = await getEmailProvider(settings, options);
+    await provider.send({ from: settings.from!, to: email.to, subject: email.subject, html: renderHtml(email), text: renderText(email) });
+    return true;
   } catch (error) {
-    console.error('Resend request failed.', error);
+    console.error(`Email delivery through ${registryEmailProviderName()} failed.`, error);
+    return false;
   }
-  return false;
 };

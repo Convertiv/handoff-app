@@ -5,7 +5,7 @@ import { getClientConfig, isMcpEnabled } from '../config';
 import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
 import { resolveAuthenticatedRegistryConnection } from '../registry/connection';
 import { resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
-import { resolveEmailFromConfig } from '../registry/email';
+import { resolveEmailFromConfig } from '../registry/email/resolve';
 import type { ResolvedConfig, RuntimeMode } from '../types/config';
 import { getAppPath } from './paths';
 

@@ -43,7 +43,7 @@ export default async function usersHandler(req: NextApiRequest, res: NextApiResp
       actionUrl: activationUrl,
     });
     if (!delivered) {
-      res.status(502).json({ error: 'The invitation was created, but email delivery failed. Fix Resend configuration and resend it.' });
+      res.status(502).json({ error: 'The invitation was created, but email delivery failed. Fix the email configuration and resend it.' });
       return;
     }
     res.status(201).json({ user: result.user, message: 'Invitation sent.' });

@@ -9,7 +9,7 @@ import { buildComponents } from '../pipeline/components';
 import { buildPatterns } from '../pipeline/patterns';
 import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
 import { resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
-import { resolveEmailFromConfig, type EmailSettings } from '../registry/email';
+import { emailOptionEnvNames, resolveEmailFromConfig, type EmailSettings } from '../registry/email/resolve';
 import processComponents from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
@@ -310,8 +310,10 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const escapedAssetStorageMaxInline = escapeForSingleQuotedJsString(String(assetStorage.maxInlineBytes));
   const escapedAssetStorageOptions = escapeForSingleQuotedJsString(JSON.stringify(assetStorage.options ?? {}));
   const email = resolveEmailFromConfig(handoff.config);
+  const escapedEmailProvider = escapeForSingleQuotedJsString(email.provider);
   const escapedEmailFrom = escapeForSingleQuotedJsString(email.from ?? '');
-  const escapedEmailApiKeyEnv = escapeForSingleQuotedJsString(email.apiKeyEnv);
+  const escapedEmailModule = escapeForSingleQuotedJsString(email.module ?? '');
+  const escapedEmailOptions = escapeForSingleQuotedJsString(JSON.stringify(email.options));
   // AI assistant selection baked (enabled flag + declared connections + default model). Connections
   // carry env-var names and non-secret options only; keys are read from their named env var at
   // request time, and a deployment can extend or replace the list through HANDOFF_AI_CONNECTIONS.
@@ -339,8 +341,10 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_ASSET_STORAGE_TOKEN_ENV%': escapedAssetStorageTokenEnv,
     '%HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES%': escapedAssetStorageMaxInline,
     '%HANDOFF_ASSET_STORAGE_OPTIONS%': escapedAssetStorageOptions,
+    '%HANDOFF_EMAIL_PROVIDER%': escapedEmailProvider,
     '%HANDOFF_EMAIL_FROM%': escapedEmailFrom,
-    '%HANDOFF_EMAIL_API_KEY_ENV%': escapedEmailApiKeyEnv,
+    '%HANDOFF_EMAIL_MODULE%': escapedEmailModule,
+    '%HANDOFF_EMAIL_OPTIONS%': escapedEmailOptions,
     '%HANDOFF_AI_ENABLED%': escapedAiEnabled,
     '%HANDOFF_AI_BAKED_CONNECTIONS%': escapedAiConnections,
     '%HANDOFF_AI_DEFAULT_MODEL%': escapedAiDefaultModel,
@@ -485,6 +489,13 @@ merged over the list this build baked in, keyed by \`id\`. Use it to add or repo
 without rebuilding.
 `;
 
+  const emailEnvs = emailOptionEnvNames(email.options);
+  const emailSection = !email.from
+    ? 'Email delivery is off because `runtime.registry.email.from` is not set. Invitation links are shown once to an administrator for manual delivery.'
+    : `Invitation and password-reset emails are sent from \`${email.from}\` through the \`${email.provider}\` provider.${
+        emailEnvs.length ? ` The provider reads ${emailEnvs.map((name) => `\`${name}\``).join(', ')} at request time.` : ''
+      } Until the provider's settings have values, invitation links are shown once to an administrator for manual delivery.`;
+
   const readme = `# Handoff Registry App
 
 A self-contained, deployable Next.js **standalone** build produced by
@@ -502,11 +513,7 @@ and \`.next/static/\` already copied alongside so the server serves them.
 - \`AUTH_SECRET\` — a long, random secret used to sign browser sessions.
 - \`AUTH_URL\` — the canonical public registry URL, including the configured base path.
 
-${
-  email.from
-    ? `Invitation and password-reset emails are sent from \`${email.from}\` when \`${email.apiKeyEnv}\` holds a Resend API key.`
-    : 'Email delivery is off because `runtime.registry.email.from` is not set.'
-} Without email, invitation links are shown once to an administrator for manual delivery.
+${emailSection}
 ${aiSection}
 ## Database migrations
 
@@ -590,7 +597,8 @@ containers, custom Node servers, and other non-Vercel hosts.
  * runtime, given the configured database driver. `next`/`react`/`react-dom` run the server and React
  * runtime; `drizzle-orm` backs both the request-time DB client and the migration runner; the MCP SDK
  * (and its `zod` peer) is only needed when `/api/mcp/` is enabled; the driver package is
- * driver-specific (the Neon serverless driver also needs `ws` for its Node WebSocket transport).
+ * driver-specific (the Neon serverless driver also needs `ws` for its Node WebSocket transport); the
+ * SMTP email provider needs `nodemailer`.
  */
 const getRequiredRegistryRuntimeModules = (handoff: Handoff): string[] => {
   const base = ['next', 'next-auth', 'react', 'react-dom', 'drizzle-orm'];
@@ -617,7 +625,8 @@ const getRequiredRegistryRuntimeModules = (handoff: Handoff): string[] => {
   if (Array.isArray(sdkModules)) {
     storage.push(...sdkModules.filter((mod): mod is string => typeof mod === 'string'));
   }
-  return [...base, ...driverModules, ...storage];
+  const email = resolveEmailFromConfig(handoff.config).provider === 'smtp' ? ['nodemailer'] : [];
+  return [...base, ...driverModules, ...storage, ...email];
 };
 
 /**

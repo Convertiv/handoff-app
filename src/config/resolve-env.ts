@@ -19,13 +19,20 @@ const pathMatches = (pattern: string, path: string, prefix = false): boolean => 
 export const DEFERRED_PATHS = [
   'runtime.registry.databaseUrl',
   'runtime.registry.assetStorage.token',
-  'runtime.registry.email.apiKey',
+  'runtime.registry.email.options.apiKey',
+  'runtime.registry.email.options.password',
   'runtime.ai.connections.*.apiKey',
 ];
+/**
+ * Path prefixes whose nested references the deployed app reads at request time. Literals below them
+ * are baked. `DEFERRED_PATHS` entries below them still reject literals.
+ */
+const DEFERRED_PREFIXES = ['runtime.registry.email.options'];
 const SECRET_PATHS = new Set(['dev_access_token', 'devAccessToken', 'runtime.registryConnection.accessToken']);
 /** Path prefixes whose resolved contents are JSON-baked into the bundle, so a reference would bake its value. */
 const BAKED_PATHS = ['runtime.registry.assetStorage.options', 'runtime.ai.connections.*.options'];
 const isDeferred = (path: string): boolean => DEFERRED_PATHS.some((deferred) => pathMatches(deferred, path));
+const isUnderDeferredPrefix = (path: string): boolean => DEFERRED_PREFIXES.some((prefix) => path.startsWith(`${prefix}.`));
 const isBaked = (path: string): boolean => BAKED_PATHS.some((baked) => pathMatches(baked, path, true));
 const ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const ALIASES: Record<string, string> = {
@@ -80,7 +87,7 @@ export const resolveConfigEnv = (config: Config, profile?: string, defaults?: Co
       if (Object.keys(value).some((key) => key !== '$env' && key !== 'default')) {
         fail(path, `Environment variable "${name}" has an invalid reference shape.`);
       }
-      if (deferred) {
+      if (deferred || isUnderDeferredPrefix(path)) {
         if ('default' in value) fail(path, `Environment variable "${name}" cannot have a default because it is read by the deployed app.`);
         return { $env: name };
       }
