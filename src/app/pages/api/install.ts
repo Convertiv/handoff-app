@@ -3,6 +3,7 @@ import { getRegistryInstallationState, installRegistry } from '@handoff/registry
 import { allowApiMethods, prepareRegistryApi } from '../../lib/auth/api';
 import { canonicalRegistryUrl, registryAuthSecret } from '../../lib/auth/config';
 import { registryEmailIsConfigured } from '../../lib/auth/email';
+import { getServerRuntimeConfig } from '../../lib/docs-api/runtime-config';
 
 const check = (id: string, label: string, ok: boolean, message: string, optional = false) => ({
   id,
@@ -61,7 +62,7 @@ export default async function installHandler(req: NextApiRequest, res: NextApiRe
         registryEmailIsConfigured(),
         registryEmailIsConfigured()
           ? 'Resend delivery is configured.'
-          : 'Optional. Set RESEND_API_KEY and AUTH_FROM_EMAIL, or deliver invitation links manually.',
+          : `Optional. Set runtime.registry.email.from in the config and ${getServerRuntimeConfig().email.apiKeyEnv}, or deliver invitation links manually.`,
         true
       ),
     ];

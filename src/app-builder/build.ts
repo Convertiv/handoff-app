@@ -9,6 +9,7 @@ import { buildComponents } from '../pipeline/components';
 import { buildPatterns } from '../pipeline/patterns';
 import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
 import { resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
+import { resolveEmailFromConfig, type EmailSettings } from '../registry/email';
 import processComponents from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
@@ -308,6 +309,9 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const escapedAssetStorageTokenEnv = escapeForSingleQuotedJsString(assetStorage.tokenEnv);
   const escapedAssetStorageMaxInline = escapeForSingleQuotedJsString(String(assetStorage.maxInlineBytes));
   const escapedAssetStorageOptions = escapeForSingleQuotedJsString(JSON.stringify(assetStorage.options ?? {}));
+  const email = resolveEmailFromConfig(handoff.config);
+  const escapedEmailFrom = escapeForSingleQuotedJsString(email.from ?? '');
+  const escapedEmailApiKeyEnv = escapeForSingleQuotedJsString(email.apiKeyEnv);
   // AI assistant selection baked (enabled flag + declared connections + default model). Connections
   // carry env-var names and non-secret options only; keys are read from their named env var at
   // request time, and a deployment can extend or replace the list through HANDOFF_AI_CONNECTIONS.
@@ -335,6 +339,8 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_ASSET_STORAGE_TOKEN_ENV%': escapedAssetStorageTokenEnv,
     '%HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES%': escapedAssetStorageMaxInline,
     '%HANDOFF_ASSET_STORAGE_OPTIONS%': escapedAssetStorageOptions,
+    '%HANDOFF_EMAIL_FROM%': escapedEmailFrom,
+    '%HANDOFF_EMAIL_API_KEY_ENV%': escapedEmailApiKeyEnv,
     '%HANDOFF_AI_ENABLED%': escapedAiEnabled,
     '%HANDOFF_AI_BAKED_CONNECTIONS%': escapedAiConnections,
     '%HANDOFF_AI_DEFAULT_MODEL%': escapedAiDefaultModel,
@@ -460,7 +466,8 @@ const writeRegistryDeploymentReadme = async (
   outputRoot: string,
   entryRelativePath: string,
   databaseUrlEnv: string,
-  ai: AiSettings
+  ai: AiSettings,
+  email: EmailSettings
 ): Promise<void> => {
   const serviceKeyEnvs = [...new Set(ai.connections.map((connection) => connection.apiKeyEnv).filter(Boolean))];
   const needsKeySecret = ai.connections.some((connection) => connection.credential === 'user');
@@ -495,8 +502,11 @@ and \`.next/static/\` already copied alongside so the server serves them.
 - \`AUTH_SECRET\` — a long, random secret used to sign browser sessions.
 - \`AUTH_URL\` — the canonical public registry URL, including the configured base path.
 
-Optional email delivery uses \`RESEND_API_KEY\` and \`AUTH_FROM_EMAIL\`. Without them, invitation
-links are shown once to an administrator for manual delivery.
+${
+  email.from
+    ? `Invitation and password-reset emails are sent from \`${email.from}\` when \`${email.apiKeyEnv}\` holds a Resend API key.`
+    : 'Email delivery is off because `runtime.registry.email.from` is not set.'
+} Without email, invitation links are shown once to an administrator for manual delivery.
 ${aiSection}
 ## Database migrations
 
@@ -822,7 +832,8 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
     output,
     entryRelativePath,
     resolveDatabaseUrlEnv(handoff.config),
-    resolveAiFromConfig(handoff.config)
+    resolveAiFromConfig(handoff.config),
+    resolveEmailFromConfig(handoff.config)
   );
 
   Logger.success(`Packaged registry app at ${output} (start: \`node ${entryRelativePath}\`, migrate: \`handoff-app db:migrate\`).`);

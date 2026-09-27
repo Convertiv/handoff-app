@@ -502,6 +502,27 @@ runtime: {
 The associated `BLOB_READ_WRITE_TOKEN` is supplied through the deployment
 environment.
 
+#### Optional email delivery
+
+Invitation and password-reset emails are sent through Resend when a sender is
+set in `handoff.config.ts`:
+
+```ts
+runtime: {
+  registry: {
+    email: {
+      from: 'Handoff <no-reply@example.com>',
+    },
+  },
+},
+```
+
+The Resend API key is supplied through `RESEND_API_KEY`, or through the
+variable named by `email.apiKey: fromEnv('...')`. Use a profile to set a
+different sender per environment. Without email, invitation links are shown
+once to an administrator for manual delivery, and password reset is
+unavailable.
+
 ### 3. Installation
 
 The installer is opened at http://localhost:4000/install, where the first

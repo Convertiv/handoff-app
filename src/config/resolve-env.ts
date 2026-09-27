@@ -16,7 +16,12 @@ const pathMatches = (pattern: string, path: string, prefix = false): boolean => 
 };
 
 /** Paths whose value the deployed app reads at request time, so only the variable name is stored. */
-export const DEFERRED_PATHS = ['runtime.registry.databaseUrl', 'runtime.registry.assetStorage.token', 'runtime.ai.connections.*.apiKey'];
+export const DEFERRED_PATHS = [
+  'runtime.registry.databaseUrl',
+  'runtime.registry.assetStorage.token',
+  'runtime.registry.email.apiKey',
+  'runtime.ai.connections.*.apiKey',
+];
 const SECRET_PATHS = new Set(['dev_access_token', 'devAccessToken', 'runtime.registryConnection.accessToken']);
 /** Path prefixes whose resolved contents are JSON-baked into the bundle, so a reference would bake its value. */
 const BAKED_PATHS = ['runtime.registry.assetStorage.options', 'runtime.ai.connections.*.options'];

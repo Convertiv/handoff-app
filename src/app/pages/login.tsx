@@ -27,6 +27,7 @@ function RegistryLoginPage() {
   const { data: session, status } = useSession();
   const [pending, setPending] = useState(false);
   const [checkingInstall, setCheckingInstall] = useState(true);
+  const [emailConfigured, setEmailConfigured] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,8 +38,9 @@ function RegistryLoginPage() {
     void fetch(authApiUrl('/api/install'), { credentials: 'include', cache: 'no-store' })
       .then(async (response) => {
         if (!response.ok) return;
-        const body = (await response.json()) as { installed?: boolean };
+        const body = (await response.json()) as { installed?: boolean; emailConfigured?: boolean };
         if (body.installed === false) await router.replace('/install');
+        setEmailConfigured(body.emailConfigured !== false);
       })
       .finally(() => setCheckingInstall(false));
   }, [router]);
@@ -106,9 +108,13 @@ function RegistryLoginPage() {
             <Button type="submit" className="w-full" disabled={pending || checkingInstall}>
               {pending ? 'Signing in…' : 'Sign in'}
             </Button>
-            <Link href="/reset-password" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
-              Forgot password?
-            </Link>
+            {emailConfigured ? (
+              <Link href="/reset-password" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+                Forgot password?
+              </Link>
+            ) : (
+              <p className="text-sm text-muted-foreground">Forgot your password? Ask an administrator for a reset link.</p>
+            )}
           </CardFooter>
         </form>
       </Card>

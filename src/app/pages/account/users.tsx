@@ -8,7 +8,7 @@ import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
-import { Check, Copy, MailPlus, RefreshCw } from 'lucide-react';
+import { Check, Copy, KeyRound, MailPlus, RefreshCw } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { FormEvent, useCallback, useEffect, useState } from 'react';
@@ -48,6 +48,7 @@ function RegistryUsersPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [manualLink, setManualLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [emailConfigured, setEmailConfigured] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (sessionStatus === 'authenticated' && currentUser?.role !== 'admin') void router.replace('/account');
@@ -56,8 +57,9 @@ function RegistryUsersPage() {
   const load = useCallback(async () => {
     const response = await fetch(authApiUrl('/api/admin/users'), { credentials: 'include', cache: 'no-store' });
     if (!response.ok) throw new Error(await readApiError(response, 'Could not load users.'));
-    const body = (await response.json()) as RegistryUser[] | { users: RegistryUser[] };
+    const body = (await response.json()) as RegistryUser[] | { users: RegistryUser[]; emailConfigured?: boolean };
     const rows = Array.isArray(body) ? body : body.users;
+    if (!Array.isArray(body)) setEmailConfigured(body.emailConfigured ?? null);
     setUsers(
       rows.map((user) => ({
         ...user,
@@ -112,7 +114,12 @@ function RegistryUsersPage() {
     }
   };
 
-  const mutate = async (user: RegistryUser, action: 'resend' | 'role' | 'status', body: Record<string, string>, successMessage: string) => {
+  const mutate = async (
+    user: RegistryUser,
+    action: 'resend' | 'reset' | 'role' | 'status',
+    body: Record<string, string>,
+    successMessage: string
+  ) => {
     setPending(true);
     setError(null);
     setSuccess(null);
@@ -152,7 +159,11 @@ function RegistryUsersPage() {
           <CardHeader>
             <CardTitle>Invite a user</CardTitle>
             <CardDescription>
-              Email delivery is used when configured. Otherwise, the activation link appears once for manual delivery.
+              {emailConfigured === false
+                ? 'Email delivery is off. Activation and reset links appear once here for you to deliver.'
+                : emailConfigured
+                  ? 'Invitations and reset links are sent by email.'
+                  : null}
             </CardDescription>
           </CardHeader>
           <form onSubmit={invite}>
@@ -170,12 +181,12 @@ function RegistryUsersPage() {
               {manualLink ? (
                 <Alert variant="warning">
                   <MailPlus />
-                  <AlertTitle>Deliver this activation link securely</AlertTitle>
+                  <AlertTitle>Deliver this link securely</AlertTitle>
                   <AlertDescription>
                     <p className="mb-3">It is shown only in this response.</p>
                     <div className="flex gap-2">
                       <Input value={manualLink} readOnly className="text-xs" />
-                      <Button type="button" size="icon" variant="outline" onClick={() => void copyLink()} aria-label="Copy activation link">
+                      <Button type="button" size="icon" variant="outline" onClick={() => void copyLink()} aria-label="Copy link">
                         {copied ? <Check /> : <Copy />}
                       </Button>
                     </div>
@@ -270,6 +281,19 @@ function RegistryUsersPage() {
                             onClick={() => void mutate(user, 'resend', {}, `Invitation resent to ${user.email}.`)}
                           >
                             <RefreshCw /> Resend
+                          </Button>
+                        ) : null}
+                        {user.status === 'active' ? (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            disabled={pending}
+                            onClick={() => {
+                              if (window.confirm(`Create a password reset link for ${user.email}?`))
+                                void mutate(user, 'reset', {}, `Password reset link created for ${user.email}.`);
+                            }}
+                          >
+                            <KeyRound /> Reset password
                           </Button>
                         ) : null}
                         {user.status !== 'invited' ? (

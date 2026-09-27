@@ -4,6 +4,7 @@ import type { RuntimeMode } from '@handoff/types/config';
 import { DEFAULT_DATABASE_URL_ENV, DEFAULT_REGISTRY_DRIVER, type RegistryDatabaseDriver } from '@handoff/registry/db/driver';
 import { DEFAULT_ASSET_STORAGE_ADAPTER, type AssetStorageSettings } from '@handoff/registry/asset-storage/resolve';
 import { mergeAiConnections, parseAiConnections, type AiSettings } from '@handoff/ai/connections';
+import { DEFAULT_EMAIL_API_KEY_ENV, type EmailSettings } from '@handoff/registry/email';
 
 /**
  * Server-side runtime resolution for the docs read API.
@@ -44,6 +45,8 @@ export interface ServerRuntimeConfig {
    * values are resolved from `process.env` at request time, never persisted here.
    */
   assetStorage: AssetStorageSettings;
+  /** Registry email sender and the *name* of the env var holding the Resend API key. */
+  email: EmailSettings;
 }
 
 let cached: ServerRuntimeConfig | null = null;
@@ -58,6 +61,7 @@ const defaults = (): ServerRuntimeConfig => ({
     databaseUrlEnv: DEFAULT_DATABASE_URL_ENV,
   },
   assetStorage: { adapter: DEFAULT_ASSET_STORAGE_ADAPTER },
+  email: { apiKeyEnv: DEFAULT_EMAIL_API_KEY_ENV },
 });
 
 /** Parse the baked asset-storage selection from env (names/selectors only; JSON options tolerated). */
@@ -129,6 +133,10 @@ const fromEnv = (): ServerRuntimeConfig | null => {
       databaseUrlEnv,
     },
     assetStorage: assetStorageFromEnv(),
+    email: {
+      from: process.env.HANDOFF_EMAIL_FROM?.trim() || undefined,
+      apiKeyEnv: process.env.HANDOFF_EMAIL_API_KEY_ENV?.trim() || DEFAULT_EMAIL_API_KEY_ENV,
+    },
   };
 };
 
@@ -168,6 +176,13 @@ export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
           databaseUrlEnv,
         },
         assetStorage,
+        email: {
+          from: typeof parsed?.email?.from === 'string' ? parsed.email.from.trim() || undefined : undefined,
+          apiKeyEnv:
+            typeof parsed?.email?.apiKeyEnv === 'string' && parsed.email.apiKeyEnv.trim()
+              ? parsed.email.apiKeyEnv.trim()
+              : DEFAULT_EMAIL_API_KEY_ENV,
+        },
       };
       return cached;
     }

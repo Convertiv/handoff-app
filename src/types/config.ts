@@ -230,6 +230,16 @@ export interface HandoffRuntimeConfig {
       /** Non-secret options, JSON-encoded into the bundle. Environment references are rejected. Pass variable names instead. */
       options?: Record<string, unknown>;
     };
+    /**
+     * Invitation and password-reset email, sent through Resend. Email stays off until `from` is set
+     * and the API key variable has a value; invitation links are then shown to an administrator.
+     */
+    email?: {
+      /** Sender address, such as `Handoff <no-reply@example.com>`. Use a profile for per-environment values. */
+      from?: string;
+      /** Environment reference to the Resend API key. @default fromEnv('RESEND_API_KEY') */
+      apiKey?: RuntimeEnvReference<string>;
+    };
   };
   /**
    * Connected-workspace settings pointing at a remote registry. A connected workspace is

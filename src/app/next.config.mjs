@@ -151,6 +151,9 @@ const nextConfig = {
     HANDOFF_ASSET_STORAGE_TOKEN_ENV: '%HANDOFF_ASSET_STORAGE_TOKEN_ENV%',
     HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES: '%HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES%',
     HANDOFF_ASSET_STORAGE_OPTIONS: '%HANDOFF_ASSET_STORAGE_OPTIONS%',
+    // Registry email sender and the env-var *name* of the Resend API key, read at request time.
+    HANDOFF_EMAIL_FROM: '%HANDOFF_EMAIL_FROM%',
+    HANDOFF_EMAIL_API_KEY_ENV: '%HANDOFF_EMAIL_API_KEY_ENV%',
   },
   images: {
     unoptimized: true,

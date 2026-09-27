@@ -10,7 +10,7 @@ export default async function usersHandler(req: NextApiRequest, res: NextApiResp
   if (!context?.user) return;
 
   if (method === 'GET') {
-    res.status(200).json({ users: await listRegistryUsers(context.db) });
+    res.status(200).json({ users: await listRegistryUsers(context.db), emailConfigured: registryEmailIsConfigured() });
     return;
   }
 
