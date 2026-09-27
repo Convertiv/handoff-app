@@ -34,7 +34,7 @@ working directory. This is useful for extending handoff for different components
 or integrations.
 
 ## Requirements
-Node 16+
+Node.js 22 or newer and npm 10 or newer
 
 ## Install the CLI 
 

@@ -24,8 +24,8 @@ registry-mode application is created automatically by a registry build.
 
 ## Requirements
 
-- Node.js 18.18 or newer; Node.js 20 LTS or newer is recommended
-- npm 8 or newer
+- Node.js 22 or newer; Node.js 24 LTS is recommended
+- npm 10 or newer
 - A paid Figma account when fetching a Figma library
 - PostgreSQL when running a registry
 

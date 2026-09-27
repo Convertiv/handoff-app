@@ -18,10 +18,26 @@ Each feature section identifies the affected projects and the required changes.
 
 | Change | Affected projects |
 | --- | --- |
+| [Node.js 22](#nodejs-22) | All projects |
 | [Figma token environment references](#figma-token-environment-references) | Projects that put a Figma token directly in config |
 | [Catalog items](#catalog-items) | Projects with component or pattern declarations |
 
 <!-- Add future breaking changes as feature sections before "Verify the upgrade". Add each section to this table. -->
+
+### Node.js 22
+
+Handoff 2.x.x requires Node.js 22 or newer and npm 10 or newer. Version 1.x.x supported Node.js 16.
+Update Node.js, CI images, and hosting runtimes before you install the new package.
+
+Projects created by `handoff-app init` in version 1.x.x declare the old minimum in `package.json`.
+Change it to:
+
+```json
+"engines": {
+  "node": ">=22",
+  "npm": ">=10"
+}
+```
 
 ### Figma token environment references
 

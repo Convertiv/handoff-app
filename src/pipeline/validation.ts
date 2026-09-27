@@ -3,13 +3,13 @@ import { Logger } from '../utils/logger';
 /**
  * Validates that the Node.js runtime meets the minimum version requirements.
  *
- * @throws {Error} If Node.js version is below 16.
+ * @throws {Error} If Node.js version is below 22.
  */
 export const validateHandoffRequirements = async () => {
   let requirements = false;
   const result = process.versions;
   if (result && result.node) {
-    if (parseInt(result.node) >= 16) {
+    if (parseInt(result.node) >= 22) {
       requirements = true;
     }
   } else {
@@ -18,7 +18,7 @@ export const validateHandoffRequirements = async () => {
   if (!requirements) {
     Logger.error('Handoff installation failed.');
     Logger.warn(
-      '- Please update node to at least Node 16 https://nodejs.org/en/download. \n- You can read more about installing handoff at https://www.handoff.com/docs/'
+      '- Please update node to at least Node 22 https://nodejs.org/en/download. \n- You can read more about installing handoff at https://www.handoff.com/docs/'
     );
     throw new Error('Could not run handoff');
   }

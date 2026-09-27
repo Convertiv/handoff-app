@@ -67,7 +67,7 @@ const evaluateTypeScriptConfig = (filePath: string, handoffModulePath: string): 
     write: false,
     platform: 'node',
     format: 'cjs',
-    target: 'node16',
+    target: 'node22',
     logLevel: 'silent',
     external: ['handoff-app'],
     loader: STYLE_IMPORT_LOADERS,

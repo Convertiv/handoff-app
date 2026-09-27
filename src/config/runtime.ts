@@ -72,7 +72,7 @@ const evaluateDeclaration = (filePath: string, handoffModulePath: string): any =
     write: false,
     platform: 'node',
     format: 'cjs',
-    target: 'node16',
+    target: 'node22',
     logLevel: 'silent',
     jsx: 'automatic',
     external: ['react', 'react-dom', 'handoff-app'],
