@@ -7,12 +7,15 @@ import {
   Check,
   CircleAlert,
   Copy,
+  FileText,
   Layers,
+  LayoutTemplate,
   Lightbulb,
   Loader2,
   MessageSquareText,
   Square,
   SquarePen,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
@@ -20,7 +23,9 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { stripBasePath } from '../../lib/utils';
+import type { AiPageKind } from '../../lib/ai/context';
 import { MarkdownComponents } from '../Markdown/MarkdownComponents';
+import { Attachment, AttachmentAction, AttachmentContent, AttachmentMedia, AttachmentTitle } from '../ui/attachment';
 import { Bubble, BubbleContent } from '../ui/bubble';
 import { Button } from '../ui/button';
 import { Marker, MarkerContent, MarkerIcon } from '../ui/marker';
@@ -29,6 +34,7 @@ import { toolResultCard } from './AiToolResult';
 import { toolCallLabel } from './toolLabel';
 import { useAiChat } from './useAiChat';
 import { useAiConnections, type AiModelOption } from './useAiConnections';
+import { useNavTitles, usePageContext, type AiPage } from './usePageContext';
 
 /**
  * The docs assistant: a conversation with the design system, grounded in the same records the MCP
@@ -225,10 +231,17 @@ const sentAtOf = (message: UIMessage): number | undefined => {
   return typeof sentAt === 'number' ? sentAt : undefined;
 };
 
-/** The reader's question, with when it was sent and a copy action revealed on hover or focus. */
-const Question: React.FC<{ message: UIMessage }> = ({ message }) => {
+/** The page the question was asked from. Messages sent without page context have none. */
+const pathOf = (message: UIMessage): string | undefined => {
+  const path = (message.metadata as { path?: unknown } | undefined)?.path;
+  return typeof path === 'string' ? path : undefined;
+};
+
+/** The reader's question, with when and where it was sent and a copy action revealed on hover or focus. */
+const Question: React.FC<{ message: UIMessage; titles: Map<string, string> }> = ({ message, titles }) => {
   const text = message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('');
   const sentAt = sentAtOf(message);
+  const path = pathOf(message);
 
   return (
     <div className="group flex flex-col items-end gap-2">
@@ -237,7 +250,20 @@ const Question: React.FC<{ message: UIMessage }> = ({ message }) => {
         <BubbleContent className="whitespace-pre-wrap">{text}</BubbleContent>
       </Bubble>
       <div className="-mt-1.5 flex h-5 items-center justify-end gap-2 text-[11px] text-muted-foreground opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
-        {sentAt !== undefined && <span>{timeAgo(sentAt)}</span>}
+        {(sentAt !== undefined || path) && (
+          <span>
+            {sentAt !== undefined && timeAgo(sentAt)}
+            {sentAt !== undefined && path && ' · '}
+            {path && (
+              <>
+                on{' '}
+                <Link href={path} className="text-muted-foreground no-underline transition-colors hover:text-foreground">
+                  {titles.get(path) ?? path}
+                </Link>
+              </>
+            )}
+          </span>
+        )}
         <button
           type="button"
           title="Copy message"
@@ -258,12 +284,13 @@ const Conversation: React.FC<{ messages: UIMessage[]; thinking: boolean }> = ({ 
   // One mark at a time. The waiting row stands in for the answer until the answer has a first tool
   // call or a first token of its own.
   const waiting = thinking && visible[visible.length - 1]?.role !== 'assistant';
+  const titles = useNavTitles();
 
   return (
     <div className="flex flex-col gap-4">
       {visible.map((message) =>
         message.role === 'user' ? (
-          <Question key={message.id} message={message} />
+          <Question key={message.id} message={message} titles={titles} />
         ) : (
           <Answer key={message.id} message={message} waitingForText={thinking && message.id === activeMessage?.id} />
         )
@@ -383,7 +410,7 @@ const ModelPicker: React.FC<{ models: AiModelOption[]; value: string | null; onC
       <SelectTrigger
         aria-label="Model"
         title={selected ? `${selected.label} · ${selected.model}` : undefined}
-        className="h-8 w-auto min-w-0 gap-1 border-0 px-2 text-xs font-medium text-muted-foreground shadow-none hover:bg-muted hover:text-foreground focus:ring-0"
+        className="-ml-2 h-8 w-auto min-w-0 gap-1 border-0 px-2 text-xs font-medium text-muted-foreground shadow-none hover:bg-muted hover:text-foreground focus:ring-0"
       >
         <SelectValue>
           <span className="truncate">{selected && (ambiguous ? `${selected.label} · ${selected.model}` : selected.model)}</span>
@@ -408,6 +435,41 @@ const ModelPicker: React.FC<{ models: AiModelOption[]; value: string | null; onC
   );
 };
 
+const PAGE_ICONS: Record<AiPageKind, React.ElementType> = { component: Layers, pattern: LayoutTemplate, page: FileText };
+
+/**
+ * The page the next question is asked about. The reader can leave it out.
+ *
+ * A tighter `xs` attachment: the chip sits inside the composer, so it stays about one line tall.
+ * `-mt-1.5` cancels the composer's top padding, which is sized for text, so the chip sits as far
+ * from the border above as from the text below.
+ */
+const PageChip: React.FC<{ page: AiPage; onRemove: () => void }> = ({ page, onRemove }) => {
+  const Icon = PAGE_ICONS[page.kind];
+  return (
+    <Attachment
+      size="xs"
+      className="-mt-1.5 mb-2 min-w-0 has-data-[slot=attachment-content]:p-0.5 has-data-[slot=attachment-media]:p-0.5"
+    >
+      <AttachmentMedia className="group-data-[size=xs]/attachment:w-5">
+        <Icon className="size-3" aria-hidden="true" />
+      </AttachmentMedia>
+      <AttachmentContent>
+        <AttachmentTitle title={page.title}>{page.title}</AttachmentTitle>
+      </AttachmentContent>
+      <AttachmentAction
+        type="button"
+        aria-label={`Leave ${page.title} out of the question`}
+        title={`Leave ${page.title} out of the question`}
+        onClick={onRemove}
+        className="h-5 w-5 text-muted-foreground hover:text-foreground [&_svg]:size-3"
+      >
+        <X />
+      </AttachmentAction>
+    </Attachment>
+  );
+};
+
 export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactNode }> = ({ active, controls }) => {
   const [input, setInput] = React.useState('');
   const connections = useAiConnections(active);
@@ -417,6 +479,12 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
   const following = React.useRef(true);
 
   const { messages, sendMessage, status, stop, error, model, chooseModel, startFresh } = useAiChat();
+
+  // A dismissed page stays out only while the reader stays on it.
+  const page = usePageContext();
+  const [dismissedPath, setDismissedPath] = React.useState<string | null>(null);
+  React.useEffect(() => setDismissedPath(null), [page?.path]);
+  const context = page && page.path !== dismissedPath ? page : null;
 
   // The picker follows the deployment's default until the reader chooses, and falls back to the
   // first usable model so a deployment whose default is not usable here still answers.
@@ -436,7 +504,10 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
     if (!text.trim() || busy || !selectedModel) return;
     setInput('');
     following.current = true;
-    void sendMessage({ text: text.trim(), metadata: { sentAt: Date.now() } }, { body: { model: selectedModel } });
+    void sendMessage(
+      { text: text.trim(), metadata: { sentAt: Date.now(), ...(context && { path: context.path }) } },
+      { body: { model: selectedModel } }
+    );
     composerRef.current?.focus();
   };
 
@@ -543,6 +614,15 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
         className="shrink-0 border-t p-3"
       >
         <div className="px-1 pt-1.5">
+          {context && (
+            <PageChip
+              page={context}
+              onRemove={() => {
+                setDismissedPath(context.path);
+                composerRef.current?.focus();
+              }}
+            />
+          )}
           <textarea
             ref={composerRef}
             value={input}

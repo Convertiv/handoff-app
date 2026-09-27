@@ -10,10 +10,12 @@ import {
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { allowApiMethods } from '@/lib/api/methods';
 import { authorizeAiRequest } from '@/lib/ai/auth';
+import { withPageContext } from '@/lib/ai/context';
 import { AiConnectionError, createAiLanguageModel } from '@/lib/ai/model';
 import { DOCS_ASSISTANT_PROMPT } from '@/lib/ai/prompt';
 import { describeAiConnections, findAiConnection, selectAiModel } from '@/lib/ai/resolve';
 import { createAiToolSession, type AiSource } from '@/lib/ai/tools';
+import { resolveDocsBackend } from '@/lib/docs-api';
 
 /**
  * `/api/ai/chat`: the docs assistant's agent loop, streamed to the browser.
@@ -89,10 +91,15 @@ export default async function aiChatHandler(req: NextApiRequest, res: NextApiRes
       // function, and a reader who closes the modal mid-answer must not leave the session open.
       res.on('close', () => void session.close());
 
+      // A question never fails for want of context.
+      const labeled = await resolveDocsBackend()
+        .then((backend) => withPageContext(messages, backend))
+        .catch(() => messages);
+
       const result = streamText({
         model,
         system: DOCS_ASSISTANT_PROMPT,
-        messages: await convertToModelMessages(messages),
+        messages: await convertToModelMessages(labeled),
         tools: session.tools,
         stopWhen: stepCountIs(MAX_AGENT_STEPS),
       });
