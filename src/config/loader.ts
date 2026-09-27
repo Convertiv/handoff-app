@@ -2,9 +2,11 @@ import esbuild from 'esbuild';
 import { STYLE_IMPORT_LOADERS } from '../transformers/utils/build';
 import fs from 'fs-extra';
 import mergeWith from 'lodash/mergeWith';
+import omit from 'lodash/omit';
 import { createRequire } from 'module';
 import path from 'path';
-import { Config, ResolvedConfig } from '../types/config';
+import { DEFAULT_EMAIL_PROVIDER } from '../registry/email/resolve';
+import { Config, HandoffEmailConfig, ResolvedConfig } from '../types/config';
 import { Logger } from '../utils/logger';
 import { resolveWorkingPath } from '../utils/path';
 import { defaultConfig } from './defaults';
@@ -234,6 +236,27 @@ const replaceValues = (destination: unknown, source: unknown) => {
 };
 
 /**
+ * A layer that changes `runtime.registry.email.provider` starts from fresh `options` and `module`, so
+ * the deep merge never mixes the settings of two providers.
+ */
+const resetEmailOnProviderChange = (layers: Partial<Config>[]): Partial<Config>[] => {
+  let provider: string = DEFAULT_EMAIL_PROVIDER;
+  let start = 0;
+  layers.forEach((layer, index) => {
+    const next = layer.runtime?.registry?.email?.provider;
+    if (next !== undefined && next !== provider) {
+      provider = next;
+      start = index;
+    }
+  });
+  return layers.map((layer, index) => {
+    const email = layer.runtime?.registry?.email;
+    if (index >= start || !email) return layer;
+    return { ...layer, runtime: { ...layer.runtime, registry: { ...layer.runtime!.registry, email: omit(email, ['options', 'module']) as HandoffEmailConfig } } };
+  });
+};
+
+/**
  * Loads the handoff configuration for the given working directory and returns metadata.
  */
 export const initConfigWithMetadata = (configOverride?: Partial<Config>, context?: ConfigLoadContext): ConfigLoadResult => {
@@ -264,7 +287,7 @@ export const initConfigWithMetadata = (configOverride?: Partial<Config>, context
   Logger.debug(`Config profile: ${profileLabel}`);
   Logger.debug(`Config files loaded: ${[configPath, profileConfigPath].filter(Boolean).join(', ') || 'none, using defaults'}`);
 
-  const merged = mergeWith({}, ...layers, replaceValues) as Config;
+  const merged = mergeWith({}, ...resetEmailOnProviderChange(layers), replaceValues) as Config;
   const config = resolveConfigEnv(merged, profileSelection?.name, layers[0]);
 
   // Guards run on the resolved config so a profile cannot slip a removed setting past them.

@@ -13,6 +13,7 @@ import { resolveAssetStorageSettings, type ResolvedAssetStorage } from '@handoff
 import type { AssetStorage, AssetStorageFactory } from '@handoff/registry/asset-storage/types';
 import type { AssetStorageProvider } from '@handoff/registry/db/schema';
 import { getServerRuntimeConfig } from './docs-api/runtime-config';
+import { importServerModule } from './server-module';
 
 let activeCache: ResolvedAssetStorage | null = null;
 const adapterCache = new Map<string, AssetStorage | null>();
@@ -30,8 +31,7 @@ const loadCustomAdapter = async (active: ResolvedAssetStorage): Promise<AssetSto
   if (!active.module) {
     throw new Error('A custom asset storage adapter is selected but no module path is configured.');
   }
-  // Traced into the registry bundle at build time; resolved by Node at runtime (see build tracing).
-  const mod: any = await import(/* webpackIgnore: true */ active.module);
+  const mod = await importServerModule(active.module);
   const exported = mod?.default ?? mod;
   const adapter: unknown = typeof exported === 'function' ? await (exported as AssetStorageFactory)({ options: active.options, env: process.env }) : exported;
   const candidate = adapter as Partial<AssetStorage> | null;

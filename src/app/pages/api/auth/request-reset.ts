@@ -13,6 +13,11 @@ export default async function requestResetHandler(req: NextApiRequest, res: Next
   if (!method) return;
   const context = await prepareRegistryApi(req, res, { mutation: true });
   if (!context) return;
+  // The same answer for every address, so this reveals nothing about which accounts exist.
+  if (!registryEmailIsConfigured()) {
+    res.status(503).json({ error: 'Password reset by email is not available on this registry. Ask an administrator for a reset link.' });
+    return;
+  }
   const body = req.body && typeof req.body === 'object' ? req.body : {};
   const email = normalizeEmail(typeof body.email === 'string' ? body.email : '');
   const throttle = await consumeAuthRateLimit(context.db, {
@@ -27,26 +32,19 @@ export default async function requestResetHandler(req: NextApiRequest, res: Next
     return;
   }
 
-  if (!registryEmailIsConfigured()) {
-    res.status(200).json({ ok: true });
-    return;
-  }
   const result = await createPasswordReset(context.db, email);
   if (result.token && result.user) {
     const resetUrl = registryPageUrl('/reset-password', undefined, { token: result.token });
+    // The result is ignored so the response never reveals whether the account exists.
     if (resetUrl) {
-      try {
-        await sendRegistryAuthEmail({
-          to: result.user.email,
-          subject: 'Reset your Handoff Registry password',
-          heading: 'Reset your password',
-          message: 'Use this single-use link to choose a new password.',
-          actionLabel: 'Reset password',
-          actionUrl: resetUrl,
-        });
-      } catch {
-        // Keep the response enumeration-safe. Operational email failures never reveal account state.
-      }
+      await sendRegistryAuthEmail({
+        to: result.user.email,
+        subject: 'Reset your Handoff Registry password',
+        heading: 'Reset your password',
+        message: 'Use this single-use link to choose a new password. It expires in one hour.',
+        actionLabel: 'Reset password',
+        actionUrl: resetUrl,
+      });
     }
   }
   res.status(200).json({ ok: true });

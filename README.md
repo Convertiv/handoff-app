@@ -502,6 +502,56 @@ runtime: {
 The associated `BLOB_READ_WRITE_TOKEN` is supplied through the deployment
 environment.
 
+#### Optional email delivery
+
+The registry sends invitation and password-reset emails when `email.from` is
+set. Without it, an administrator sees each invitation link once and delivers
+it manually, and password reset is not available.
+
+Resend is the default provider. It reads its key from `RESEND_API_KEY`, unless
+`options.apiKey` names a different variable:
+
+```ts
+runtime: {
+  registry: {
+    email: { from: 'Handoff <no-reply@example.com>' },
+  },
+},
+```
+
+For an SMTP server, for example Amazon SES, SendGrid, or Microsoft 365:
+
+```ts
+email: {
+  from: 'Handoff <no-reply@example.com>',
+  provider: 'smtp',
+  options: {
+    host: fromEnv('SMTP_HOST'),
+    port: 465, // default, uses TLS. 587 uses STARTTLS.
+    user: fromEnv('SMTP_USER'),
+    password: fromEnv('SMTP_PASSWORD'),
+  },
+},
+```
+
+For a different service, set `provider: 'custom'` and set `module` to a
+server-only file. The factory gets `options` with `fromEnv()` values resolved:
+
+```ts
+import { defineEmailProvider } from 'handoff-app';
+
+export default defineEmailProvider(({ options }) => ({
+  async send({ from, to, subject, html, text }) {
+    // Deliver the message. Throw an error if it is not accepted.
+  },
+}));
+```
+
+Literals in `options` are baked into the build. `fromEnv()` values are read at
+request time, so they can change without a rebuild. `apiKey` and `password`
+must use `fromEnv()`. A profile can set a different sender or provider. When a
+profile changes the provider, it replaces `options`.
+
 ### 3. Installation
 
 The installer is opened at http://localhost:4000/install, where the first

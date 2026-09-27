@@ -4,6 +4,7 @@ import type { RuntimeMode } from '@handoff/types/config';
 import { DEFAULT_DATABASE_URL_ENV, DEFAULT_REGISTRY_DRIVER, type RegistryDatabaseDriver } from '@handoff/registry/db/driver';
 import { DEFAULT_ASSET_STORAGE_ADAPTER, type AssetStorageSettings } from '@handoff/registry/asset-storage/resolve';
 import { mergeAiConnections, parseAiConnections, type AiSettings } from '@handoff/ai/connections';
+import { DEFAULT_EMAIL_PROVIDER, parseEmailSettings, type EmailSettings } from '@handoff/registry/email/resolve';
 
 /**
  * Server-side runtime resolution for the docs read API.
@@ -44,6 +45,8 @@ export interface ServerRuntimeConfig {
    * values are resolved from `process.env` at request time, never persisted here.
    */
   assetStorage: AssetStorageSettings;
+  /** Registry email provider, sender, and options. Options hold `{ $env }` references, never secret values. */
+  email: EmailSettings;
 }
 
 let cached: ServerRuntimeConfig | null = null;
@@ -58,6 +61,7 @@ const defaults = (): ServerRuntimeConfig => ({
     databaseUrlEnv: DEFAULT_DATABASE_URL_ENV,
   },
   assetStorage: { adapter: DEFAULT_ASSET_STORAGE_ADAPTER },
+  email: { provider: DEFAULT_EMAIL_PROVIDER, options: {} },
 });
 
 /** Parse the baked asset-storage selection from env (names/selectors only; JSON options tolerated). */
@@ -129,6 +133,12 @@ const fromEnv = (): ServerRuntimeConfig | null => {
       databaseUrlEnv,
     },
     assetStorage: assetStorageFromEnv(),
+    email: parseEmailSettings({
+      from: process.env.HANDOFF_EMAIL_FROM,
+      provider: process.env.HANDOFF_EMAIL_PROVIDER?.trim(),
+      module: process.env.HANDOFF_EMAIL_MODULE,
+      options: process.env.HANDOFF_EMAIL_OPTIONS,
+    }),
   };
 };
 
@@ -168,6 +178,7 @@ export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
           databaseUrlEnv,
         },
         assetStorage,
+        email: parseEmailSettings(parsed?.email ?? {}),
       };
       return cached;
     }

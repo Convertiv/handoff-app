@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getRegistryInstallationState, installRegistry } from '@handoff/registry/auth';
 import { allowApiMethods, prepareRegistryApi } from '../../lib/auth/api';
 import { canonicalRegistryUrl, registryAuthSecret } from '../../lib/auth/config';
-import { registryEmailIsConfigured } from '../../lib/auth/email';
+import { missingRegistryEmailSettings, registryEmailIsConfigured, registryEmailProviderName } from '../../lib/auth/email';
 
 const check = (id: string, label: string, ok: boolean, message: string, optional = false) => ({
   id,
@@ -60,8 +60,8 @@ export default async function installHandler(req: NextApiRequest, res: NextApiRe
         'Email delivery',
         registryEmailIsConfigured(),
         registryEmailIsConfigured()
-          ? 'Resend delivery is configured.'
-          : 'Optional. Set RESEND_API_KEY and AUTH_FROM_EMAIL, or deliver invitation links manually.',
+          ? `Delivery through ${registryEmailProviderName()} is configured.`
+          : `Optional. Set ${missingRegistryEmailSettings().join(', ')}, or deliver invitation links manually.`,
         true
       ),
     ];
