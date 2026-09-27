@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import * as React from 'react';
 
 import { cn } from '../../lib/utils';
+import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from '../ui/sheet';
 import { AiConversation } from './AiConversation';
 import { DOCK_WIDTH_VAR, fitWidth, MAX_WIDTH, MIN_WIDTH, type DockState } from './dockState';
@@ -19,15 +20,9 @@ import { DOCK_WIDTH_VAR, fitWidth, MAX_WIDTH, MIN_WIDTH, type DockState } from '
 const RESIZE_STEP = 16;
 
 const IconButton: React.FC<{ label: string; onClick: () => void; children: React.ReactNode }> = ({ label, onClick, children }) => (
-  <button
-    type="button"
-    onClick={onClick}
-    title={label}
-    aria-label={label}
-    className="focus-visible:ring-ai-via/50 outline-hidden flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground focus-visible:ring-2"
-  >
+  <Button type="button" variant="ghost" size="icon-sm" onClick={onClick} title={label} aria-label={label} className="text-muted-foreground">
     {children}
-  </button>
+  </Button>
 );
 
 /**
@@ -77,7 +72,7 @@ const ResizeHandle: React.FC<{ width: number; onCommit: (width: number) => void 
       }}
       // Inside the panel: the dock clips its overflow, so a handle across the border loses half its
       // hit area.
-      className="focus-visible:bg-ai-via/60 outline-hidden hover:bg-ai-via/40 absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize transition-colors"
+      className="outline-hidden absolute inset-y-0 left-0 z-10 w-1.5 cursor-col-resize transition-colors hover:bg-border focus-visible:bg-ring"
     />
   );
 };
@@ -125,8 +120,9 @@ export const AiAssistantPanel: React.FC<{
       inert={!state.open}
       style={{ width: `var(${DOCK_WIDTH_VAR}, 0px)` }}
       className={cn(
-        'ai-dock fixed inset-y-0 right-0 z-50 flex flex-col overflow-hidden bg-background',
-        state.open && 'border-l shadow-[-1px_0_3px_0_rgba(0,0,0,0.06)]'
+        // Below the app header, which reaches across the dock's column through `.ai-dock-bleed`.
+        'ai-dock top-17 fixed bottom-0 right-0 z-40 flex flex-col overflow-hidden bg-background',
+        state.open && 'border-l'
       )}
     >
       {/* Kept mounted after the first open, so closing preserves the scroll position and an unsent draft. */}

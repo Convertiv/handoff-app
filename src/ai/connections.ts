@@ -74,8 +74,9 @@ const toConnectionSettings = (input: unknown): AiConnectionSettings | null => {
       : typeof reference?.$env === 'string'
         ? reference.$env
         : undefined;
+  // A repeated model would be two picker entries for one choice, so the first occurrence wins.
   const models = Array.isArray(raw.models)
-    ? raw.models.filter((model): model is string => typeof model === 'string' && !!model.trim())
+    ? [...new Set(raw.models.filter((model): model is string => typeof model === 'string' && !!model.trim()).map((model) => model.trim()))]
     : [];
   const options =
     raw.options && typeof raw.options === 'object' && !Array.isArray(raw.options) ? (raw.options as Record<string, unknown>) : undefined;

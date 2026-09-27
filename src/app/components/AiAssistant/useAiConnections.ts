@@ -12,9 +12,20 @@ export interface AiConnection {
   configured: boolean;
 }
 
+/** One model this reader can run, as `<connectionId>/<model>`. */
+export interface AiModelOption {
+  id: string;
+  connectionId: string;
+  label: string;
+  model: string;
+}
+
 export interface AiConnectionsState {
-  /** Every `<connectionId>/<model>` this reader can run right now, in declaration order. */
-  models: { id: string; label: string; model: string }[];
+  /**
+   * Every model this reader can run right now, grouped by connection. Connections and their models
+   * keep the order the config declares, which is also the order the server falls back through.
+   */
+  models: AiModelOption[];
   defaultModel: string | null;
   /** Whether this deployment has an account page where a reader can add a key. */
   canAddKeys: boolean;
@@ -26,7 +37,7 @@ export interface AiConnectionsState {
 const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
 
 /**
- * The models the assistant may offer. Loaded once the modal is first opened rather than on every
+ * The models the assistant may offer. Loaded once the assistant is first opened rather than on every
  * page, so a reader who never asks a question pays nothing for the feature.
  */
 export const useAiConnections = (active: boolean): AiConnectionsState => {
@@ -46,7 +57,12 @@ export const useAiConnections = (active: boolean): AiConnectionsState => {
       models: body.connections
         .filter((connection) => connection.configured)
         .flatMap((connection) =>
-          (connection.models ?? []).map((model) => ({ id: `${connection.id}/${model}`, label: connection.label, model }))
+          (connection.models ?? []).map((model) => ({
+            id: `${connection.id}/${model}`,
+            connectionId: connection.id,
+            label: connection.label,
+            model,
+          }))
         ),
       defaultModel: body.defaultModel,
       canAddKeys: body.canAddKeys,

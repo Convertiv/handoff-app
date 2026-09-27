@@ -1,20 +1,34 @@
 'use client';
 
 import { getToolOrDynamicToolName, isDynamicToolUIPart, isToolUIPart, type UIMessage } from 'ai';
-import { ArrowRight, ArrowUpRight, Square, SquarePen, Wrench } from 'lucide-react';
+import {
+  ArrowUp,
+  ArrowUpRight,
+  Check,
+  CircleAlert,
+  Copy,
+  Layers,
+  Lightbulb,
+  Loader2,
+  MessageSquareText,
+  Square,
+  SquarePen,
+} from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { cn, stripBasePath } from '../../lib/utils';
+import { stripBasePath } from '../../lib/utils';
 import { MarkdownComponents } from '../Markdown/MarkdownComponents';
+import { Bubble, BubbleContent } from '../ui/bubble';
 import { Button } from '../ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { AiEdge, AiMark } from './AiMark';
+import { Marker, MarkerContent, MarkerIcon } from '../ui/marker';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '../ui/select';
+import { toolResultCard } from './AiToolResult';
 import { toolCallLabel } from './toolLabel';
 import { useAiChat } from './useAiChat';
-import { useAiConnections } from './useAiConnections';
+import { useAiConnections, type AiModelOption } from './useAiConnections';
 
 /**
  * The docs assistant: a conversation with the design system, grounded in the same records the MCP
@@ -26,9 +40,14 @@ import { useAiConnections } from './useAiConnections';
  */
 
 /** Openers that name what the assistant can reach, because the tools answer from this catalog. */
-const STARTERS = ['What components are in this design system?', 'Which color tokens are defined?', 'What typography styles are available?'];
+const BROWSE_PROMPT = 'What components are in this design system?';
+const PROMPT_SUGGESTIONS = [
+  'Which color tokens are defined, and what is each one for?',
+  'What typography styles are available, and when should I use each?',
+  'Which components accept an icon, and how do I pass one?',
+];
 
-const COMPOSER_MAX_HEIGHT = 128;
+const COMPOSER_MAX_HEIGHT = 160;
 
 /** Within this distance of the end, the transcript follows the answer. Past it, the reader reads. */
 const FOLLOW_THRESHOLD_PX = 48;
@@ -42,7 +61,6 @@ const sourcesOf = (message: UIMessage): { url: string; title: string }[] => {
   return [...seen].map(([url, title]) => ({ url, title }));
 };
 
-/**
 /**
  * A page of this app, not a file it serves. A rendered preview and an API route share the origin,
  * and the router answers a soft navigation to either with its 404 page.
@@ -82,44 +100,33 @@ const AnswerLink: React.FC<{ href?: string; children?: React.ReactNode }> = ({ h
 
 const AnswerMarkdown = { ...MarkdownComponents, a: AnswerLink };
 
-const AnswerMark: React.FC<{ busy?: boolean }> = ({ busy = false }) => (
-  <span className="relative mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center overflow-hidden rounded-md p-px">
-    {busy ? <AiEdge motion="always" /> : <span aria-hidden="true" className="absolute inset-0 bg-border" />}
-    <span className="relative flex h-full w-full items-center justify-center rounded-[5px] bg-background">
-      <AiMark className="h-3 w-3" />
-    </span>
-  </span>
-);
-
 /**
- * A call that is still in flight carries a moving highlight. That highlight is the only progress
- * signal the transport gives before the output arrives.
+ * One tool call as a status row. The spinner is the only progress signal the transport gives before
+ * the output arrives.
  */
-const ToolRow: React.FC<{ label: string; running: boolean }> = ({ label, running }) => (
-  <div
-    className={cn(
-      'flex w-fit max-w-full items-center gap-2 rounded-md border bg-muted/40 px-2 py-1 text-xs text-muted-foreground',
-      running && 'animate-ai-shimmer bg-[linear-gradient(90deg,transparent,hsl(var(--ai-via)/0.18),transparent)] bg-[length:200%_100%]'
-    )}
-  >
-    <Wrench aria-hidden="true" className="h-3 w-3 shrink-0" />
-    <span className="truncate">{label}</span>
-  </div>
+const ToolRow: React.FC<{ label: string; state: 'running' | 'done' | 'failed' }> = ({ label, state }) => (
+  <Marker className="text-xs">
+    <MarkerIcon>
+      {state === 'running' ? (
+        <Loader2 className="size-3.5 animate-spin" />
+      ) : state === 'failed' ? (
+        <CircleAlert className="size-3.5 text-destructive" />
+      ) : (
+        <Check className="size-3.5" />
+      )}
+    </MarkerIcon>
+    <MarkerContent className="truncate">{label}</MarkerContent>
+  </Marker>
 );
 
-/** A quiet progress signal for time that has no tool activity or answer text of its own. */
-const WorkingDots: React.FC = () => (
-  <span role="status" className="inline-flex h-6 items-center gap-1">
-    <span className="sr-only">The assistant is working.</span>
-    {[0, 1, 2].map((index) => (
-      <span
-        key={index}
-        aria-hidden="true"
-        className="animate-ai-dot h-1.5 w-1.5 rounded-full bg-muted-foreground opacity-35"
-        style={{ animationDelay: `${index * 160}ms` }}
-      />
-    ))}
-  </span>
+/** Progress for time that has no tool activity or answer text of its own. */
+const Thinking: React.FC = () => (
+  <Marker role="status">
+    <MarkerIcon>
+      <Loader2 className="animate-spin" />
+    </MarkerIcon>
+    <MarkerContent>Thinking…</MarkerContent>
+  </Marker>
 );
 
 const hasTextContent = (message: UIMessage): boolean =>
@@ -133,12 +140,11 @@ const hasRunningTool = (message: UIMessage): boolean =>
 
 const Answer: React.FC<{ message: UIMessage; waitingForText: boolean }> = ({ message, waitingForText }) => {
   const sources = sourcesOf(message);
-  const showWorkingDots = waitingForText && !hasTextContent(message) && !hasRunningTool(message);
+  const showThinking = waitingForText && !hasTextContent(message) && !hasRunningTool(message);
 
   return (
-    <div className="flex gap-3">
-      <AnswerMark />
-      <div className="min-w-0 flex-1 space-y-2">
+    <Bubble variant="ghost">
+      <BubbleContent className="flex w-full flex-col gap-2.5 overflow-visible">
         {message.parts.map((part, index) => {
           if (part.type === 'text') {
             return (
@@ -157,12 +163,19 @@ const Answer: React.FC<{ message: UIMessage; waitingForText: boolean }> = ({ mes
             );
           }
           if (isToolUIPart(part) || isDynamicToolUIPart(part)) {
-            const running = part.state !== 'output-available' && part.state !== 'output-error';
-            return <ToolRow key={index} label={toolCallLabel(getToolOrDynamicToolName(part), part.input)} running={running} />;
+            const name = getToolOrDynamicToolName(part);
+            const card = part.state === 'output-available' ? toolResultCard(name, part.output) : null;
+            const state = part.state === 'output-available' ? 'done' : part.state === 'output-error' ? 'failed' : 'running';
+            return (
+              <div key={index} className="flex flex-col gap-2">
+                <ToolRow label={toolCallLabel(name, part.input)} state={state} />
+                {card}
+              </div>
+            );
           }
           return null;
         })}
-        {showWorkingDots && <WorkingDots />}
+        {showThinking && <Thinking />}
         {sources.length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-1">
             {/*
@@ -173,7 +186,7 @@ const Answer: React.FC<{ message: UIMessage; waitingForText: boolean }> = ({ mes
               <Link
                 key={source.url}
                 href={stripBasePath(source.url)}
-                className="hover:border-ai-via/50 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                className="inline-flex items-center gap-1.5 rounded-full border bg-muted/40 px-2.5 py-1 text-xs text-muted-foreground no-underline transition-colors hover:bg-muted hover:text-foreground"
               >
                 <ArrowUpRight className="h-3 w-3" />
                 {source.title}
@@ -181,8 +194,8 @@ const Answer: React.FC<{ message: UIMessage; waitingForText: boolean }> = ({ mes
             ))}
           </div>
         )}
-      </div>
-    </div>
+      </BubbleContent>
+    </Bubble>
   );
 };
 
@@ -195,6 +208,50 @@ const hasAnswerContent = (message: UIMessage): boolean =>
   hasTextContent(message) ||
   message.parts.some((part) => part.type === 'source-url' || isToolUIPart(part) || isDynamicToolUIPart(part));
 
+/** "just now", then minutes, then hours, then a date. Read at render, since precision is not the point. */
+const timeAgo = (at: number): string => {
+  const seconds = Math.max(0, Math.floor((Date.now() - at) / 1000));
+  if (seconds < 60) return 'just now';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  return new Date(at).toLocaleDateString();
+};
+
+/** When the question was sent. Messages saved before this was recorded have none. */
+const sentAtOf = (message: UIMessage): number | undefined => {
+  const sentAt = (message.metadata as { sentAt?: unknown } | undefined)?.sentAt;
+  return typeof sentAt === 'number' ? sentAt : undefined;
+};
+
+/** The reader's question, with when it was sent and a copy action revealed on hover or focus. */
+const Question: React.FC<{ message: UIMessage }> = ({ message }) => {
+  const text = message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('');
+  const sentAt = sentAtOf(message);
+
+  return (
+    <div className="group flex flex-col items-end gap-2">
+      <span className="sr-only">You said:</span>
+      <Bubble variant="secondary" align="end">
+        <BubbleContent className="whitespace-pre-wrap">{text}</BubbleContent>
+      </Bubble>
+      <div className="-mt-1.5 flex h-5 items-center justify-end gap-2 text-[11px] text-muted-foreground opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+        {sentAt !== undefined && <span>{timeAgo(sentAt)}</span>}
+        <button
+          type="button"
+          title="Copy message"
+          aria-label="Copy message"
+          onClick={() => void navigator.clipboard?.writeText(text)}
+          className="transition-colors hover:text-foreground"
+        >
+          <Copy className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const Conversation: React.FC<{ messages: UIMessage[]; thinking: boolean }> = ({ messages, thinking }) => {
   const visible = messages.filter((message) => message.role === 'user' || hasAnswerContent(message));
   const activeMessage = messages[messages.length - 1];
@@ -203,56 +260,87 @@ const Conversation: React.FC<{ messages: UIMessage[]; thinking: boolean }> = ({ 
   const waiting = thinking && visible[visible.length - 1]?.role !== 'assistant';
 
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-4">
       {visible.map((message) =>
         message.role === 'user' ? (
-          <div key={message.id} className="flex justify-end">
-            <p className="max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-muted px-3.5 py-2 text-sm text-foreground">
-              {message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('')}
-            </p>
-          </div>
+          <Question key={message.id} message={message} />
         ) : (
           <Answer key={message.id} message={message} waitingForText={thinking && message.id === activeMessage?.id} />
         )
       )}
-      {waiting && (
-        <div className="flex items-center gap-3">
-          <AnswerMark />
-          <WorkingDots />
-        </div>
-      )}
+      {waiting && <Thinking />}
     </div>
   );
 };
 
-const EmptyState: React.FC<{ onPick: (text: string) => void }> = ({ onPick }) => (
-  <div className="mx-auto flex h-full w-full max-w-sm flex-col items-center justify-center px-2 py-10 text-center">
-    <AiMark className="mb-5 h-9 w-9" />
-    <h3 className="text-lg font-medium tracking-tight">What do you want to explore?</h3>
-    <p className="mt-2 text-sm leading-6 text-muted-foreground">Ask about the components, tokens and guidance published here.</p>
-    <div className="mt-7 flex w-full flex-wrap justify-center gap-2">
-      {STARTERS.map((starter) => (
-        <button
-          key={starter}
-          type="button"
-          onClick={() => onPick(starter)}
-          className="focus-visible:ring-ai-via/50 outline-hidden inline-flex min-h-9 max-w-full items-center rounded-full border border-border/60 bg-muted/30 px-3.5 py-1.5 text-center text-sm text-muted-foreground transition-colors hover:border-border hover:bg-muted/60 hover:text-foreground focus-visible:ring-2"
-        >
-          {starter}
-        </button>
-      ))}
-    </div>
+/** The opening panel: a heading and a few ways in, sitting just above the composer. */
+const PanelIntro: React.FC<{ title: string; children?: React.ReactNode }> = ({ title, children }) => (
+  <div className="flex min-h-full flex-col justify-end gap-3 p-4">
+    <span className="mb-1 flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
+      <MessageSquareText className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+    </span>
+    <p className="text-sm font-semibold text-foreground">{title}</p>
+    {children}
   </div>
 );
 
+const IntroAction: React.FC<{ icon: React.ReactNode; onClick: () => void; expanded?: boolean; children: React.ReactNode }> = ({
+  icon,
+  onClick,
+  expanded,
+  children,
+}) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-expanded={expanded}
+    className="flex w-full items-center gap-2.5 rounded-lg px-2 py-2 text-left text-sm text-muted-foreground transition hover:bg-muted hover:text-foreground"
+  >
+    {icon}
+    <span className="truncate">{children}</span>
+  </button>
+);
+
+/** "Try a prompt" drops the example into the composer rather than sending it, so the reader can adjust it first. */
+const EmptyState: React.FC<{ onAsk: (text: string) => void; onDraft: (text: string) => void }> = ({ onAsk, onDraft }) => {
+  const [suggestionsOpen, setSuggestionsOpen] = React.useState(false);
+
+  return (
+    <PanelIntro title="Explore and understand your design system">
+      <div className="space-y-0.5">
+        <IntroAction icon={<Layers className="h-4 w-4 shrink-0" />} onClick={() => onAsk(BROWSE_PROMPT)}>
+          Browse the components...
+        </IntroAction>
+        <IntroAction
+          icon={<Lightbulb className="h-4 w-4 shrink-0" />}
+          onClick={() => setSuggestionsOpen((open) => !open)}
+          expanded={suggestionsOpen}
+        >
+          Try a prompt...
+        </IntroAction>
+        {suggestionsOpen && (
+          <div className="space-y-2 pt-1">
+            {PROMPT_SUGGESTIONS.map((text) => (
+              <button
+                key={text}
+                type="button"
+                onClick={() => onDraft(text)}
+                className="block w-full rounded-lg bg-muted/60 px-2 py-2 text-left text-xs leading-snug text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              >
+                {text}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </PanelIntro>
+  );
+};
+
 /** Takes the place of the conversation when no model is reachable for this reader. */
 const Unavailable: React.FC<{ canAddKeys: boolean; failed: boolean }> = ({ canAddKeys, failed }) => (
-  <div className="flex h-full flex-col items-center justify-center px-2 py-10 text-center">
-    <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl border bg-muted/50">
-      <AiMark className="h-6 w-6 text-muted-foreground" muted />
-    </span>
-    <h3 className="text-base font-medium">{canAddKeys ? 'Add a provider key' : 'The assistant is unavailable'}</h3>
-    <p className="mt-1.5 max-w-sm text-sm text-muted-foreground">
+  <PanelIntro title={canAddKeys ? 'Add a provider key' : 'The assistant is unavailable'}>
+    <p className="text-xs text-muted-foreground">
       {failed
         ? 'The list of AI providers could not be loaded.'
         : canAddKeys
@@ -262,14 +350,63 @@ const Unavailable: React.FC<{ canAddKeys: boolean; failed: boolean }> = ({ canAd
     {canAddKeys && (
       <Link
         href="/account/ai"
-        className="hover:border-ai-via/50 mt-4 inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-accent/50"
+        className="-mx-2 flex items-center gap-2.5 rounded-lg px-2 py-2 text-sm text-muted-foreground no-underline transition hover:bg-muted hover:text-foreground"
       >
-        Add a key
-        <ArrowUpRight className="h-3.5 w-3.5" />
+        <ArrowUpRight className="h-4 w-4 shrink-0" />
+        Add a key...
       </Link>
     )}
-  </div>
+  </PanelIntro>
 );
+
+/**
+ * The models grouped under their connection, in the order the config declares both. That order is
+ * the author's preference and the server's fallback order, so it is kept rather than sorted.
+ *
+ * The trigger names the model alone, and adds its connection only when another connection offers a
+ * model of the same name.
+ */
+const ModelPicker: React.FC<{ models: AiModelOption[]; value: string | null; onChange: (id: string) => void }> = ({
+  models,
+  value,
+  onChange,
+}) => {
+  // A `Map` keeps insertion order for every key; a plain object would move an integer-like id first.
+  const byConnection = new Map<string, AiModelOption[]>();
+  for (const entry of models) byConnection.set(entry.connectionId, [...(byConnection.get(entry.connectionId) ?? []), entry]);
+  const groups = [...byConnection.values()];
+  const selected = models.find((entry) => entry.id === value);
+  const ambiguous = selected ? models.some((entry) => entry.model === selected.model && entry.id !== selected.id) : false;
+
+  return (
+    <Select value={value ?? undefined} onValueChange={onChange}>
+      <SelectTrigger
+        aria-label="Model"
+        title={selected ? `${selected.label} · ${selected.model}` : undefined}
+        className="h-8 w-auto min-w-0 gap-1 border-0 px-2 text-xs font-medium text-muted-foreground shadow-none hover:bg-muted hover:text-foreground focus:ring-0"
+      >
+        <SelectValue>
+          <span className="truncate">{selected && (ambiguous ? `${selected.label} · ${selected.model}` : selected.model)}</span>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent align="start" className="max-w-72">
+        {groups.map((group, index) => (
+          <React.Fragment key={group[0].connectionId}>
+            {index > 0 && <SelectSeparator />}
+            <SelectGroup>
+              <SelectLabel className="px-2 pb-1 pt-1.5 text-xs font-medium text-muted-foreground">{group[0].label}</SelectLabel>
+              {group.map((entry) => (
+                <SelectItem key={entry.id} value={entry.id} className="text-xs">
+                  {entry.model}
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          </React.Fragment>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+};
 
 export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactNode }> = ({ active, controls }) => {
   const [input, setInput] = React.useState('');
@@ -290,11 +427,16 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
   const busy = status === 'submitted' || status === 'streaming';
   const hasModel = connections.models.length > 0;
 
+  const draft = (text: string) => {
+    setInput(text);
+    composerRef.current?.focus();
+  };
+
   const ask = (text: string) => {
     if (!text.trim() || busy || !selectedModel) return;
     setInput('');
     following.current = true;
-    void sendMessage({ text: text.trim() }, { body: { model: selectedModel } });
+    void sendMessage({ text: text.trim(), metadata: { sentAt: Date.now() } }, { body: { model: selectedModel } });
     composerRef.current?.focus();
   };
 
@@ -342,59 +484,65 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="h-17 flex shrink-0 items-center justify-between gap-2 px-3 shadow-[0_1px_0_var(--color-border)]">
-        <h2 className="flex min-w-0 items-center gap-2.5 text-sm font-medium">
-          <AiMark className="h-4 w-4 shrink-0" />
-          <span className="truncate">Ask the design system</span>
-        </h2>
-        <div className="flex shrink-0 items-center gap-1">
-          {/*
-            A soft chip and not an outlined box. It shares this corner with the panel's own controls,
-            and competing rectangles there read as a toolbar that the header does not have.
-          */}
-          {canStartFresh && (
-            <button
-              type="button"
-              onClick={() => {
-                startFresh();
-                setInput('');
-                composerRef.current?.focus();
-              }}
-              title="New conversation"
-              className="group flex h-7 shrink-0 items-center gap-1.5 rounded-full bg-muted/60 pl-2 pr-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <SquarePen className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-rotate-12" />
-              New
-            </button>
-          )}
-          {controls}
-        </div>
+      <div className="flex h-11 shrink-0 items-center justify-end gap-0.5 px-2">
+        {canStartFresh && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => {
+              startFresh();
+              setInput('');
+              composerRef.current?.focus();
+            }}
+            title="New conversation"
+            aria-label="New conversation"
+            className="text-muted-foreground"
+          >
+            <SquarePen className="h-4 w-4" />
+          </Button>
+        )}
+        {controls}
       </div>
 
-      <div ref={transcriptRef} onScroll={onTranscriptScroll} className="min-h-0 flex-1 overflow-y-auto px-4 pb-10 pt-5">
+      <div ref={transcriptRef} onScroll={onTranscriptScroll} className="min-h-0 flex-1 overflow-y-auto">
         {messages.length > 0 ? (
-          <Conversation messages={messages} thinking={busy} />
+          <div className="flex flex-col gap-4 px-3 pb-4 pt-1">
+            <Conversation messages={messages} thinking={busy} />
+            {answeredNothing && (
+              <Marker>
+                <MarkerIcon>
+                  <CircleAlert />
+                </MarkerIcon>
+                <MarkerContent>
+                  The model stopped without an answer. A long conversation is the usual cause, so a new one often helps.
+                </MarkerContent>
+              </Marker>
+            )}
+            {error && (
+              <Marker>
+                <MarkerIcon>
+                  <CircleAlert className="text-destructive" />
+                </MarkerIcon>
+                <MarkerContent className="text-destructive">{error.message}</MarkerContent>
+              </Marker>
+            )}
+          </div>
         ) : connections.loading ? null : hasModel ? (
-          <EmptyState onPick={ask} />
+          <EmptyState onAsk={ask} onDraft={draft} />
         ) : (
           <Unavailable canAddKeys={connections.canAddKeys} failed={connections.failed} />
         )}
-        {answeredNothing && (
-          <p className="mt-4 text-sm text-muted-foreground">
-            The model stopped without writing an answer. A long conversation is the usual cause, so starting a new one often helps.
-          </p>
-        )}
-        {error && <p className="mt-4 text-sm text-destructive">{error.message}</p>}
       </div>
 
-      <div className="pointer-events-none relative z-10 -mt-10 shrink-0 bg-linear-to-t from-background from-65% to-transparent px-3 pb-3 pt-10">
-        <form
-          onSubmit={(event) => {
-            event.preventDefault();
-            ask(input);
-          }}
-          className="focus-within:border-ai-via/60 pointer-events-auto rounded-2xl border bg-background/95 shadow-[0_8px_28px_-10px_rgba(15,23,42,0.25)] backdrop-blur-sm transition-[border-color,box-shadow] dark:shadow-[0_8px_28px_-10px_rgba(0,0,0,0.7)]"
-        >
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          ask(input);
+        }}
+        className="shrink-0 border-t p-3"
+      >
+        <div className="px-1 pt-1.5">
           <textarea
             ref={composerRef}
             value={input}
@@ -406,53 +554,41 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
               }
             }}
             rows={1}
-            placeholder={hasModel ? 'Ask about a component, token or guideline…' : 'The assistant is unavailable'}
+            aria-label="Question"
+            placeholder={hasModel ? 'Ask about your design system...' : 'The assistant is unavailable'}
             disabled={!hasModel}
-            className="outline-hidden block w-full resize-none bg-transparent px-4 pb-2 pt-4 text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed"
+            className="outline-hidden block w-full resize-none border-0 bg-transparent p-0 text-sm leading-6 text-foreground placeholder:text-muted-foreground disabled:cursor-not-allowed"
           />
-          <div className="flex items-center justify-between gap-3 px-3 pb-3">
-            {connections.models.length > 1 ? (
-              <Select value={selectedModel ?? undefined} onValueChange={chooseModel}>
-                <SelectTrigger className="h-7 w-auto min-w-0 gap-1 border-0 px-1.5 text-xs text-muted-foreground shadow-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent align="start">
-                  {connections.models.map((entry) => (
-                    <SelectItem key={entry.id} value={entry.id} className="text-xs">
-                      {entry.label} · {entry.model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <span className="truncate px-1.5 text-xs text-muted-foreground">
-                {connections.models[0] ? `${connections.models[0].label} · ${connections.models[0].model}` : ''}
-              </span>
-            )}
-            {busy ? (
-              <button
-                type="button"
-                onClick={() => void stop()}
-                title="Stop"
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <Square className="h-3 w-3 fill-current" />
-              </button>
-            ) : (
-              <Button
-                type="submit"
-                size="sm"
-                title="Send"
-                disabled={!input.trim() || !hasModel}
-                className="group shrink-0 [&_svg]:size-3.5"
-              >
-                Send
-                <ArrowRight className="inline-block transition-transform group-hover:translate-x-1" />
-              </Button>
-            )}
-          </div>
-        </form>
-      </div>
+        </div>
+        <div className="flex items-center justify-between gap-2 px-1 pb-1 pt-2">
+          {hasModel ? <ModelPicker models={connections.models} value={selectedModel} onChange={chooseModel} /> : <span />}
+          {busy ? (
+            // The spinner doubles as the stop control, and shows its square on hover.
+            <Button
+              type="button"
+              size="icon-sm"
+              onClick={() => void stop()}
+              title="Stop"
+              aria-label="Stop"
+              className="group shrink-0 rounded-full"
+            >
+              <Loader2 className="h-4 w-4 animate-spin group-hover:hidden" />
+              <Square className="hidden h-3 w-3 fill-current group-hover:block" />
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              size="icon-sm"
+              title="Send (Enter)"
+              aria-label="Send"
+              disabled={!input.trim() || !hasModel}
+              className="shrink-0 rounded-full"
+            >
+              <ArrowUp className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </form>
     </div>
   );
 };

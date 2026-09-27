@@ -55,15 +55,8 @@
 	--radius-md: calc(var(--radius) - 2px);
 	--radius-sm: calc(var(--radius) - 4px);
 
-	--color-ai-from: hsl(var(--ai-from));
-	--color-ai-via: hsl(var(--ai-via));
-	--color-ai-to: hsl(var(--ai-to));
-
 	--animate-accordion-down: accordion-down 0.2s ease-out;
 	--animate-accordion-up: accordion-up 0.2s ease-out;
-	--animate-ai-orbit: ai-orbit 5s linear infinite;
-	--animate-ai-shimmer: ai-shimmer 1.6s linear infinite;
-	--animate-ai-dot: ai-dot 1.2s ease-in-out infinite;
 
 	@keyframes accordion-down {
 		from {
@@ -79,34 +72,6 @@
 		}
 		to {
 			height: 0;
-		}
-	}
-	/* Drives the conic border of the assistant's controls. */
-	@keyframes ai-orbit {
-		to {
-			transform: rotate(360deg);
-		}
-	}
-	/* Moves a highlight across a tool row while the tool still runs. */
-	@keyframes ai-shimmer {
-		from {
-			background-position: 200% 0;
-		}
-		to {
-			background-position: -200% 0;
-		}
-	}
-	/* Gives otherwise idle wait time a compact progress signal. */
-	@keyframes ai-dot {
-		0%,
-		60%,
-		100% {
-			opacity: 0.35;
-			transform: translateY(0);
-		}
-		30% {
-			opacity: 1;
-			transform: translateY(-2px);
 		}
 	}
 }
@@ -161,9 +126,6 @@
 		--sidebar-accent-foreground: 240 5.9% 10%;
 		--sidebar-border: 220 13% 91%;
 		--sidebar-ring: 217.2 91.2% 59.8%;
-		--ai-from: 258 90% 62%;
-		--ai-via: 217 91% 60%;
-		--ai-to: 190 95% 50%;
 	}
 
 	.dark {
@@ -194,9 +156,6 @@
 		--sidebar-accent-foreground: 240 4.8% 95.9%;
 		--sidebar-border: 240 3.7% 15.9%;
 		--sidebar-ring: 217.2 91.2% 59.8%;
-		--ai-from: 262 90% 74%;
-		--ai-via: 214 95% 72%;
-		--ai-to: 187 95% 62%;
 	}
 }
 
@@ -215,11 +174,18 @@
 	padding-right: var(--ai-dock-width, 0px);
 }
 
+/* The app header keeps the full width, and the dock starts below it. */
+.ai-dock-bleed {
+	margin-right: calc(-1 * var(--ai-dock-width, 0px));
+}
+
 .ai-dock-inset,
+.ai-dock-bleed,
 .ai-dock {
 	transition:
 		width 0.2s ease-out,
-		padding-right 0.2s ease-out;
+		padding-right 0.2s ease-out,
+		margin-right 0.2s ease-out;
 }
 
 .ai-assistant-trigger {
@@ -243,17 +209,14 @@
 }
 
 [data-ai-dock-resizing] .ai-dock-inset,
+[data-ai-dock-resizing] .ai-dock-bleed,
 [data-ai-dock-resizing] .ai-dock {
 	transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-	/* This also matches the variants. The sweep in the header is `group-hover:animate-ai-orbit`. */
-	[class*='animate-ai-'] {
-		animation: none;
-	}
-
 	.ai-dock-inset,
+	.ai-dock-bleed,
 	.ai-dock,
 	.ai-assistant-trigger {
 		transition: none;

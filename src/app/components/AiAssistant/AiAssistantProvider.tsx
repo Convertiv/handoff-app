@@ -1,5 +1,6 @@
 'use client';
 
+import { Sparkles } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import * as React from 'react';
@@ -7,7 +8,6 @@ import * as React from 'react';
 import { useIsMobile } from '../../hooks/use-mobile';
 import { SheetClose } from '../ui/sheet';
 import { AiAssistantPanel } from './AiAssistantPanel';
-import { AiEdge, AiMark } from './AiMark';
 import { DEFAULT_DOCK, DOCK_WIDTH_VAR, clampWidth, dockWidth, isAiAssistantRoute, readDock, writeDock, type DockState } from './dockState';
 
 /**
@@ -167,13 +167,8 @@ const useShortcutLabel = (): string => {
 };
 
 /**
- * The header control.
- *
- * Nothing moves at rest. This control sits in the chrome of every page, where constant motion is a
- * distraction and not a signal. The motion belongs to hover.
- *
- * It must not look like a search field. This control opens a conversation, not a result list, and
- * the app has no search to confuse it with.
+ * The header control. It must not look like a search field: it opens a conversation, not a result
+ * list.
  */
 export function AiAssistantTrigger() {
   const assistant = useAiAssistant();
@@ -187,20 +182,11 @@ export function AiAssistantTrigger() {
         onClick={assistant.toggle}
         title="Ask the design system"
         aria-expanded={assistant.isOpen}
-        className="outline-hidden focus-visible:ring-ai-via/50 group relative inline-flex h-8 shrink-0 items-center rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        className="outline-hidden inline-flex h-8 shrink-0 items-center gap-2 rounded-full border bg-background px-3 shadow-sm transition-colors hover:bg-muted focus-visible:ring-1 focus-visible:ring-ring"
       >
-        <span
-          aria-hidden="true"
-          className="bg-linear-to-r from-ai-from via-ai-via to-ai-to pointer-events-none absolute -inset-1 rounded-full opacity-0 blur-md transition-opacity duration-500 group-hover:opacity-40"
-        />
-        <span className="relative flex h-full items-center overflow-hidden rounded-full p-px">
-          <AiEdge motion="hover" className="opacity-70 transition-opacity duration-500 group-hover:opacity-100" />
-          <span className="relative flex h-full items-center gap-2 rounded-full bg-background px-3">
-            <AiMark className="h-4 w-4 transition-transform duration-500 group-hover:rotate-90" />
-            <span className="text-sm font-medium">Ask</span>
-            <kbd className="rounded-sm border bg-muted px-1 font-mono text-[10px] leading-[14px] text-muted-foreground">{shortcut}</kbd>
-          </span>
-        </span>
+        <Sparkles className="h-4 w-4 text-primary" />
+        <span className="text-sm font-medium">Ask</span>
+        <kbd className="rounded-sm border bg-muted px-1 font-mono text-[10px] leading-[14px] text-muted-foreground">{shortcut}</kbd>
       </button>
     </span>
   );
@@ -219,13 +205,10 @@ export function AiAssistantMobileTrigger() {
       <button
         type="button"
         onClick={assistant.open}
-        className="outline-hidden focus-visible:ring-ai-via/50 group relative flex w-full items-center overflow-hidden rounded-lg p-px text-left focus-visible:ring-2"
+        className="outline-hidden flex w-full items-center gap-2.5 rounded-lg border px-3 py-2.5 text-left transition-colors hover:bg-muted focus-visible:ring-1 focus-visible:ring-ring"
       >
-        <AiEdge motion="hover" className="opacity-70 transition-opacity duration-500 group-hover:opacity-100" />
-        <span className="relative flex w-full items-center gap-2.5 rounded-[7px] bg-background px-3 py-2.5">
-          <AiMark className="h-4 w-4" />
-          <span className="text-sm font-medium">Ask</span>
-        </span>
+        <Sparkles className="h-4 w-4 text-primary" />
+        <span className="text-sm font-medium">Ask</span>
       </button>
     </SheetClose>
   );

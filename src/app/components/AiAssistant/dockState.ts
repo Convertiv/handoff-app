@@ -2,7 +2,7 @@
 
 export const MIN_WIDTH = 320;
 export const MAX_WIDTH = 720;
-export const DEFAULT_WIDTH = 420;
+export const DEFAULT_WIDTH = 320;
 
 /** Below this the assistant overlays the page instead of docking. Matches `useIsMobile`. */
 export const DOCK_BREAKPOINT = 768;
