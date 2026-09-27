@@ -3,7 +3,6 @@ import { authApiUrl, readApiError } from '../../components/Auth/api';
 import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { useSession } from 'next-auth/react';
@@ -83,71 +82,67 @@ function RegistryAccountPage() {
     .toUpperCase();
 
   return (
-    <AccountLayout title="Profile">
-      <Card>
-        <CardHeader>
-          <CardTitle>Profile</CardTitle>
-          <CardDescription>Manage how your account appears in this registry.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {message ? (
-            <Alert variant={message.error ? 'destructive' : 'green'}>
-              <AlertDescription>{message.text}</AlertDescription>
-            </Alert>
-          ) : null}
-          {loading ? (
-            <p className="text-sm text-muted-foreground">Loading profile…</p>
-          ) : user ? (
-            <>
-              <div className="flex items-center gap-4">
-                {avatarUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={avatarUrl} alt="" className="h-16 w-16 rounded-full border object-cover" />
-                ) : (
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-semibold">{initials}</div>
-                )}
-                <div>
-                  <p className="font-medium">{name || user.email}</p>
-                  <Badge variant={user.status === 'deactivated' ? 'destructive' : 'secondary'} className="mt-1">
-                    {user.role}
-                  </Badge>
-                </div>
+    <AccountLayout title="Profile" description="Manage how your account appears in this registry.">
+      <div className="space-y-5">
+        {message ? (
+          <Alert variant={message.error ? 'destructive' : 'green'}>
+            <AlertDescription>{message.text}</AlertDescription>
+          </Alert>
+        ) : null}
+        {loading ? (
+          <p className="text-sm text-muted-foreground">Loading profile…</p>
+        ) : user ? (
+          <>
+            <div className="flex items-center gap-4">
+              {avatarUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={avatarUrl} alt="" className="h-16 w-16 rounded-full border object-cover" />
+              ) : (
+                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted text-lg font-semibold">{initials}</div>
+              )}
+              <div>
+                <p className="font-medium">{name || user.email}</p>
+                <Badge variant={user.status === 'deactivated' ? 'destructive' : 'secondary'} className="mt-1">
+                  {user.role}
+                </Badge>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="account-email">Email</Label>
-                <Input id="account-email" value={user.email} disabled />
-                <p className="text-xs text-muted-foreground">Email addresses cannot be changed.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="account-email">Email</Label>
+              <Input id="account-email" value={user.email} disabled />
+              <p className="text-xs text-muted-foreground">Email addresses cannot be changed.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="account-name">Display name</Label>
+              <Input id="account-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={100} />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <Label htmlFor="account-avatar">Avatar URL</Label>
+                {gravatarUrl ? (
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setAvatarUrl(gravatarUrl)}>
+                    Use Gravatar
+                  </Button>
+                ) : null}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="account-name">Display name</Label>
-                <Input id="account-name" value={name} onChange={(event) => setName(event.target.value)} maxLength={100} />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <Label htmlFor="account-avatar">Avatar URL</Label>
-                  {gravatarUrl ? (
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setAvatarUrl(gravatarUrl)}>
-                      Use Gravatar
-                    </Button>
-                  ) : null}
-                </div>
-                <Input
-                  id="account-avatar"
-                  type="url"
-                  placeholder="https://example.com/avatar.png"
-                  value={avatarUrl}
-                  onChange={(event) => setAvatarUrl(event.target.value)}
-                  maxLength={500}
-                />
-                <p className="text-xs text-muted-foreground">Use an HTTPS image URL, click Use Gravatar, or leave this empty to show your initials.</p>
-              </div>
-              <Button onClick={() => void save()} disabled={saving}>
-                {saving ? 'Saving…' : 'Save changes'}
-              </Button>
-            </>
-          ) : null}
-        </CardContent>
-      </Card>
+              <Input
+                id="account-avatar"
+                type="url"
+                placeholder="https://example.com/avatar.png"
+                value={avatarUrl}
+                onChange={(event) => setAvatarUrl(event.target.value)}
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground">
+                Use an HTTPS image URL, click Use Gravatar, or leave this empty to show your initials.
+              </p>
+            </div>
+            <Button onClick={() => void save()} disabled={saving}>
+              {saving ? 'Saving…' : 'Save changes'}
+            </Button>
+          </>
+        ) : null}
+      </div>
     </AccountLayout>
   );
 }

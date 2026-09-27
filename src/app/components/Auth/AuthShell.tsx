@@ -42,7 +42,7 @@ export function AuthShell({ children, title, description, wide = false, hideNav 
       </Head>
       <div className="min-h-screen bg-background">
         <header className="border-b">
-          <div className="container mx-auto flex h-17 max-w-[1200px] items-center justify-between px-6">
+          <div className={`container mx-auto flex h-17 items-center justify-between px-6 ${wide ? 'max-w-[1500px]' : 'max-w-[1200px]'}`}>
             {hideNav ? (
               <span className="flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -66,7 +66,7 @@ export function AuthShell({ children, title, description, wide = false, hideNav 
             )}
           </div>
         </header>
-        <main className={`container mx-auto px-6 py-10 ${wide ? 'max-w-[1200px]' : 'max-w-xl'}`}>{children}</main>
+        <main className={`container mx-auto px-6 ${wide ? 'max-w-[1500px]' : 'max-w-xl py-10'}`}>{children}</main>
       </div>
     </ThemeProvider>
   );

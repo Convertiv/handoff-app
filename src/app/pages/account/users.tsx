@@ -146,7 +146,7 @@ function RegistryUsersPage() {
   };
 
   return (
-    <AccountLayout title="Users">
+    <AccountLayout title="Users" description="Invite people and manage their access to this registry.">
       <div className="space-y-6">
         <Card>
           <CardHeader>

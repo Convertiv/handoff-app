@@ -101,7 +101,7 @@ function RegistryAiKeysPage() {
   };
 
   return (
-    <AccountLayout title="AI providers">
+    <AccountLayout title="AI providers" description="Add your own keys for the AI providers this site uses.">
       <div className="space-y-6">
         {error && (
           <Alert variant="destructive">
