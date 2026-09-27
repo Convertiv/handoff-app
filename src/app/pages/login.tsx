@@ -1,9 +1,7 @@
-import { Alert, AlertDescription } from '../components/ui/alert';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { CircleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
@@ -16,7 +14,11 @@ const safeCallbackUrl = (value: unknown): string =>
 
 export default function LoginPage() {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
-    return <AuthShell title="Sign in">{null}</AuthShell>;
+    return (
+      <AuthShell title="Sign in" centered>
+        {null}
+      </AuthShell>
+    );
   }
 
   return <RegistryLoginPage />;
@@ -76,25 +78,18 @@ function RegistryLoginPage() {
   };
 
   return (
-    <AuthShell title="Sign in">
+    <AuthShell title="Sign in" centered>
       <Card>
         <CardHeader>
           <CardTitle>Sign in</CardTitle>
-          <CardDescription>Use your Handoff Registry email and password.</CardDescription>
+          <CardDescription>Use your Handoff account email and password.</CardDescription>
         </CardHeader>
         <form onSubmit={submit}>
           <CardContent className="space-y-4">
             {router.query.updated === '1' ? (
-              <Alert variant="green">
-                <AlertDescription>Your password was updated. Sign in below.</AlertDescription>
-              </Alert>
+              <p className="text-sm text-green-600 dark:text-green-400">Your password was updated. Sign in below.</p>
             ) : null}
-            {error ? (
-              <Alert variant="destructive">
-                <CircleAlert />
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            ) : null}
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" name="email" type="email" autoComplete="email" required placeholder="you@company.com" />
@@ -104,16 +99,16 @@ function RegistryLoginPage() {
               <Input id="password" name="password" type="password" autoComplete="current-password" required />
             </div>
           </CardContent>
-          <CardFooter className="flex-col gap-3">
+          <CardFooter className="flex flex-col gap-3">
             <Button type="submit" className="w-full" disabled={pending || checkingInstall}>
               {pending ? 'Signing in…' : 'Sign in'}
             </Button>
             {emailConfigured ? (
-              <Link href="/reset-password" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
+              <Link href="/reset-password" className="text-center text-sm text-muted-foreground underline-offset-4 hover:underline">
                 Forgot password?
               </Link>
             ) : (
-              <p className="text-sm text-muted-foreground">Forgot your password? Ask an administrator for a reset link.</p>
+              <p className="text-center text-sm text-muted-foreground">Forgot your password? Ask an administrator for a reset link.</p>
             )}
           </CardFooter>
         </form>

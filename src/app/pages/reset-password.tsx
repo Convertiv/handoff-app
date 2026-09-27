@@ -1,4 +1,3 @@
-import { Alert, AlertDescription } from '../components/ui/alert';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -88,7 +87,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <AuthShell title={token ? 'Set a new password' : 'Reset password'}>
+    <AuthShell title={token ? 'Set a new password' : 'Reset password'} centered>
       <Head>
         <meta name="referrer" content="no-referrer" />
       </Head>
@@ -97,32 +96,27 @@ export default function ResetPasswordPage() {
           <CardTitle>{token ? 'Set a new password' : 'Reset password'}</CardTitle>
           <CardDescription>
             {sent
-              ? 'If an account exists for that email, a password reset link has been sent.'
+              ? 'If an account exists for that email, we sent a link to reset your password.'
               : token
-                ? 'Choose a new password for your registry account.'
-                : 'Enter your email and we will send a reset link if an account exists.'}
+                ? 'Choose a password at least 12 characters long.'
+                : 'Enter your email and we will send you a reset link if an account exists.'}
           </CardDescription>
         </CardHeader>
         {sent ? (
-          <CardFooter>
-            <Button asChild variant="outline" className="w-full">
-              <Link href="/login">Return to sign in</Link>
-            </Button>
+          <CardFooter className="flex flex-col gap-3">
+            <Link href="/login" className="text-center text-sm text-primary underline-offset-4 hover:underline">
+              Return to sign in
+            </Link>
           </CardFooter>
         ) : (
           <form onSubmit={token ? resetPassword : requestReset}>
             <CardContent className="space-y-4">
-              {error ? (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              ) : null}
+              {error ? <p className="text-sm text-destructive">{error}</p> : null}
               {token ? (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="password">New password</Label>
                     <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={12} />
-                    <p className="text-xs text-muted-foreground">Use at least 12 characters.</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="passwordConfirmation">Confirm password</Label>
@@ -143,13 +137,15 @@ export default function ResetPasswordPage() {
                 </div>
               )}
             </CardContent>
-            <CardFooter className="flex-col gap-3">
+            <CardFooter className="flex flex-col gap-3">
               <Button type="submit" className="w-full" disabled={pending}>
                 {pending ? 'Please wait…' : token ? 'Update password' : 'Send reset link'}
               </Button>
-              <Link href="/login" className="text-sm text-muted-foreground underline-offset-4 hover:underline">
-                Back to sign in
-              </Link>
+              {token ? (
+                <Link href="/login" className="text-center text-sm text-muted-foreground underline-offset-4 hover:underline">
+                  Back to sign in
+                </Link>
+              ) : null}
             </CardFooter>
           </form>
         )}
