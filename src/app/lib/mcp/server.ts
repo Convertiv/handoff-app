@@ -7,7 +7,6 @@ import type { DocsBackend, TokenSetDetail } from '../docs-api/backend';
 import { createSearchRequest, DEFAULT_RESULT_LIMIT, MAX_QUERY_LENGTH, MAX_RESULT_LIMIT, MAX_TERMS } from '../docs-api/search';
 import {
   availableFormats,
-  CODE_FIELDS,
   matchesComponent,
   pageIdFromUrl,
   stripFigmaIds,
@@ -16,7 +15,7 @@ import {
   toComponentResult,
   toComponentSummary,
   toPageResult,
-  type CodeField,
+  toPreviewResult,
 } from './shape';
 
 /**
@@ -31,7 +30,7 @@ import {
  */
 
 /** Version of the MCP surface itself, reported in `initialize`. Bump when a tool contract changes. */
-const MCP_SERVER_VERSION = '1.0.0';
+const MCP_SERVER_VERSION = '2.0.0';
 
 /** Search results are capped so a large design system cannot flood an agent's context. */
 const DEFAULT_SEARCH_LIMIT = 25;
@@ -65,18 +64,10 @@ const read = async (what: string, body: (backend: DocsBackend) => Promise<CallTo
   }
 };
 
-/**
- * Each preview's rendered document, keyed by preview id. A preview with no artifact (an unbuilt
- * component) is left out, so the rest still come back.
- */
-const readPreviewDocuments = async (backend: DocsBackend, id: string, previewIds: string[]): Promise<Record<string, string>> => {
-  const documents = await Promise.all(
-    previewIds.map(async (previewId) => {
-      const artifact = await backend.resolveArtifact(['component', `${id}-${previewId}.html`]);
-      return [previewId, artifact?.body.toString() ?? ''] as const;
-    })
-  );
-  return Object.fromEntries(documents.filter(([, document]) => document));
+/** One preview's rendered document, or `undefined` when the component has not been built. */
+const readPreviewDocument = async (backend: DocsBackend, id: string, previewId: string): Promise<string | undefined> => {
+  const artifact = await backend.resolveArtifact(['component', `${id}-${previewId}.html`]);
+  return artifact?.body.toString() || undefined;
 };
 
 /** Read and parse a component's build artifact, or `null` when the component has not been built. */
@@ -101,8 +92,9 @@ export const createMcpServer = (): McpServer => {
         'Design-system knowledge for this project. Before writing UI code, search for an existing ' +
         'component with handoff_search_components, read its props and variants with ' +
         'handoff_get_component, and take colors, typography and spacing from handoff_get_tokens ' +
-        'rather than inventing values. Search documentation with handoff_search_pages, then pass a ' +
-        'result URL to handoff_get_page for the full Markdown content.',
+        'rather than inventing values. To see one state in full, pass a preview id from that ' +
+        "component's preview index to handoff_get_component_preview. Search documentation with " +
+        'handoff_search_pages, then pass a result URL to handoff_get_page for the full Markdown content.',
     }
   );
 
@@ -138,46 +130,68 @@ export const createMcpServer = (): McpServer => {
     {
       title: 'Get component',
       description:
-        'One component by id: its properties, previews, variant axes (the values previews demonstrate ' +
-        'for each choice-typed property — `properties[].type` has the full set), usage guidance and its ' +
-        'source (`code`/`css`/`sass`/`js`). Each preview also carries the markup it renders to, as ' +
-        '`previews[].html`, so rendered output is always tied to the state it came from. Use this ' +
-        'before writing markup for a component that already exists. `tokens.set` names its token set ' +
-        'for handoff_get_tokens when the component declares which Figma component it maps to; token ' +
-        'sets are keyed by Figma name, so do not assume it matches the component id.',
+        'One component by id: its properties, variant axes (the values previews demonstrate for each ' +
+        'choice-typed property — `properties[].type` has the full set), usage guidance and its source ' +
+        '(`code`/`css`/`sass`/`js`). Use this before writing markup for a component that already ' +
+        "exists. `previews` lists the component's states by id, title and URL; pass a preview id to " +
+        'handoff_get_component_preview for the args it passes and the markup it renders to. ' +
+        '`tokens.set` names its token set for handoff_get_tokens when the component declares which ' +
+        'Figma component it maps to; token sets are keyed by Figma name, so do not assume it matches ' +
+        'the component id.',
       annotations: { readOnlyHint: true, openWorldHint: false },
       inputSchema: {
         id: z.string().describe('Component id, as returned by handoff_search_components.'),
-        include: z
-          .array(z.enum(CODE_FIELDS))
-          .optional()
-          .describe(
-            'Which code fields to return. Omit for all of them; narrow it to keep the response small. ' +
-              '`html` is rendered markup and lands on each preview, not in `code`.'
-          ),
       },
     },
-    async ({ id, include }) =>
+    async ({ id }) =>
       read(`component "${id}"`, async (backend) => {
         const record = await backend.getComponentDetail(id);
         if (!record) {
           return fail(`Component "${id}" was not found. Use handoff_search_components to list the components that exist.`);
         }
         const [artifact, tokenSets] = await Promise.all([readComponentArtifact(backend, id), backend.listTokenSets()]);
-        const fields = (include as CodeField[]) ?? CODE_FIELDS;
-        const previewDocuments = fields.includes('html')
-          ? await readPreviewDocuments(backend, id, Object.keys(artifact?.previews ?? record.previews ?? {}))
-          : {};
         return ok(
           toComponentResult(
             record,
             artifact,
-            fields,
             basePath(),
-            tokenSets.map((set) => set.id),
-            previewDocuments
+            tokenSets.map((set) => set.id)
           )
         );
+      })
+  );
+
+  server.registerTool(
+    'handoff_get_component_preview',
+    {
+      title: 'Get component preview',
+      description:
+        'One preview of one component: `values`, the args it passes; `usage`, the snippet that ' +
+        'produces it; and `html`, the markup it renders to. Use it to see a single state in full ' +
+        'after handoff_get_component has listed which states exist. `html` is absent for a component ' +
+        'that has not been built.',
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      inputSchema: {
+        id: z.string().describe('Component id, as returned by handoff_search_components.'),
+        preview: z.string().describe('Preview id, as listed in `previews[].id` by handoff_get_component.'),
+      },
+    },
+    async ({ id, preview }) =>
+      read(`preview "${preview}" of component "${id}"`, async (backend) => {
+        const record = await backend.getComponentDetail(id);
+        if (!record) {
+          return fail(`Component "${id}" was not found. Use handoff_search_components to list the components that exist.`);
+        }
+        const artifact = await readComponentArtifact(backend, id);
+        const previews = artifact?.previews ?? record.previews ?? {};
+        const found = previews[preview];
+        if (!found) {
+          const ids = Object.keys(previews);
+          return fail(
+            `Component "${id}" has no preview "${preview}". ${ids.length ? `Its previews are: ${ids.join(', ')}.` : 'It has no previews.'}`
+          );
+        }
+        return ok(toPreviewResult(record, preview, found, basePath(), await readPreviewDocument(backend, id, preview)));
       })
   );
 

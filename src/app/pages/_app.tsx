@@ -1,5 +1,6 @@
 import type { AppProps } from 'next/app';
 
+import { AiAssistantProvider } from '../components/AiAssistant/AiAssistantProvider';
 import { RegistrySessionProvider } from '../components/Auth/RegistrySessionProvider';
 import { RegistryInstallGate } from '../components/Auth/RegistryInstallGate';
 import { NavProvider } from '../components/context/NavProvider';
@@ -13,8 +14,11 @@ function MyApp({ Component, pageProps }: AppProps) {
     <RegistrySessionProvider>
       <RegistryInstallGate>
         <NavProvider initialNav={pageProps.navData} currentSectionId={pageProps.currentSectionId}>
-          {/* @ts-ignore */}
-          <Component {...pageProps} />
+          {/* Above the page tree: every page builds its own Layout, which a soft navigation replaces. */}
+          <AiAssistantProvider>
+            {/* @ts-ignore */}
+            <Component {...pageProps} />
+          </AiAssistantProvider>
         </NavProvider>
       </RegistryInstallGate>
     </RegistrySessionProvider>

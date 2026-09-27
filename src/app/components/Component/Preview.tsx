@@ -285,11 +285,14 @@ export const ComponentDisplay: React.FC<{
   const originStyle: React.CSSProperties = originRect
     ? { top: `${originRect.top}%`, left: `${originRect.left}%`, width: `${originRect.width}%`, transform: 'translateY(0)' }
     : {};
+  // Positioned against the viewport, so it subtracts the assistant's column itself. The margin is a
+  // share of what is left, not of the whole viewport, so the card stays centered in usable space.
+  const freeWidth = 'calc(100vw - var(--ai-dock-width, 0px))';
   const fullSizeStyle: React.CSSProperties = {
     ...collapsedStyle,
     top: '50%',
-    left: '2%',
-    width: '96%',
+    left: `calc(${freeWidth} * 0.02)`,
+    width: `calc(${freeWidth} * 0.96)`,
     maxHeight: '92vh',
     transform: 'translateY(-50%)',
   };

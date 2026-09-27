@@ -8,7 +8,7 @@ Handles loading, validation, and resolution of handoff configuration.
 |------|---------|
 | `defaults.ts` | Default config values and `getClientConfig()` for the Next.js app |
 | `from-env.ts` | JSON-compatible environment markers and public types |
-| `resolve-env.ts` | Resolves merged environment references and guards reference-only properties |
+| `resolve-env.ts` | Resolves merged environment references and guards reference-only properties, whose paths accept a `*` segment to cover list elements |
 | `errors.ts` | Shared `HandoffConfigError` |
 | `env.ts` | Reads `.env` at load, then `loadProfileEnv()` applies `.env.<profile>` on top |
 | `loader.ts` | `initConfig()` — reads `handoff.config.ts/.js/.cjs/.json` (in that order) plus the selected profile sidecar, warns on conflicts, and merges every layer |

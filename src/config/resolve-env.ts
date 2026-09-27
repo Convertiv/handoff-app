@@ -4,11 +4,24 @@ import { Logger } from '../utils/logger';
 import { isEnvReference } from './from-env';
 import { HandoffConfigError } from './errors';
 
-export const DEFERRED_PATHS = new Set(['runtime.registry.databaseUrl', 'runtime.registry.assetStorage.token']);
+/**
+ * Match a dot path against a pattern. A `*` segment matches exactly one segment, so one pattern
+ * covers every element of a list. With `prefix`, the pattern also matches anything nested under it.
+ */
+const pathMatches = (pattern: string, path: string, prefix = false): boolean => {
+  const expected = pattern.split('.');
+  const actual = path.split('.');
+  if (prefix ? expected.length > actual.length : expected.length !== actual.length) return false;
+  return expected.every((segment, index) => segment === '*' || segment === actual[index]);
+};
+
+/** Paths whose value the deployed app reads at request time, so only the variable name is stored. */
+export const DEFERRED_PATHS = ['runtime.registry.databaseUrl', 'runtime.registry.assetStorage.token', 'runtime.ai.connections.*.apiKey'];
 const SECRET_PATHS = new Set(['dev_access_token', 'devAccessToken', 'runtime.registryConnection.accessToken']);
 /** Path prefixes whose resolved contents are JSON-baked into the bundle, so a reference would bake its value. */
-const BAKED_PATHS = ['runtime.registry.assetStorage.options'];
-const isBaked = (path: string): boolean => BAKED_PATHS.some((baked) => path === baked || path.startsWith(`${baked}.`));
+const BAKED_PATHS = ['runtime.registry.assetStorage.options', 'runtime.ai.connections.*.options'];
+const isDeferred = (path: string): boolean => DEFERRED_PATHS.some((deferred) => pathMatches(deferred, path));
+const isBaked = (path: string): boolean => BAKED_PATHS.some((baked) => pathMatches(baked, path, true));
 const ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const ALIASES: Record<string, string> = {
   HANDOFF_REGISTRY_URL: 'HANDOFF_CLOUD_URL',
@@ -40,7 +53,7 @@ export const resolveConfigEnv = (config: Config, profile?: string, defaults?: Co
     throw new HandoffConfigError(`Config "${path}" (profile "${profile ?? 'default'}"): ${message}`);
   };
   const walk = (value: unknown, path: string, seed?: unknown): unknown => {
-    const deferred = DEFERRED_PATHS.has(path);
+    const deferred = isDeferred(path);
     const secret = SECRET_PATHS.has(path);
     if ((secret || deferred) && value !== undefined && !isEnvReference(value)) {
       fail(path, 'Expected an environment reference, such as { $env: "VARIABLE_NAME" }. Literal values are not allowed.');

@@ -10,6 +10,7 @@ import { KNOWN_PATHS } from '@handoff/utils/menu-shell';
 import { collectPageSlugSegments } from '@handoff/utils/pages';
 import { getRegistryNavData, getWorkspaceNavData, type NavData, type NavTokenSet, type SectionLink } from '@handoff/nav';
 import { resolveDocsBackend } from '../../lib/docs-api/backend';
+import { documentationMetadata } from '../../lib/docs-api/page-rendering';
 import { tokenFormatStrings } from '../../lib/docs-api/token-detail';
 // Build-time-baked navigation shell. Imported statically (same as `pages/api/docs/nav.json.ts`) so
 // it is bundled into the route chunk and readable at request time in the Vercel registry lambda,
@@ -543,7 +544,8 @@ export const fetchDocPageMetadataAndContent = (localPath: string, slug: string |
     currentContents = fs.readFileSync(contentModuleFilePath, 'utf-8');
   }
 
-  const { data: metadata, content } = parseMarkdown(currentContents);
+  const { data, content } = parseMarkdown(currentContents);
+  const metadata: typeof data = { ...data, ...documentationMetadata(data) };
 
   return { metadata, content, options: {} };
 };

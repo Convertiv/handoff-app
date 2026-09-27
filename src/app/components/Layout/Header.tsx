@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { AiAssistantTrigger } from '../../components/AiAssistant/AiAssistantProvider';
 import { McpConfigDialog } from '../../components/McpIntegration/McpConfigDialog';
 import { ModeToggle } from '../../components/ModeSwitcher';
 import { MainNav } from '../../components/Navigation/MainNav';
@@ -29,8 +30,8 @@ export function Header() {
   return (
     <div
       className={cn(
-        'sticky top-0 z-50 py-4 shadow-[0_0_3px_0_rgba(0,0,0,0.15)] backdrop-blur-sm transition-all duration-300',
-        isScrolled && 'bg-background/70 py-3 shadow-[0_0_4px_0_rgba(0,0,0,0.15)]'
+        'ai-dock-bleed h-17 sticky top-0 z-50 py-4 shadow-[0_0_3px_0_rgba(0,0,0,0.15)] backdrop-blur-sm transition-all duration-300',
+        isScrolled && 'bg-background/70 shadow-[0_0_4px_0_rgba(0,0,0,0.15)]'
       )}
     >
       <header className="border-grid container mx-auto w-full max-w-[1500px] bg-transparent px-8">
@@ -43,6 +44,7 @@ export function Header() {
           </div>
           <div className="hidden items-center gap-4 @2xl:flex">
             <MainNav />
+            <AiAssistantTrigger />
             <McpConfigDialog />
             {runtimeMode === 'registry' ? <AuthControls /> : null}
             <ModeToggle />

@@ -31,22 +31,8 @@ import {
   SidebarMenuSub,
   SidebarSeparator,
 } from '../../components/ui/sidebar';
-import { normalizePathForMatch } from '../../lib/utils';
+import { normalizePathForMatch, stripBasePath } from '../../lib/utils';
 import { useNav } from '../context/NavProvider';
-
-/**
- * `next/link` re-applies `basePath`, but the menu item paths already carry the base prefix (built by
- * the server navigation resolver). Strip the leading base segment once so the link is not
- * double-prefixed; with no base path this just returns a leading-slash route.
- */
-const stripBasePath = (p: string): string => {
-  const base = (process.env.HANDOFF_APP_BASE_PATH ?? '').replace(/^\/+|\/+$/g, '');
-  let rel = p.replace(/^\/+/, '');
-  if (base && (rel === base || rel.startsWith(`${base}/`))) {
-    rel = rel.slice(base.length).replace(/^\/+/, '');
-  }
-  return `/${rel}`;
-};
 
 const NormalMenuItem = ({ title, icon, path }) => {
   const router = useRouter();

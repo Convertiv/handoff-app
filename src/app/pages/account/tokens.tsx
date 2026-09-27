@@ -115,7 +115,7 @@ function RegistryTokensPage() {
   };
 
   return (
-    <AccountLayout title="Access tokens">
+    <AccountLayout title="Access tokens" description="Create and revoke credentials for the CLI, CI jobs, and integrations.">
       <div className="space-y-6">
         <Card>
           <CardHeader>

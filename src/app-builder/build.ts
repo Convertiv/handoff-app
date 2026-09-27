@@ -3,6 +3,7 @@ import spawn from 'cross-spawn';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
+import { resolveAiFromConfig, type AiSettings } from '../ai/connections';
 import { isMcpEnabled } from '../config';
 import { buildComponents } from '../pipeline/components';
 import { buildPatterns } from '../pipeline/patterns';
@@ -307,6 +308,16 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const escapedAssetStorageTokenEnv = escapeForSingleQuotedJsString(assetStorage.tokenEnv);
   const escapedAssetStorageMaxInline = escapeForSingleQuotedJsString(String(assetStorage.maxInlineBytes));
   const escapedAssetStorageOptions = escapeForSingleQuotedJsString(JSON.stringify(assetStorage.options ?? {}));
+  // AI assistant selection baked (enabled flag + declared connections + default model). Connections
+  // carry env-var names and non-secret options only; keys are read from their named env var at
+  // request time, and a deployment can extend or replace the list through HANDOFF_AI_CONNECTIONS.
+  const ai = resolveAiFromConfig(handoff.config);
+  const escapedAiEnabled = escapeForSingleQuotedJsString(String(ai.enabled));
+  const escapedAiConnections = escapeForSingleQuotedJsString(JSON.stringify(ai.connections));
+  const escapedAiDefaultModel = escapeForSingleQuotedJsString(ai.defaultModel ?? '');
+  const escapedAiProviderModules = escapeForSingleQuotedJsString(
+    JSON.stringify(ai.connections.map((connection) => connection.module).filter((module): module is string => Boolean(module)))
+  );
   const placeholderValues: Record<string, string> = {
     '%HANDOFF_PROJECT_ID%': escapedProjectId,
     '%HANDOFF_APP_BASE_PATH%': escapedAppBasePath,
@@ -324,6 +335,10 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_ASSET_STORAGE_TOKEN_ENV%': escapedAssetStorageTokenEnv,
     '%HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES%': escapedAssetStorageMaxInline,
     '%HANDOFF_ASSET_STORAGE_OPTIONS%': escapedAssetStorageOptions,
+    '%HANDOFF_AI_ENABLED%': escapedAiEnabled,
+    '%HANDOFF_AI_BAKED_CONNECTIONS%': escapedAiConnections,
+    '%HANDOFF_AI_DEFAULT_MODEL%': escapedAiDefaultModel,
+    '%HANDOFF_AI_PROVIDER_MODULES%': escapedAiProviderModules,
   };
   let nextConfigContent = await fs.readFile(nextConfigPath, 'utf-8');
   for (const [placeholder, value] of Object.entries(placeholderValues)) {
@@ -444,8 +459,25 @@ const findStandaloneServerDir = (root: string): string | null => {
 const writeRegistryDeploymentReadme = async (
   outputRoot: string,
   entryRelativePath: string,
-  databaseUrlEnv: string
+  databaseUrlEnv: string,
+  ai: AiSettings
 ): Promise<void> => {
+  const serviceKeyEnvs = [...new Set(ai.connections.map((connection) => connection.apiKeyEnv).filter(Boolean))];
+  const needsKeySecret = ai.connections.some((connection) => connection.credential === 'user');
+  const aiSection = !ai.enabled
+    ? ''
+    : `
+## AI assistant
+
+This build serves the docs assistant at \`/api/ai/*\`.
+
+${serviceKeyEnvs.map((name) => `- \`${name}\` — API key for a declared AI connection, read at request time.`).join('\n') || '- No service-key connection is declared, so no provider key is required here.'}
+${needsKeySecret ? '- `HANDOFF_AI_KEY_SECRET` — a long, random secret that encrypts the API keys readers save for themselves. Readers cannot save a key without it.\n' : ''}
+\`HANDOFF_AI_CONNECTIONS\` optionally carries a JSON array of connections, read at request time and
+merged over the list this build baked in, keyed by \`id\`. Use it to add or repoint a provider
+without rebuilding.
+`;
+
   const readme = `# Handoff Registry App
 
 A self-contained, deployable Next.js **standalone** build produced by
@@ -465,7 +497,7 @@ and \`.next/static/\` already copied alongside so the server serves them.
 
 Optional email delivery uses \`RESEND_API_KEY\` and \`AUTH_FROM_EMAIL\`. Without them, invitation
 links are shown once to an administrator for manual delivery.
-
+${aiSection}
 ## Database migrations
 
 Apply migrations from the \`handoff-app\` CLI as a controlled release step (e.g. in your CI/CD
@@ -552,8 +584,14 @@ containers, custom Node servers, and other non-Vercel hosts.
  */
 const getRequiredRegistryRuntimeModules = (handoff: Handoff): string[] => {
   const base = ['next', 'next-auth', 'react', 'react-dom', 'drizzle-orm'];
-  if (isMcpEnabled(handoff.config)) {
+  const ai = resolveAiFromConfig(handoff.config);
+  // The assistant runs the MCP tools in-process, so it needs the MCP SDK whether or not the HTTP
+  // endpoint is served.
+  if (isMcpEnabled(handoff.config) || ai.enabled) {
     base.push('@modelcontextprotocol/sdk', 'zod');
+  }
+  if (ai.enabled) {
+    base.push('ai', '@ai-sdk/openai-compatible');
   }
   const driver = resolveRegistryDriver(handoff.config);
   const driverModules = driver === 'neon' ? ['@neondatabase/serverless', 'ws'] : ['pg'];
@@ -609,12 +647,7 @@ const assertRegistryRuntimeDepsTraced = (handoff: Handoff, entryDir: string): vo
  *
  * @returns the absolute path of the server entry (`<entryDir>/server.js`).
  */
-const assembleRegistryStandalone = async (
-  handoff: Handoff,
-  appPath: string,
-  standaloneRoot: string,
-  entryDir: string
-): Promise<string> => {
+const assembleRegistryStandalone = async (handoff: Handoff, appPath: string, standaloneRoot: string, entryDir: string): Promise<string> => {
   await fs.copy(standaloneRoot, entryDir, { overwrite: true });
 
   // Locate the server entry in the assembled package. Traced files keep their path relative to the
@@ -785,7 +818,12 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
   // never from the deployed bundle. See the generated README for the migrate-then-deploy flow.
 
   const entryRelativePath = path.relative(output, serverEntry).split(path.sep).join('/');
-  await writeRegistryDeploymentReadme(output, entryRelativePath, resolveDatabaseUrlEnv(handoff.config));
+  await writeRegistryDeploymentReadme(
+    output,
+    entryRelativePath,
+    resolveDatabaseUrlEnv(handoff.config),
+    resolveAiFromConfig(handoff.config)
+  );
 
   Logger.success(`Packaged registry app at ${output} (start: \`node ${entryRelativePath}\`, migrate: \`handoff-app db:migrate\`).`);
 };

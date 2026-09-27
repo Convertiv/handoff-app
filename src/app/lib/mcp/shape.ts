@@ -14,9 +14,9 @@ import type { PageDetail } from '../docs-api/records';
  * flatter arrays an agent can act on. Pure functions only, no I/O.
  */
 
-/** The generated-code fields an agent can ask for; the build artifact carries them under these names. */
-export const CODE_FIELDS = ['code', 'html', 'css', 'sass', 'js'] as const;
-export type CodeField = (typeof CODE_FIELDS)[number];
+/** The generated-source fields returned with a component; the build artifact carries them under these names. */
+const SOURCE_FIELDS = ['code', 'css', 'sass', 'js'] as const;
+type SourceField = (typeof SOURCE_FIELDS)[number];
 
 /** Accept internal page routes without URL normalization hiding traversal segments. */
 export const pageIdFromUrl = (url: string): string | null => {
@@ -152,14 +152,27 @@ export const toProperties = (slots: { [key: string]: SlotMetadata } | undefined)
   return Object.fromEntries(Object.entries(slots).map(([key, slot]) => [key, toProperty(key, slot)]));
 };
 
-export interface ComponentPreview {
+/**
+ * One row of a component's preview index: enough to choose a preview, and nothing else.
+ *
+ * What a preview demonstrates and what it renders to are the bulk of a component record and are
+ * wanted one at a time, so they live behind handoff_get_component_preview. `variants` already names
+ * the axes these previews cover.
+ */
+export interface ComponentPreviewSummary {
   id: string;
   title: string;
-  values: Record<string, unknown>;
-  usage?: string;
   /** Canonical URL of the rendered preview artifact. */
   url: string;
-  /** Markup this preview renders to, when the caller asked for `html`. */
+}
+
+/** One preview in full: the args it passes, its usage snippet and the markup it renders to. */
+export interface ComponentPreviewResult extends ComponentPreviewSummary {
+  /** The component it belongs to, so the caller can link to it without a second call. */
+  component: { id: string; title: string };
+  values: Record<string, unknown>;
+  usage?: string;
+  /** Markup this preview renders to. Absent when the component has not been built. */
   html?: string;
 }
 
@@ -177,31 +190,58 @@ const previewBody = (document: string): string => {
 };
 
 /**
- * Previews with their rendered-artifact URL filled in, and their markup when `documents` carries it.
- * The builder writes the record's own `url` empty, so it is derived here the way the docs UI does.
+ * The URL a preview's rendered artifact is served at. The builder writes the record's own `url`
+ * empty, so it is derived here the way the docs UI does.
  */
-export const toPreviews = (
+const previewUrl = (id: string, previewId: string, basePath: string): string =>
+  buildArtifactUrl(`component/${id}-${previewId}.html`, basePath);
+
+/** The component's previews as an index: which ones exist, and where each is rendered. */
+export const toPreviewIndex = (
   id: string,
   previews: { [key: string]: OptionalPreviewRender } | undefined,
-  basePath: string,
-  documents: Record<string, string> = {}
-): ComponentPreview[] =>
+  basePath: string
+): ComponentPreviewSummary[] =>
   Object.entries(previews ?? {}).map(([previewId, preview]) => ({
     id: previewId,
     title: preview.title,
-    values: preview.values ?? {},
-    usage: preview.usage || undefined,
-    url: buildArtifactUrl(`component/${id}-${previewId}.html`, basePath),
-    html: documents[previewId] ? previewBody(documents[previewId]) : undefined,
+    url: previewUrl(id, previewId, basePath),
   }));
+
+/** One preview in full, with the component it belongs to so the caller can link back to it. */
+export const toPreviewResult = (
+  record: ComponentListObject,
+  previewId: string,
+  preview: OptionalPreviewRender,
+  basePath: string,
+  document?: string
+): ComponentPreviewResult => ({
+  component: { id: record.id, title: record.title },
+  id: previewId,
+  title: preview.title,
+  url: previewUrl(record.id, previewId, basePath),
+  values: preview.values ?? {},
+  usage: preview.usage || undefined,
+  html: document ? previewBody(document) : undefined,
+});
 
 /**
  * Property names that are content slots by convention. Only consulted for a component with no type
  * information at all, such as a handlebars template; a declared type always wins.
  */
 const CONTENT_PROPERTIES = new Set([
-  'children', 'label', 'title', 'text', 'content', 'description',
-  'placeholder', 'alt', 'src', 'href', 'caption', 'subtitle',
+  'children',
+  'label',
+  'title',
+  'text',
+  'content',
+  'description',
+  'placeholder',
+  'alt',
+  'src',
+  'href',
+  'caption',
+  'subtitle',
 ]);
 
 /**
@@ -271,32 +311,29 @@ export interface ComponentResult {
   categories?: string[];
   tags?: string[];
   properties?: Record<string, ComponentProperty>;
-  previews: ComponentPreview[];
+  /** Which previews exist and where each is rendered; the bodies come from a preview read. */
+  previews: ComponentPreviewSummary[];
   variants: Record<string, (string | number | boolean)[]>;
   usage: { general?: string; shouldDo?: string[]; shouldNotDo?: string[] };
-  /** The component's source, narrowed by the caller's `include`. Absent when it is not built. */
-  code?: Partial<Record<Exclude<CodeField, 'html'>, string>>;
+  /** The component's source. Absent when it is not built. */
+  code?: Partial<Record<SourceField, string>>;
   /** This component's token set, when its declaration names the Figma component it maps to. */
   tokens?: { set: string };
 }
 
 /**
- * The component's own source, per the caller's `include`.
+ * The component's own source.
  *
- * `html` is left out even though the artifact has a top-level field by that name. That field holds
- * the rendered markup of one preview picked by the renderer (the first for handlebars, the last for
- * react and CSF), and the pick can land on an internal pattern preview that is stripped from
- * `previews` before the artifact is written. So it is markup for a state the response does not
- * describe, with no way for an agent to tell which. Rendered markup is per preview and returned
- * there, read from each preview's own artifact.
+ * The artifact's top-level `html` is left out. That field holds the rendered markup of one preview
+ * picked by the renderer (the first for handlebars, the last for react and CSF), and the pick can
+ * land on an internal pattern preview that is stripped from `previews` before the artifact is
+ * written. So it is markup for a state the response does not describe, with no way for an agent to
+ * tell which. Rendered markup is per preview and returned by handoff_get_component_preview, read
+ * from that preview's own artifact.
  */
-const pickCode = (
-  artifact: TransformComponentTokensResult,
-  include: readonly CodeField[]
-): Partial<Record<Exclude<CodeField, 'html'>, string>> => {
-  const code: Partial<Record<Exclude<CodeField, 'html'>, string>> = {};
-  for (const field of include) {
-    if (field === 'html') continue;
+const pickCode = (artifact: TransformComponentTokensResult): Partial<Record<SourceField, string>> => {
+  const code: Partial<Record<SourceField, string>> = {};
+  for (const field of SOURCE_FIELDS) {
     const value = artifact?.[field];
     if (typeof value === 'string' && value) code[field] = value;
   }
@@ -315,13 +352,11 @@ const pickCode = (
 export const toComponentResult = (
   record: ComponentListObject,
   artifact: TransformComponentTokensResult | null,
-  include: readonly CodeField[],
   basePath: string,
-  tokenSetIds: readonly string[] = [],
-  previewDocuments: Record<string, string> = {}
+  tokenSetIds: readonly string[] = []
 ): ComponentResult => {
   const previews = artifact?.previews ?? record.previews;
-  const code = artifact ? pickCode(artifact, include) : undefined;
+  const code = artifact ? pickCode(artifact) : undefined;
   const properties = toProperties(artifact?.properties ?? record.properties);
   const usagePreviews = Object.values(previews ?? {}).map((preview) => preview.usage);
   // The artifact's `usage` is one preview's snippet repeated at the top level. Only surface it when
@@ -339,7 +374,7 @@ export const toComponentResult = (
     categories: record.categories?.length ? record.categories : undefined,
     tags: record.tags?.length ? record.tags : undefined,
     properties,
-    previews: toPreviews(record.id, previews, basePath, previewDocuments),
+    previews: toPreviewIndex(record.id, previews, basePath),
     variants: deriveVariants(previews, properties),
     usage: {
       general,
@@ -493,10 +528,7 @@ const recordFor = (token: string, records: FoundationRecord[]): FoundationRecord
  * Reshape a foundation set. Returns `null` when the inputs are missing (no CSS or `types` artifact,
  * or nothing parsed out of them) so the caller can fall back to the stylesheet or the record.
  */
-export const synthesizeFoundationTokens = (
-  record: unknown,
-  artifacts: TokenArtifactResource[]
-): Record<string, FoundationToken> | null => {
+export const synthesizeFoundationTokens = (record: unknown, artifacts: TokenArtifactResource[]): Record<string, FoundationToken> | null => {
   const css = artifacts.find((artifact) => artifact.format === 'css');
   const types = artifacts.find((artifact) => artifact.format === 'types');
   if (!css || !types) {

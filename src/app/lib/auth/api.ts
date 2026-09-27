@@ -3,21 +3,13 @@ import type { RegistryDatabase } from '@handoff/registry/db/client';
 import { getRegistryInstallationState, type RegistryUser } from '@handoff/registry/auth';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 import { getRegistryConnection, RegistryConnectionError } from '../registry-connection';
+import { allowApiMethods } from '../api/methods';
 import { canonicalRegistryUrl, getRegistrySessionUser } from './config';
 
-export const allowApiMethods = (req: NextApiRequest, res: NextApiResponse, methods: string[]): string | null => {
-  const method = (req.method ?? 'GET').toUpperCase();
-  if (methods.includes(method)) return method;
-  res.setHeader('Allow', methods.join(', '));
-  res.status(405).json({ error: `Method ${method} is not allowed.` });
-  return null;
-};
+// Re-exported so the registry routes keep reaching it here, next to the authorization they pair it with.
+export { allowApiMethods };
 
-export const registryPageUrl = (
-  path: string,
-  query?: Record<string, string>,
-  fragment?: Record<string, string>
-): string | null => {
+export const registryPageUrl = (path: string, query?: Record<string, string>, fragment?: Record<string, string>): string | null => {
   const canonical = canonicalRegistryUrl();
   if (!canonical) return null;
   const base = canonical.pathname.replace(/\/+$/, '');

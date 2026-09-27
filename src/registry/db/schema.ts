@@ -378,23 +378,20 @@ export const tokenArtifacts = pgTable(
  * collection is its current manifest. Publish replaces those rows atomically, so readers always see a
  * complete manifest.
  */
-export const assetCollections = pgTable(
-  'asset_collections',
-  {
-    /** Stable collection id (`icons`|`logos`|`fonts`). Join key across stores. */
-    collection: text('collection').primaryKey(),
-    /** Deterministic content hash over the collection's `(path, contentHash)` manifest (skip-unchanged). */
-    sourceHash: text('source_hash'),
-    /** Build/publish status for the collection. */
-    status: text('status').$type<RegistryBuildStatus>(),
-    builtAt: timestamp('built_at', { withTimezone: true }),
-    builderVersion: text('builder_version'),
-    /** Registry-only review/catalog metadata (parity with other entities; management-API only). */
-    metadata: jsonb('metadata').$type<RegistryReviewMetadata>(),
-    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-  }
-);
+export const assetCollections = pgTable('asset_collections', {
+  /** Stable collection id (`icons`|`logos`|`fonts`). Join key across stores. */
+  collection: text('collection').primaryKey(),
+  /** Deterministic content hash over the collection's `(path, contentHash)` manifest (skip-unchanged). */
+  sourceHash: text('source_hash'),
+  /** Build/publish status for the collection. */
+  status: text('status').$type<RegistryBuildStatus>(),
+  builtAt: timestamp('built_at', { withTimezone: true }),
+  builderVersion: text('builder_version'),
+  /** Registry-only review/catalog metadata (parity with other entities; management-API only). */
+  metadata: jsonb('metadata').$type<RegistryReviewMetadata>(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
 
 /**
  * Logical asset metadata - the collection manifest. One row per asset (icon/logo SVG, sprite,
@@ -576,6 +573,31 @@ export const registryDeviceAuthorizations = pgTable(
 );
 
 /**
+ * One reader's key for one declared AI connection. Unlike every other credential here the value
+ * must be recoverable, because it is sent to the provider on that reader's behalf, so it is
+ * encrypted rather than hashed (see `../auth/crypto`). A row whose `connectionId` no longer appears
+ * in the config is ignored, not deleted: the connection may come back on the next deploy.
+ */
+export const registryAiKeys = pgTable(
+  'registry_ai_keys',
+  {
+    userId: text('user_id')
+      .notNull()
+      .references(() => registryUsers.id, { onDelete: 'cascade' }),
+    /** Id of the connection the config declares. Never a reader-supplied endpoint. */
+    connectionId: text('connection_id').notNull(),
+    /** Self-describing AES-256-GCM payload; the deployment secret it is keyed from is never stored. */
+    encryptedKey: text('encrypted_key').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.userId, table.connectionId] }),
+    check('registry_ai_keys_connection_not_blank', sql`length(btrim(${table.connectionId})) > 0`),
+  ]
+);
+
+/**
  * Fixed-window throttling counters. Callers pass a hash of the identifying value so raw emails and
  * IP addresses are not retained.
  */
@@ -616,6 +638,7 @@ export const registrySchema = {
   registryInstallations,
   registryAuthActionTokens,
   registryAccessTokens,
+  registryAiKeys,
   registryDeviceAuthorizations,
   registryAuthRateLimits,
 };

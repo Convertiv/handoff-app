@@ -25,7 +25,17 @@ export {
   type ResendUserInvitationResult,
   type ConsumeAuthActionResult,
 } from './action-tokens';
-export { createOpaqueSecret, hashSecret, normalizeEmail, secretHashMatches } from './crypto';
+export {
+  AI_KEY_SECRET_ENV,
+  MissingEncryptionSecretError,
+  createOpaqueSecret,
+  decryptSecret,
+  encryptSecret,
+  hashSecret,
+  normalizeEmail,
+  secretHashMatches,
+} from './crypto';
+export { deleteRegistryAiKey, listRegistryAiKeyConnections, readRegistryAiKey, saveRegistryAiKey } from './ai-keys';
 export { buildGravatarUrl } from './gravatar';
 export { authenticateRegistrySyncSecret, resolveRegistrySyncSecret, SYNC_SECRET_ENV } from './sync-secret';
 export {
