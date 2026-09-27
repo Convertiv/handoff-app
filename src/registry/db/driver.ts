@@ -36,7 +36,7 @@ export interface ResolvedRegistryDatabase {
 
 /** Resolve the env-var name holding the database URL (defaults to `DATABASE_URL`). */
 export const resolveDatabaseUrlEnv = (config: ResolvedConfig | null | undefined): string => {
-  const configured = config?.runtime?.registry?.databaseUrl?.$env?.trim();
+  const configured = config?.runtime?.registry?.database?.url?.$env?.trim();
   return configured || DEFAULT_DATABASE_URL_ENV;
 };
 
@@ -58,7 +58,7 @@ export const resolveRegistryDatabase = (config: ResolvedConfig | null | undefine
   if (!connectionString) {
     throw new Error(
       `Registry database URL is not configured. Set the "${databaseUrlEnv}" environment variable to a ` +
-        `PostgreSQL connection string (or change "runtime.registry.databaseUrl" to point at the env var you use).`
+        `PostgreSQL connection string (or change "runtime.registry.database.url" to point at the env var you use).`
     );
   }
 

@@ -54,8 +54,7 @@ export default defineConfig({
     mode: "workspace",
     // mcp: false,
     // registry: {
-    //   databaseUrl: fromEnv("DATABASE_URL"),
-    //   database: { driver: "pg" }, // 'pg' | 'neon'
+    //   database: { url: fromEnv("DATABASE_URL"), driver: "pg" }, // driver: 'pg' | 'neon'
     // },
   },
 

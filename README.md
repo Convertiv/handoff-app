@@ -473,8 +473,8 @@ Import `fromEnv` from `handoff-app`. Select the Neon connection driver in `hando
 ```ts
 runtime: {
   registry: {
-    databaseUrl: fromEnv('DATABASE_URL'),
     database: {
+      url: fromEnv('DATABASE_URL'),
       driver: 'neon',
     },
   },

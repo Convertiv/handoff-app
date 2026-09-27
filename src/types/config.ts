@@ -253,9 +253,9 @@ export interface HandoffRuntimeConfig {
   };
   /** Registry-mode host settings. Env-var values are stored as names, never as secrets. */
   registry?: {
-    /** Environment reference to the database URL. @default fromEnv('DATABASE_URL') */
-    databaseUrl?: RuntimeEnvReference<string>;
     database?: {
+      /** Environment reference to the database URL. @default fromEnv('DATABASE_URL') */
+      url?: RuntimeEnvReference<string>;
       /**
        * PostgreSQL is the supported database. `driver` selects the built-in connection driver — how
        * to connect, not which engine — over the same package-owned Postgres schema and migrations.

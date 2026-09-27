@@ -24,7 +24,7 @@ export const defaultConfig = (): Config => ({
       accessToken: fromEnv('HANDOFF_REGISTRY_ACCESS_TOKEN', { default: '' }),
     },
     registry: {
-      databaseUrl: fromEnv('DATABASE_URL'),
+      database: { url: fromEnv('DATABASE_URL') },
       assetStorage: { token: fromEnv('BLOB_READ_WRITE_TOKEN') },
     },
   },

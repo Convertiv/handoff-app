@@ -17,7 +17,7 @@ const pathMatches = (pattern: string, path: string, prefix = false): boolean => 
 
 /** Paths whose value the deployed app reads at request time, so only the variable name is stored. */
 export const DEFERRED_PATHS = [
-  'runtime.registry.databaseUrl',
+  'runtime.registry.database.url',
   'runtime.registry.assetStorage.token',
   'runtime.registry.email.options.apiKey',
   'runtime.registry.email.options.password',
