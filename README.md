@@ -504,24 +504,22 @@ environment.
 
 #### Optional email delivery
 
-Invitation and password-reset emails are sent when a sender is set in
-`handoff.config.ts`. Resend is the default provider:
+The registry sends invitation and password-reset emails when `email.from` is
+set. Without it, an administrator sees each invitation link once and delivers
+it manually, and password reset is not available.
+
+Resend is the default provider. It reads its key from `RESEND_API_KEY`, unless
+`options.apiKey` names a different variable:
 
 ```ts
 runtime: {
   registry: {
-    email: {
-      from: 'Handoff <no-reply@example.com>',
-    },
+    email: { from: 'Handoff <no-reply@example.com>' },
   },
 },
 ```
 
-The Resend API key is read from `RESEND_API_KEY`. To use a different variable,
-set `options: { apiKey: fromEnv('...') }`.
-
-Any SMTP server can send the emails, for example Amazon SES, SendGrid,
-Postmark, Mailgun or Microsoft 365:
+For an SMTP server, for example Amazon SES, SendGrid, or Microsoft 365:
 
 ```ts
 email: {
@@ -529,19 +527,15 @@ email: {
   provider: 'smtp',
   options: {
     host: fromEnv('SMTP_HOST'),
-    port: 465,
+    port: 465, // default, uses TLS. 587 uses STARTTLS.
     user: fromEnv('SMTP_USER'),
     password: fromEnv('SMTP_PASSWORD'),
   },
 },
 ```
 
-Port 465 is the default and uses TLS. With `port: 587`, the connection
-upgrades with STARTTLS.
-
-For another service, set `provider: 'custom'` and `module` to a server-only
-file that default-exports `defineEmailProvider()`. The factory gets `options`
-with their environment references resolved:
+For a different service, set `provider: 'custom'` and set `module` to a
+server-only file. The factory gets `options` with `fromEnv()` values resolved:
 
 ```ts
 import { defineEmailProvider } from 'handoff-app';
@@ -553,14 +547,10 @@ export default defineEmailProvider(({ options }) => ({
 }));
 ```
 
-A literal in `options` is baked into the build. A `fromEnv()` reference is
-read by the deployed registry at request time, so its value can change without
-a rebuild. `apiKey` and `password` must be `fromEnv()` references. A profile
-that sets a different `provider` starts with new `options`.
-
-Use a profile to set a different sender per environment. Without email,
-invitation links are shown once to an administrator for manual delivery, and
-password reset is unavailable.
+Literals in `options` are baked into the build. `fromEnv()` values are read at
+request time, so they can change without a rebuild. `apiKey` and `password`
+must use `fromEnv()`. A profile can set a different sender or provider. When a
+profile changes the provider, it replaces `options`.
 
 ### 3. Installation
 
