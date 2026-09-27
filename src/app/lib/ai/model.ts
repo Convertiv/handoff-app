@@ -4,6 +4,7 @@ import { aiCredentialKind, type AiConnectionSettings } from '@handoff/ai/connect
 import type { AiProvider, AiProviderFactory } from '@handoff/ai/types';
 import type { LanguageModel } from 'ai';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
+import { importServerModule } from '../server-module';
 
 /**
  * Server-only model construction.
@@ -57,8 +58,7 @@ export const resolveAiKey = async (connection: AiConnectionSettings, userId: str
 
 /** Load a custom provider module and coerce its default export (provider object or factory) to a provider. */
 const loadProviderModule = async (connection: AiConnectionSettings, apiKey: string | undefined): Promise<AiProvider> => {
-  // Traced into the registry bundle at build time; resolved by Node at runtime (see build tracing).
-  const mod: any = await import(/* webpackIgnore: true */ connection.module!);
+  const mod = await importServerModule(connection.module!);
   const exported = mod?.default ?? mod;
   const provider: unknown =
     typeof exported === 'function'

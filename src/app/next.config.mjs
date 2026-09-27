@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 const resolveBasePath = (rawBasePath) => {
   if (!rawBasePath || rawBasePath.startsWith('%HANDOFF_')) {
@@ -29,7 +30,10 @@ const handoffAssetStorageModule = '%HANDOFF_ASSET_STORAGE_MODULE%';
 // is loaded by a variable dynamic import. A JSON array, since the config can declare several.
 const handoffAiProviderModules = '%HANDOFF_AI_PROVIDER_MODULES%';
 
-const toAbsoluteProjectPath = (target) => (path.isAbsolute(target) ? target : path.resolve(handoffWorkingPath, target));
+// Next resolves `outputFileTracingIncludes` globs against the app directory, so an absolute path would
+// be joined onto it and match nothing.
+const handoffAppDir = path.dirname(fileURLToPath(import.meta.url));
+const toAppRelativePath = (target) => path.relative(handoffAppDir, path.resolve(handoffWorkingPath, target)).split(path.sep).join('/');
 
 const resolveServerModuleIncludes = () => {
   if (handoffBuildTarget !== 'registry') {
@@ -47,7 +51,7 @@ const resolveServerModuleIncludes = () => {
       // A malformed list must not sink the build; the assertion after assembly reports what is missing.
     }
   }
-  return modules.length ? { '/api/**': modules.map(toAbsoluteProjectPath) } : undefined;
+  return modules.length ? { '/api/**': modules.map(toAppRelativePath) } : undefined;
 };
 
 const resolveOutputMode = (target) => {
@@ -121,6 +125,9 @@ const nextConfig = {
     // static export). Read straight from the build env — empty for workspace dev/start.
     HANDOFF_BUILD_TARGET: handoffBuildTarget ?? '',
     HANDOFF_WORKING_PATH: '%HANDOFF_WORKING_PATH%',
+    // Where the project sits inside a registry bundle, which mirrors the tracing root. Custom server
+    // modules are imported from there (see `lib/server-module.ts`).
+    HANDOFF_BUNDLE_PROJECT_DIR: path.relative(handoffTracingRoot, handoffWorkingPath),
     HANDOFF_MODULE_PATH: '%HANDOFF_MODULE_PATH%',
     HANDOFF_EXPORT_PATH: '%HANDOFF_EXPORT_PATH%',
     HANDOFF_WEBSOCKET_PORT: '%HANDOFF_WEBSOCKET_PORT%',
