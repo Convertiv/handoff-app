@@ -13,6 +13,7 @@ import {
   Lightbulb,
   Loader2,
   MessageSquareText,
+  Plus,
   Square,
   SquarePen,
   X,
@@ -22,7 +23,7 @@ import * as React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
-import { stripBasePath } from '../../lib/utils';
+import { cn, stripBasePath } from '../../lib/utils';
 import type { AiPageKind } from '../../lib/ai/context';
 import { MarkdownComponents } from '../Markdown/MarkdownComponents';
 import { Attachment, AttachmentAction, AttachmentContent, AttachmentMedia, AttachmentTitle } from '../ui/attachment';
@@ -34,7 +35,7 @@ import { toolResultCard } from './AiToolResult';
 import { toolCallLabel } from './toolLabel';
 import { useAiChat } from './useAiChat';
 import { useAiConnections, type AiModelOption } from './useAiConnections';
-import { useNavTitles, usePageContext, type AiPage } from './usePageContext';
+import { pageAt, useNavTitles, usePageContext, type AiPage } from './usePageContext';
 
 /**
  * The docs assistant: a conversation with the design system, grounded in the same records the MCP
@@ -54,6 +55,9 @@ const PROMPT_SUGGESTIONS = [
 ];
 
 const COMPOSER_MAX_HEIGHT = 160;
+
+/** Earlier pages shown as chips. The rest fold into one count, so the composer stays short. */
+const EARLIER_PAGE_LIMIT = 2;
 
 /** Within this distance of the end, the transcript follows the answer. Past it, the reader reads. */
 const FOLLOW_THRESHOLD_PX = 48;
@@ -438,34 +442,55 @@ const ModelPicker: React.FC<{ models: AiModelOption[]; value: string | null; onC
 const PAGE_ICONS: Record<AiPageKind, React.ElementType> = { component: Layers, pattern: LayoutTemplate, page: FileText };
 
 /**
- * The page the next question is asked about. The reader can leave it out.
+ * The page the next question is asked about.
+ *
+ * - `attached`: sent with the next question. The reader can leave it out.
+ * - `left-out`: stays in view, so the reader can see it is not sent and can add it back.
+ * - `in-conversation`: an earlier question already carries this page, and the server sends that
+ *   question's page with every turn. Leaving it out would not take it from the model, so there is
+ *   no action.
  *
  * A tighter `xs` attachment: the chip sits inside the composer, so it stays about one line tall.
- * `-mt-1.5` cancels the composer's top padding, which is sized for text, so the chip sits as far
- * from the border above as from the text below.
  */
-const PageChip: React.FC<{ page: AiPage; onRemove: () => void }> = ({ page, onRemove }) => {
+type PageChipState = 'attached' | 'left-out' | 'in-conversation';
+
+const PageChip: React.FC<{ page: AiPage; state: PageChipState; onToggle?: () => void }> = ({ page, state, onToggle }) => {
   const Icon = PAGE_ICONS[page.kind];
+  const leftOut = state === 'left-out';
+  const hint = state === 'in-conversation' ? `${page.title} is already in this conversation` : page.title;
   return (
     <Attachment
       size="xs"
-      className="-mt-1.5 mb-2 min-w-0 has-data-[slot=attachment-content]:p-0.5 has-data-[slot=attachment-media]:p-0.5"
+      className={cn(
+        'has-data-[slot=attachment-content]:p-0.5 has-data-[slot=attachment-media]:p-0.5 min-w-0',
+        leftOut && 'border-dashed bg-transparent text-muted-foreground',
+        state === 'in-conversation' && 'border-transparent bg-muted/60'
+      )}
     >
-      <AttachmentMedia className="group-data-[size=xs]/attachment:w-5">
+      <AttachmentMedia className={cn('group-data-[size=xs]/attachment:w-5', leftOut && 'bg-transparent text-muted-foreground')}>
         <Icon className="size-3" aria-hidden="true" />
       </AttachmentMedia>
       <AttachmentContent>
-        <AttachmentTitle title={page.title}>{page.title}</AttachmentTitle>
+        <AttachmentTitle title={hint} className={cn(leftOut && 'line-through')}>
+          {page.title}
+        </AttachmentTitle>
       </AttachmentContent>
-      <AttachmentAction
-        type="button"
-        aria-label={`Leave ${page.title} out of the question`}
-        title={`Leave ${page.title} out of the question`}
-        onClick={onRemove}
-        className="h-5 w-5 text-muted-foreground hover:text-foreground [&_svg]:size-3"
-      >
-        <X />
-      </AttachmentAction>
+      {state === 'in-conversation' ? (
+        <span className="flex h-5 w-5 items-center justify-center text-muted-foreground">
+          <Check className="size-3" aria-hidden="true" />
+          <span className="sr-only">Already in this conversation</span>
+        </span>
+      ) : (
+        <AttachmentAction
+          type="button"
+          aria-label={leftOut ? `Ask about ${page.title}` : `Leave ${page.title} out of the question`}
+          title={leftOut ? `Ask about ${page.title}` : `Leave ${page.title} out of the question`}
+          onClick={onToggle}
+          className="h-5 w-5 text-muted-foreground hover:text-foreground [&_svg]:size-3"
+        >
+          {leftOut ? <Plus /> : <X />}
+        </AttachmentAction>
+      )}
     </Attachment>
   );
 };
@@ -480,11 +505,29 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
 
   const { messages, sendMessage, status, stop, error, model, chooseModel, startFresh } = useAiChat();
 
-  // A dismissed page stays out only while the reader stays on it.
+  // A page left out stays out only while the reader stays on it. A page an earlier question
+  // carries cannot be left out.
   const page = usePageContext();
-  const [dismissedPath, setDismissedPath] = React.useState<string | null>(null);
-  React.useEffect(() => setDismissedPath(null), [page?.path]);
-  const context = page && page.path !== dismissedPath ? page : null;
+  const titles = useNavTitles();
+  const [leftOutPath, setLeftOutPath] = React.useState<string | null>(null);
+  React.useEffect(() => setLeftOutPath(null), [page?.path]);
+  // Every page the questions were asked from, most recent first.
+  const askedPaths = [...new Set(messages.map(pathOf).reverse())].filter((path): path is string => Boolean(path));
+  const earlierPages = askedPaths
+    .filter((path) => path !== page?.path)
+    .map((path) => pageAt(path, titles))
+    .filter((earlier): earlier is AiPage => Boolean(earlier));
+  const shownEarlierPages = earlierPages.slice(0, EARLIER_PAGE_LIMIT);
+  const hiddenEarlierPages = earlierPages.slice(EARLIER_PAGE_LIMIT);
+  const hiddenTitles = hiddenEarlierPages.map((hidden) => hidden.title).join(', ');
+  const pageState: PageChipState | null = !page
+    ? null
+    : askedPaths.includes(page.path)
+      ? 'in-conversation'
+      : page.path === leftOutPath
+        ? 'left-out'
+        : 'attached';
+  const context = pageState && pageState !== 'left-out' ? page : null;
 
   // The picker follows the deployment's default until the reader chooses, and falls back to the
   // first usable model so a deployment whose default is not usable here still answers.
@@ -614,14 +657,34 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
         className="shrink-0 border-t p-3"
       >
         <div className="px-1 pt-1.5">
-          {context && (
-            <PageChip
-              page={context}
-              onRemove={() => {
-                setDismissedPath(context.path);
-                composerRef.current?.focus();
-              }}
-            />
+          {/* `-mt-1.5` cancels the composer's top padding, which is sized for text, so the chips sit as far
+              from the border above as from the text below. */}
+          {(pageState || earlierPages.length > 0) && (
+            <div className="-mt-1.5 mb-2 flex flex-wrap gap-1.5">
+              {page && pageState && (
+                <PageChip
+                  page={page}
+                  state={pageState}
+                  onToggle={() => {
+                    setLeftOutPath(pageState === 'left-out' ? null : page.path);
+                    composerRef.current?.focus();
+                  }}
+                />
+              )}
+              {shownEarlierPages.map((earlier) => (
+                <PageChip key={earlier.path} page={earlier} state="in-conversation" />
+              ))}
+              {hiddenEarlierPages.length > 0 && (
+                <Attachment
+                  size="xs"
+                  title={hiddenTitles}
+                  className="min-w-0 border-transparent bg-muted/60 px-2 py-1 text-muted-foreground"
+                >
+                  +{hiddenEarlierPages.length}
+                  <span className="sr-only"> more in this conversation: {hiddenTitles}</span>
+                </Attachment>
+              )}
+            </div>
           )}
           <textarea
             ref={composerRef}

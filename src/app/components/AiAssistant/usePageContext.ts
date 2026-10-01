@@ -48,12 +48,16 @@ export const useNavTitles = (): Map<string, string> => {
   return React.useMemo(() => collectTitles(nav.shell), [nav]);
 };
 
+/** The page at a route, or `null` when the route gives no context or is not in the nav. */
+export const pageAt = (path: string, titles: Map<string, string>): AiPage | null => {
+  const ref = pageRefFromPath(path);
+  const title = titles.get(path);
+  return ref && title ? { path, kind: ref.kind, title } : null;
+};
+
 /** The current page, or `null` when the route gives no context or is not in the nav. */
 export const usePageContext = (): AiPage | null => {
   const { asPath } = useRouter();
   const titles = useNavTitles();
-  const path = routeOf(asPath);
-  const ref = pageRefFromPath(path);
-  const title = titles.get(path);
-  return ref && title ? { path, kind: ref.kind, title } : null;
+  return pageAt(routeOf(asPath), titles);
 };
