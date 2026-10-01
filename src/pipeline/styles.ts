@@ -29,7 +29,7 @@ export const buildCustomFonts = async (handoff: Handoff, documentationObject: Ha
     if (fs.existsSync(fontDirName)) {
       const stream = fs.createWriteStream(path.join(fontLocation, `${name}.zip`));
       await zip(fontDirName, stream);
-      const fontsFolder = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId(), 'fonts');
+      const fontsFolder = path.join(handoff.getOutputPath(), 'fonts');
       if (!fs.existsSync(fontsFolder)) {
         fs.mkdirSync(fontsFolder);
       }

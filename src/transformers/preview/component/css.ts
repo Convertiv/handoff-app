@@ -179,7 +179,7 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
     // Setup SASS load paths
     const loadPaths = [
       path.resolve(handoff.workingPath),
-      path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
+      handoff.getOutputPath(),
       path.resolve(handoff.workingPath, 'node_modules'),
     ];
 
@@ -247,7 +247,7 @@ export const buildMainCss = async (handoff: Handoff): Promise<void> => {
         const loadPaths = [
           path.dirname(scssEntry),
           path.resolve(handoff.workingPath),
-          path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId()),
+          handoff.getOutputPath(),
           path.resolve(handoff.workingPath, 'node_modules'),
         ];
 

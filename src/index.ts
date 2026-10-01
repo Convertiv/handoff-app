@@ -555,16 +555,8 @@ class Handoff {
     return this._handoffRunner;
   }
 
-  /**
-   * Gets the project ID, falling back to filesystem-safe working path if no Figma file ID is set
-   * @returns {string} The project ID to use for path construction
-   */
+  /** Keys `.handoff/<projectId>`, so workspaces that share one installed package stage apart. */
   getProjectId(): string {
-    const { projectId } = resolveFigmaConnection(this.config);
-    if (projectId) {
-      return projectId;
-    }
-    // Fallback to filesystem-safe transformation of working path
     return generateFilesystemSafeId(this.workingPath);
   }
 
@@ -573,7 +565,7 @@ class Handoff {
    * @returns {string} The absolute path to the output directory
    */
   getOutputPath(): string {
-    return path.resolve(this.workingPath, this.exportsDirectory, this.getProjectId());
+    return path.resolve(this.workingPath, this.exportsDirectory);
   }
 
   /**

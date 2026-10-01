@@ -46,7 +46,7 @@ export const DEFAULT_BUILD_TARGET: BuildTarget = 'static';
 /**
  * Resolved packaging axis — orthogonal to {@link BuildTarget}. It
  * selects *how* the build is packaged, not *what* is built:
- *   - `standalone` → the existing sites-directory deliverable (`out/<projectId>` for static, the
+ *   - `standalone` → the sites-directory deliverable (`out/static` for static, the
  *     Node standalone bundle `out/registry` for registry).
  *   - `vercel`     → the Vercel Build Output API directory (`.vercel/output`) at the repo root.
  *
@@ -73,7 +73,7 @@ export class HandoffBuildError extends Error {
  * Resolve and validate the effective `(target, package)` pair.
  *
  * `--package` is optional and never implies a target. When omitted the effective package is
- * `standalone` for both targets, preserving today's `out/<projectId>` / `out/registry` deliverables.
+ * `standalone` for both targets (`out/static` / `out/registry`).
  * The one rejected combination is `static + standalone`: a static snapshot has no server to package
  * as a Node standalone bundle.
  */
@@ -164,13 +164,9 @@ const runNextBuild = async (appPath: string, target: BuildTarget, errorLabel: st
   });
 };
 
-/**
- * Output directory for the packaged registry app. Lives under the configurable sites output
- * directory (`sitesOutputDirectory`, default `out`) alongside the static target's `out/<projectId>`
- * deliverable — both build targets emit to one discoverable, gitignored output root, keeping the
- * package's `.handoff` for internal build/staging only. The registry artifact is a single
- * deployable, so it is not keyed by project id.
- */
+/** Fixed names, not project ids, so deploy paths are the same on every machine. */
+export const getStaticBuildOutputPath = (handoff: Handoff): string => path.resolve(handoff.workingPath, handoff.sitesDirectory, 'static');
+
 export const getRegistryBuildOutputPath = (handoff: Handoff): string =>
   path.resolve(handoff.workingPath, handoff.sitesDirectory, 'registry');
 
@@ -284,7 +280,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const handoffAppBasePath = handoff.config.app.base_path ?? '';
   const handoffWorkingPath = path.resolve(handoff.workingPath);
   const handoffModulePath = path.resolve(handoff.modulePath);
-  const handoffExportPath = path.resolve(handoff.workingPath, handoff.exportsDirectory, handoff.getProjectId());
+  const handoffExportPath = handoff.getOutputPath();
   const nextConfigPath = path.resolve(srcPath, 'next.config.mjs');
   const targetPath = path.resolve(appPath, 'next.config.mjs');
   const handoffWebsocketPort = handoff.config.app.ports?.websocket ?? 3001;
@@ -417,23 +413,14 @@ const buildApp = async (
 
   // Final assembly branches on the resolved package. `vercel` lays the materialized export
   // under `.vercel/output/static/` at the repo root (not the sites directory) — a hard Vercel
-  // constraint; `standalone` keeps writing the `out/<projectId>` export.
+  // constraint; `standalone` keeps writing the `out/static` export.
   if (resolvedPackage === 'vercel') {
     await writeStaticVercelOutput(handoff, exportDir);
     return;
   }
 
-  // Ensure output root directory exists
-  const outputRoot = path.resolve(handoff.workingPath, handoff.sitesDirectory);
-  await fs.ensureDir(outputRoot);
-
-  // Clean the project output directory (if exists)
-  const output = path.resolve(outputRoot, handoff.getProjectId());
-  if (fs.existsSync(output)) {
-    await fs.remove(output);
-  }
-
-  // Copy the build files into the project output directory
+  const output = getStaticBuildOutputPath(handoff);
+  await fs.remove(output);
   await fs.copy(exportDir, output);
 };
 

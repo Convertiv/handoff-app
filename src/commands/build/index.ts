@@ -17,7 +17,7 @@ export interface BuildArgs extends SharedArgs {
  * `handoff-app build [--target static|registry] [--package standalone|vercel]` — builds the
  * documentation site for the resolved target and packages it for the resolved deliverable.
  * `--target` selects *what* is built; the optional, additive `--package` selects *how* it is
- * packaged. Bare `build` resolves to the static target with the `out/<projectId>` export;
+ * packaged. Bare `build` resolves to the static target with the `out/static` export;
  * `--package` never implies a `--target`.
  */
 const command: CommandModule<{}, BuildArgs> = {

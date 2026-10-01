@@ -137,7 +137,19 @@ export const validateFigmaAuth = async (handoff: Handoff): Promise<void> => {
 export const figmaExtract = async (handoff: Handoff): Promise<HandoffTypes.IDocumentationObject> => {
   Logger.success(`Starting Figma data extraction.`);
 
-  await fs.emptyDir(handoff.getOutputPath());
+  // The export directory can hold other files, so remove only what fetch writes.
+  const outputPath = handoff.getOutputPath();
+  await Promise.all(
+    [
+      handoff.getTokensFilePath(),
+      handoff.getVariablesFilePath(),
+      handoff.getIconsZipFilePath(),
+      handoff.getLogosZipFilePath(),
+      path.join(outputPath, 'tokens-map.json'),
+      path.join(outputPath, 'fonts'),
+    ].map((entry) => fs.remove(entry))
+  );
+  await fs.ensureDir(outputPath);
 
   const documentationObject = await createDocumentationObject(handoff);
   const createZipFiles = process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false';

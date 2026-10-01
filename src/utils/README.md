@@ -8,7 +8,7 @@ Shared utility functions used across the codebase.
 |------|---------|
 | `logger.ts` | `Logger` class — timestamped, color-coded console logging |
 | `filter.ts` | `evaluateFilter()`, `filterAndSort()` — generic object filtering with logical operators |
-| `path.ts` | `generateFilesystemSafeId()` — creates safe directory names from paths |
+| `path.ts` | `generateFilesystemSafeId()` — creates short, safe directory names (base name + path hash) from paths |
 | `fs.ts` | `findFilesByExtension()` — recursive file search by extension |
 | `markdown.ts` | `parseMarkdown()` — frontmatter parse without gray-matter's unbounded module cache |
 | `index.ts` | `filterOutNull()` type guard |

@@ -21,6 +21,7 @@ Each feature section identifies the affected projects and the required changes.
 | [Node.js 22](#nodejs-22) | All projects |
 | [Figma settings](#figma-settings) | Projects that set Figma values in config |
 | [Catalog items](#catalog-items) | Projects with component or pattern declarations |
+| [Output directories](#output-directories) | Projects that deploy the static build, commit `exported/`, or use a `public-<projectId>` directory |
 
 <!-- Add future breaking changes as feature sections before "Verify the upgrade". Add each section to this table. -->
 
@@ -224,6 +225,29 @@ CSF uses `renderer: 'react'` with `format: 'csf'` inside `implementation`.
 
 Checkout writes only catalog declarations.
 Registry records require explicit renderer and source-format metadata where applicable.
+
+### Output directories
+
+Version 1.x.x put the static site and the fetched tokens in a directory named after `<projectId>`.
+`<projectId>` was the Figma file ID, or a name made from the project path when no Figma file was set.
+Version 2.x.x uses fixed directory names:
+
+| Content | 1.x.x | 2.x.x |
+| --- | --- | --- |
+| Static site from `handoff-app build` | `out/<projectId>` | `out/static` |
+| Tokens and assets from `fetch` and `checkout` | `exported/<projectId>` | `exported` |
+| Project-specific public files | `public-<projectId>` | Removed. Use `public` |
+
+Do these steps:
+
+1. Update deploy scripts and CI steps that read `out/<projectId>`.
+   If you set `sitesOutputDirectory` or `HANDOFF_SITES_DIR`, the site is in `static` below that directory.
+2. Move the contents of `exported/<projectId>` up to `exported`, or run `npm run fetch` again.
+   Then remove `exported/<projectId>` and commit the result.
+3. Merge the files from `public-<projectId>` into `public`, then remove `public-<projectId>`.
+
+A repository that builds more than one Figma file gets one `out/static` and one `exported` directory.
+Set `HANDOFF_SITES_DIR` and `HANDOFF_OUTPUT_DIR`, or the matching config values in a profile, to a different directory for each build.
 
 ### Verify the upgrade
 

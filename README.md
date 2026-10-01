@@ -386,9 +386,9 @@ After design changes, the Figma library should be republished and the command
 should be run again so the latest foundations are pulled.
 
 Generated tokens, CSS, Sass, and available assets are written below
-`exported/<projectId>`. The `exported/` directory should be committed so the
+`exported/`. The `exported/` directory should be committed so the
 same inputs are used by local and CI builds. A successful fetch can be verified
-by checking for generated token data such as `exported/<projectId>/tokens.json`;
+by checking for generated token data such as `exported/tokens.json`;
 an empty foundation route does not prove that the fetch succeeded.
 
 ## Workspace
@@ -421,7 +421,7 @@ A static documentation site is built with:
 npm run build
 ```
 
-Static output is written below `out/<projectId>` and can be served by any
+Static output is written below `out/static` and can be served by any
 static file server or CDN.
 
 Components whose files have not changed since the last build are not built

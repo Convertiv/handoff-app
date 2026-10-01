@@ -40,7 +40,7 @@ const resolveBasePath = (rawBasePath: string | undefined): string => {
  * no functions, no database.
  *
  * @param exportDir Absolute path of the materialized static export (the same content the static
- *   target writes to `out/<projectId>`).
+ *   target writes to `out/static`).
  */
 export const writeStaticVercelOutput = async (handoff: Handoff, exportDir: string): Promise<void> => {
   const outputPath = getVercelOutputPath(handoff);
