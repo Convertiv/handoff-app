@@ -854,11 +854,11 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
  */
 export const watchApp = async (handoff: Handoff): Promise<void> => {
   // Build the shared/global artifacts first so component/pattern preview HTML references them only
-  // when present, then process components with caching enabled (which skips
-  // rebuilding components whose source files haven't changed).
+  // when present, then process components. The build cache skips the components whose files did not
+  // change.
   await buildMainJS(handoff);
   await buildMainCss(handoff);
-  await processComponents(handoff, undefined, undefined, { useCache: true });
+  await processComponents(handoff);
 
   // Build patterns after components are ready
   await buildPatterns(handoff);

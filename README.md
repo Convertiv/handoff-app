@@ -69,7 +69,7 @@ Every command runs against a working directory: the directory holding
 ├─ public/api/     # generated docs API; gitignored
 ├─ out/            # build output; gitignored
 ├─ .vercel/        # `--package vercel` output; gitignored
-└─ .handoff/       # saved CLI login; gitignored
+└─ .handoff/       # local Handoff state; gitignored
 ```
 
 In a repository of its own, which is what `init` scaffolds, the working
@@ -423,6 +423,17 @@ npm run build
 
 Static output is written below `out/<projectId>` and can be served by any
 static file server or CDN.
+
+Components whose files have not changed since the last build are not built
+again. The build cache in `.handoff/.cache/` records the files of each
+component and every file that its last build read, Sass partials included.
+Files under `node_modules` are covered by the lockfile instead. Assets that a
+stylesheet loads through `url()` are not tracked. Every component is built
+again with:
+
+```bash
+npm run build -- --force
+```
 
 A standalone registry application is built with:
 

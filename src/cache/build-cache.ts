@@ -1,18 +1,20 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../index';
+import { collectModuleInputs } from '../transformers/utils/build';
 import { Logger } from '../utils/logger';
 import { normalizePathForCompare } from '../utils/path';
+import { BuildInputs } from './build-inputs';
 import { computeDirectoryState, computeFileState, directoryStatesMatch, FileState, statesMatch } from './file-state';
 
 /** Current cache format version - bump when structure changes */
-const CACHE_VERSION = '1.0.0';
+const CACHE_VERSION = '2.0.0';
 
 /**
  * Cache entry for a single component
  */
 export interface ComponentCacheEntry {
-  /** File states for all source files of this component */
+  /** File states for the declared source files of this component and every file its last build read */
   files: Record<string, FileState>;
   /** States for template directory files (if templates is a directory) */
   templateDirFiles?: Record<string, FileState>;
@@ -30,7 +32,24 @@ export interface GlobalDepsState {
   globalScss?: FileState;
   /** Global JS entry file state */
   globalJs?: FileState;
+  /** Main config file state. The build hooks are declared there */
+  mainConfig?: FileState;
+  /** Profile config file state */
+  profileConfig?: FileState;
+  /** Selected profile. All profiles write to the same output, so a switch invalidates all of it */
+  profile?: string;
+  /** Lockfile state. It stands in for the files under `node_modules`, which the cache does not track */
+  lockfile?: FileState;
+  /** handoff-app version that built the output */
+  version?: string;
+  /** Base path written into the generated HTML */
+  basePath?: string;
 }
+
+const GLOBAL_FILE_DEPS = ['tokens', 'globalScss', 'globalJs', 'mainConfig', 'profileConfig', 'lockfile'] as const;
+const GLOBAL_VALUE_DEPS = ['profile', 'version', 'basePath'] as const;
+
+const LOCKFILE_NAMES = ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock', 'bun.lockb'];
 
 /**
  * Complete build cache structure
@@ -48,11 +67,9 @@ export interface BuildCache {
  * Gets the path to the build cache file
  */
 export function getCachePath(handoff: Handoff): string {
-  // Two profiles share one project id and can build different output, so the profile has to name
-  // the cache file. One shared cache would serve the other profile's components.
-  const profile = handoff.getProfile();
-  const fileName = profile ? `build-cache.${profile}.json` : 'build-cache.json';
-  return path.resolve(handoff.modulePath, '.handoff', handoff.getProjectId(), '.cache', fileName);
+  // The cache describes the output in the working directory, so it lives there too. A build deletes
+  // the staged app under the package, so a cache there would not survive.
+  return path.resolve(handoff.workingPath, '.handoff', '.cache', 'build-cache.json');
 }
 
 /**
@@ -128,7 +145,44 @@ export async function computeGlobalDepsState(handoff: Handoff): Promise<GlobalDe
     result.globalJs = (await computeFileState(handoff.runtimeConfig.entries.js)) ?? undefined;
   }
 
+  const mainConfigPath = handoff.getMainConfigFilePath();
+  if (mainConfigPath) {
+    result.mainConfig = (await computeFileState(mainConfigPath)) ?? undefined;
+  }
+
+  const profileConfigPath = handoff.getProfileConfigFilePath();
+  if (profileConfigPath) {
+    result.profileConfig = (await computeFileState(profileConfigPath)) ?? undefined;
+  }
+
+  result.profile = handoff.getProfile();
+
+  const lockfilePath = findLockfile(handoff.workingPath);
+  if (lockfilePath) {
+    result.lockfile = (await computeFileState(lockfilePath)) ?? undefined;
+  }
+
+  result.version = await readPackageVersion(handoff);
+  result.basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
+
   return result;
+}
+
+/** The nearest lockfile, searched up from the working directory so that a monorepo root lockfile is found. */
+function findLockfile(fromDirectory: string): string | undefined {
+  for (let directory = path.resolve(fromDirectory); ; directory = path.dirname(directory)) {
+    const lockfile = LOCKFILE_NAMES.map((name) => path.join(directory, name)).find((file) => fs.existsSync(file));
+    if (lockfile) return lockfile;
+    if (path.dirname(directory) === directory) return undefined;
+  }
+}
+
+async function readPackageVersion(handoff: Handoff): Promise<string | undefined> {
+  try {
+    return (await fs.readJson(path.resolve(handoff.modulePath, 'package.json'))).version;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -137,20 +191,18 @@ export async function computeGlobalDepsState(handoff: Handoff): Promise<GlobalDe
 export function haveGlobalDepsChanged(cached: GlobalDepsState | null | undefined, current: GlobalDepsState): boolean {
   if (!cached) return true;
 
-  // Check each global dependency
-  if (!statesMatch(cached.tokens, current.tokens)) {
-    Logger.debug('Global dependency changed: tokens.json');
-    return true;
+  for (const key of GLOBAL_FILE_DEPS) {
+    if (!statesMatch(cached[key], current[key])) {
+      Logger.debug(`Global dependency changed: ${key}`);
+      return true;
+    }
   }
 
-  if (!statesMatch(cached.globalScss, current.globalScss)) {
-    Logger.debug('Global dependency changed: global SCSS entry');
-    return true;
-  }
-
-  if (!statesMatch(cached.globalJs, current.globalJs)) {
-    Logger.debug('Global dependency changed: global JS entry');
-    return true;
+  for (const key of GLOBAL_VALUE_DEPS) {
+    if (cached[key] !== current[key]) {
+      Logger.debug(`Global dependency changed: ${key}`);
+      return true;
+    }
   }
 
   return false;
@@ -274,46 +326,78 @@ export async function computeComponentFileStates(
 }
 
 /**
- * Checks if a component needs to be rebuilt based on file states
+ * Checks if a component needs to be rebuilt based on file states. This also compares the files that
+ * the last build read with their current state on disk.
  */
-export function hasComponentChanged(
+export async function hasComponentChanged(
   cached: ComponentCacheEntry | null | undefined,
   current: { files: Record<string, FileState>; templateDirFiles?: Record<string, FileState> }
-): boolean {
+): Promise<boolean> {
   if (!cached) {
     return true; // No cache entry means new component
   }
 
-  // Check regular files
-  const cachedFiles = Object.keys(cached.files);
-  const currentFiles = Object.keys(current.files);
-
-  // Check if file count changed
-  if (cachedFiles.length !== currentFiles.length) {
-    return true;
-  }
-
-  // Check if any files were added or removed
-  const cachedSet = new Set(cachedFiles);
-  for (const file of currentFiles) {
-    if (!cachedSet.has(file)) {
+  for (const [file, state] of Object.entries(current.files)) {
+    if (!statesMatch(cached.files[file], state)) {
       return true;
     }
   }
 
-  // Check if any file states changed
-  for (const file of cachedFiles) {
-    if (!statesMatch(cached.files[file], current.files[file])) {
+  for (const [file, state] of Object.entries(cached.files)) {
+    if (!(file in current.files) && !statesMatch(state, await computeFileState(file))) {
       return true;
     }
   }
 
-  // Check template directory files if applicable
-  if (!directoryStatesMatch(cached.templateDirFiles, current.templateDirFiles)) {
-    return true;
+  return !directoryStatesMatch(cached.templateDirFiles, current.templateDirFiles);
+}
+
+const SCRIPT_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mts', '.cts']);
+
+/**
+ * File states for every file that the builds of a component read, or `null` when that list is
+ * incomplete and the component must not be cached.
+ *
+ * Previews compile their sources with esbuild inside a Vite plugin, so Rollup does not see those
+ * imports. The esbuild graph of each script entry supplies them. The lockfile covers the files under
+ * `node_modules`, so they are skipped, together with the generated files in the output directory.
+ */
+export async function computeBuildInputStates(
+  handoff: Handoff,
+  componentId: string,
+  inputs: BuildInputs
+): Promise<Record<string, FileState> | null> {
+  if (inputs.failed) {
+    return null;
   }
 
-  return false;
+  const files = new Set(inputs.files);
+  const entries = handoff.runtimeConfig?.entities.components[componentId]?.entries as Record<string, string | undefined> | undefined;
+  const scriptEntries = new Set(Object.values(entries ?? {}).filter((entry): entry is string => !!entry && SCRIPT_EXTENSIONS.has(path.extname(entry))));
+
+  for (const entry of scriptEntries) {
+    const moduleInputs = await collectModuleInputs(entry, handoff);
+    if (!moduleInputs) {
+      return null;
+    }
+    for (const file of moduleInputs) files.add(file);
+  }
+
+  const outputDirectory = path.resolve(handoff.workingPath, 'public/api/component');
+  const states: Record<string, FileState> = {};
+
+  for (const id of files) {
+    const file = id.split('?')[0];
+    if (!path.isAbsolute(file) || file.split(path.sep).includes('node_modules') || file.startsWith(outputDirectory + path.sep)) {
+      continue;
+    }
+    const state = await computeFileState(file);
+    if (state) {
+      states[path.resolve(file)] = state;
+    }
+  }
+
+  return states;
 }
 
 /**
@@ -369,10 +453,11 @@ export function createEmptyCache(): BuildCache {
 export function updateComponentCacheEntry(
   cache: BuildCache,
   componentId: string,
-  fileStates: { files: Record<string, FileState>; templateDirFiles?: Record<string, FileState> }
+  fileStates: { files: Record<string, FileState>; templateDirFiles?: Record<string, FileState> },
+  inputStates: Record<string, FileState>
 ): void {
   cache.components[componentId] = {
-    files: fileStates.files,
+    files: { ...inputStates, ...fileStates.files },
     templateDirFiles: fileStates.templateDirFiles,
     buildTimestamp: Date.now(),
   };

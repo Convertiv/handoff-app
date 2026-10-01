@@ -641,6 +641,13 @@ class Handoff {
     return this._mainConfigFilePath;
   }
 
+  /**
+   * Gets the selected profile config file path if one exists.
+   */
+  getProfileConfigFilePath(): string | undefined {
+    return this._profileConfigFilePath;
+  }
+
   getProfile(): string | undefined {
     return this._profile;
   }

@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
+import { BuildInputs, withBuildInputs } from '../../../cache/build-inputs';
 import Handoff from '../../../index';
 import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
@@ -17,6 +18,7 @@ export const MAIN_COMPONENT_JS_FILE = 'main.js';
  * @param options.entry - The entry file path for the bundle
  * @param options.outputPath - The directory where the bundle will be output
  * @param options.outputFilename - The name of the output file
+ * @param inputs - Collects the files that the build reads, for the build cache
  */
 const buildJsBundle = async (
   {
@@ -25,7 +27,8 @@ const buildJsBundle = async (
     outputFilename,
     format = 'cjs',
   }: { entry: string; outputPath: string; outputFilename: string; format?: 'cjs' | 'iife' },
-  handoff: Handoff
+  handoff: Handoff,
+  inputs?: BuildInputs
 ) => {
   const absEntryPath = path.resolve(entry);
 
@@ -62,7 +65,7 @@ const buildJsBundle = async (
       viteConfig = handoff.config.hooks.jsBuildConfig(viteConfig);
     }
 
-    await viteBuild(viteConfig);
+    await viteBuild(withBuildInputs(viteConfig, inputs));
   } finally {
     // Restore the original NODE_ENV value after vite build completes
     // This prevents interference with Next.js app building/running processes
@@ -84,7 +87,11 @@ const buildJsBundle = async (
  * @param handoff - The Handoff configuration object
  * @returns The updated component transformation result with JavaScript data
  */
-export const buildComponentJs = async (data: TransformComponentTokensResult, handoff: Handoff): Promise<TransformComponentTokensResult> => {
+export const buildComponentJs = async (
+  data: TransformComponentTokensResult,
+  handoff: Handoff,
+  inputs?: BuildInputs
+): Promise<TransformComponentTokensResult> => {
   const id = data.id;
   const outputPath = getComponentOutputPath(handoff);
   const builtJsPath = path.resolve(outputPath, `${id}.js`);
@@ -111,9 +118,11 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
           outputPath,
           outputFilename: `${id}.js`,
         },
-        handoff
+        handoff,
+        inputs
       );
     } catch (e) {
+      if (inputs) inputs.failed = true;
       Logger.error(`Failed to bundle JS for component "${id}" (${id}.js):`, e);
       return data;
     }
@@ -126,6 +135,7 @@ export const buildComponentJs = async (data: TransformComponentTokensResult, han
       delete data['jsCompiled'];
     }
   } catch (e) {
+    if (inputs) inputs.failed = true;
     Logger.error(`JS build failed for component "${id}":`, e);
   }
 

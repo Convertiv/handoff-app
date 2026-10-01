@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { InlineConfig, build as viteBuild } from 'vite';
+import { BuildInputs, withBuildInputs } from '../../../cache/build-inputs';
 import Handoff from '../../../index';
 import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
@@ -22,6 +23,7 @@ export const SHARED_COMPONENT_CSS_FILE = 'shared.css';
  * @param options.outputFilename - The name of the output file
  * @param options.loadPaths - Array of paths for SASS to look for imports
  * @param options.handoff - The Handoff configuration object
+ * @param options.inputs - Collects the files that the build reads, for the build cache
  */
 const buildCssBundle = async ({
   entry,
@@ -29,12 +31,14 @@ const buildCssBundle = async ({
   outputFilename,
   loadPaths,
   handoff,
+  inputs,
 }: {
   entry: string;
   outputPath: string;
   outputFilename: string;
   loadPaths: string[];
   handoff: Handoff;
+  inputs?: BuildInputs;
 }): Promise<void> => {
   // Store the current NODE_ENV value
   const oldNodeEnv = process.env.NODE_ENV;
@@ -85,7 +89,7 @@ const buildCssBundle = async ({
       viteConfig = handoff.config.hooks.cssBuildConfig(viteConfig);
     }
 
-    await viteBuild(viteConfig);
+    await viteBuild(withBuildInputs(viteConfig, inputs));
   } catch (e) {
     Logger.error(`Failed to build CSS for "${entry}"`);
     throw e;
@@ -141,7 +145,7 @@ const writeCombinedStyleEntry = async (sources: string[], outputPath: string, id
   return entryPath;
 };
 
-const buildComponentCss = async (data: TransformComponentTokensResult, handoff: Handoff) => {
+const buildComponentCss = async (data: TransformComponentTokensResult, handoff: Handoff, inputs?: BuildInputs) => {
   const id = data.id;
   Logger.debug(`buildComponentCss`, id);
   const outputPath = getComponentOutputPath(handoff);
@@ -189,6 +193,7 @@ const buildComponentCss = async (data: TransformComponentTokensResult, handoff: 
       outputFilename: `${id}.css`,
       loadPaths,
       handoff,
+      inputs,
     });
 
     // Read the built CSS

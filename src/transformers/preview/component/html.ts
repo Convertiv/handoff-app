@@ -1,6 +1,7 @@
 import react from '@vitejs/plugin-react';
 import { Types as CoreTypes } from 'handoff-core';
 import { InlineConfig, PluginOption, build as viteBuild } from 'vite';
+import { BuildInputs, withBuildInputs } from '../../../cache/build-inputs';
 import type { RendererKind, SourceFormat } from '../../../catalog/renderers';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
@@ -35,6 +36,7 @@ const RENDERER_PLUGINS: Record<RendererKind, PreviewPlugins> = {
  * @param data - The result of transforming component tokens.
  * @param handoff - The Handoff configuration object.
  * @param components - Optional file components object.
+ * @param inputs - Collects the files that the build reads, for the build cache.
  * @returns A promise that resolves to the transformed component tokens result.
  * @throws Will throw an error if the Vite build process fails.
  *
@@ -46,7 +48,8 @@ const RENDERER_PLUGINS: Record<RendererKind, PreviewPlugins> = {
 export const buildPreviews = async (
   data: TransformComponentTokensResult,
   handoff: Handoff,
-  components?: CoreTypes.IDocumentationObject['components']
+  components?: CoreTypes.IDocumentationObject['components'],
+  inputs?: BuildInputs
 ): Promise<TransformComponentTokensResult> => {
   if (!data.entries?.template) return data;
 
@@ -87,8 +90,9 @@ export const buildPreviews = async (
       viteConfig = handoff.config.hooks.htmlBuildConfig(viteConfig);
     }
 
-    await viteBuild(viteConfig);
+    await viteBuild(withBuildInputs(viteConfig, inputs));
   } catch (error) {
+    if (inputs) inputs.failed = true;
     Logger.error(`Error building component previews: ${data.entries.template}`, error);
   } finally {
     // Restore the original NODE_ENV value after vite build completes

@@ -9,7 +9,8 @@ Builds and runs the Next.js documentation app from runtime config + generated pr
 
 2. **Build component artifacts**
    - Production: `buildComponents` + `buildPatterns`.
-   - Watch mode: `processComponents(..., { useCache: true })` to skip unchanged components.
+   - Watch mode: `processComponents(handoff)`.
+   - Every full component build uses the build cache to skip unchanged components (see `src/cache`).
 
 3. **Build global bundles**
    - Build main JS/CSS entry bundles when configured.

@@ -4,6 +4,7 @@ export { computeDirectoryState, computeFileState, directoryStatesMatch, statesMa
 // Build cache utilities
 export {
   checkOutputExists,
+  computeBuildInputStates,
   computeComponentFileStates,
   computeGlobalDepsState,
   createEmptyCache,
@@ -18,3 +19,6 @@ export {
   type ComponentCacheEntry,
   type GlobalDepsState,
 } from './build-cache';
+
+// Build input collection
+export { createBuildInputs, type BuildInputs } from './build-inputs';

@@ -88,6 +88,20 @@ function orderStyleImports(metafile: esbuild.Metafile, entryPath: string): strin
  * declared entry.
  */
 export async function collectStyleImports(entryPath: string, handoff: any): Promise<string[]> {
+  const metafile = await buildModuleGraph(entryPath, handoff);
+  return metafile ? orderStyleImports(metafile, entryPath) : [];
+}
+
+/**
+ * Every file in the module graph of an entry, stylesheets included, or `null` when the graph does
+ * not build.
+ */
+export async function collectModuleInputs(entryPath: string, handoff: any): Promise<string[] | null> {
+  const metafile = await buildModuleGraph(entryPath, handoff);
+  return metafile ? Object.keys(metafile.inputs).map((input) => path.resolve(input)) : null;
+}
+
+async function buildModuleGraph(entryPath: string, handoff: any): Promise<esbuild.Metafile | null> {
   const baseConfig: esbuild.BuildOptions = {
     ...DEFAULT_SSR_BUILD_CONFIG,
     entryPoints: [entryPath],
@@ -99,10 +113,9 @@ export async function collectStyleImports(entryPath: string, handoff: any): Prom
     // The `empty` loader keeps stylesheets out of the JavaScript, and the metafile still records
     // them as inputs, so the graph carries the order.
     const result = await esbuild.build({ ...withStyleLoaders(hookedConfig), metafile: true });
-
-    return result.metafile ? orderStyleImports(result.metafile, entryPath) : [];
+    return result.metafile ?? null;
   } catch {
-    return [];
+    return null;
   }
 }
 
