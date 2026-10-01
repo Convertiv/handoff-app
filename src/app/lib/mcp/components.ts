@@ -1,56 +1,167 @@
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { z } from 'zod';
 import { buildArtifactUrl } from '@handoff/artifacts/url';
-import { HOME_PAGE_ID } from '@handoff/registry/content-kinds';
-import type { TokenArtifactResource } from '@handoff/store';
 import type { SlotMetadata } from '@handoff/transformers/preview/component';
 import type { ComponentListObject, OptionalPreviewRender, TransformComponentTokensResult } from '@handoff/transformers/preview/types';
-import type { PageDetail } from '../docs-api/records';
+import type { DocsBackend } from '../docs-api/backend';
+import { basePath, fail, ok, read } from './result';
 
-/**
- * Agent-facing projections of the store records.
- *
- * The docs read API returns records verbatim because the browser app needs every field. An MCP
- * client pays for each field in context, so everything here is a deliberate narrowing: build config,
- * validation state, absolute paths and Figma sync ids are dropped, and the rest is reshaped into the
- * flatter arrays an agent can act on. Pure functions only, no I/O.
- */
+/** The component tools: search, read, one preview, and the source. */
 
-/** The generated-source fields returned with a component; the build artifact carries them under these names. */
+/** Search results are capped so a large design system cannot flood an agent's context. */
+const DEFAULT_SEARCH_LIMIT = 25;
+const MAX_SEARCH_LIMIT = 100;
+
+/** The source fields handoff_get_component_source returns; the build artifact carries them under these names. */
 const SOURCE_FIELDS = ['code', 'css', 'sass', 'js'] as const;
 type SourceField = (typeof SOURCE_FIELDS)[number];
 
-/** Accept internal page routes without URL normalization hiding traversal segments. */
-export const pageIdFromUrl = (url: string): string | null => {
-  if (!url.startsWith('/') || url.startsWith('//') || /[?#\\\u0000-\u001f\u007f]/.test(url)) {
-    return null;
-  }
-  if (url === '/') return HOME_PAGE_ID;
-  const id = url.slice(1).replace(/\/$/, '');
-  for (const segment of id.split('/')) {
-    try {
-      const decoded = decodeURIComponent(segment);
-      if (!decoded || decoded === '.' || decoded === '..' || /[/\\\u0000-\u001f\u007f]/.test(decoded)) return null;
-    } catch {
-      return null;
-    }
-  }
-  return id;
+export const registerComponentTools = (server: McpServer): void => {
+  server.registerTool(
+    'handoff_search_components',
+    {
+      title: 'Search components',
+      description:
+        'Find components. `query` matches id, title, group, categories and tags. With no arguments, ' +
+        'lists all components. Each result has id, title, description, group, type, categories and ' +
+        'tags. Read one component with handoff_get_component.',
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      inputSchema: {
+        query: z.string().optional().describe('Text to find. Case-insensitive substring match.'),
+        group: z.string().optional().describe('Group name, for example "Form Elements". Exact match, case-insensitive.'),
+        category: z.string().optional().describe('Category name. Exact match, case-insensitive.'),
+        tag: z.string().optional().describe('Tag name. Exact match, case-insensitive.'),
+        limit: z.number().int().min(1).max(MAX_SEARCH_LIMIT).optional().describe(`Max results (default ${DEFAULT_SEARCH_LIMIT}).`),
+      },
+    },
+    async ({ query, group, category, tag, limit }) =>
+      read('the component catalog', async (backend) => {
+        const matched = (await backend.listComponents()).filter((record: ComponentListObject) =>
+          matchesComponent(record, { query, group, category, tag })
+        );
+        const components = matched.slice(0, limit ?? DEFAULT_SEARCH_LIMIT).map(toComponentSummary);
+        return ok({ total: matched.length, returned: components.length, components });
+      })
+  );
+
+  server.registerTool(
+    'handoff_get_component',
+    {
+      title: 'Get component',
+      description:
+        'One component: properties, variants, usage and guidelines. `usage` is the snippet of the first ' +
+        'preview. When `usage` is absent, as for handlebars components, read the template with ' +
+        'handoff_get_component_source. `variants` lists the values the previews show; ' +
+        '`properties[].type` has all allowed values. To see another state, pass a `previews[].id` to ' +
+        'handoff_get_component_preview. `tokens.set`, when present, is the id to pass to ' +
+        'handoff_get_tokens. Do not derive a token set id from the component id.',
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      inputSchema: {
+        id: z.string().describe('Component id, as returned by handoff_search_components.'),
+      },
+    },
+    async ({ id }) =>
+      read(`component "${id}"`, async (backend) => {
+        const record = await backend.getComponentDetail(id);
+        if (!record) {
+          return componentNotFound(id);
+        }
+        const [artifact, tokenSets] = await Promise.all([readComponentArtifact(backend, id), backend.listTokenSets()]);
+        return ok(
+          toComponentResult(
+            record,
+            artifact,
+            basePath(),
+            tokenSets.map((set) => set.id)
+          )
+        );
+      })
+  );
+
+  server.registerTool(
+    'handoff_get_component_preview',
+    {
+      title: 'Get component preview',
+      description:
+        'One state of a component: `values` (the args), `usage` (the snippet) and `html` (the rendered ' +
+        'markup). `html` is absent when the component is not built.',
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      inputSchema: {
+        id: z.string().describe('Component id, as returned by handoff_search_components.'),
+        preview: z.string().describe('Preview id, as listed in `previews[].id` by handoff_get_component.'),
+      },
+    },
+    async ({ id, preview }) =>
+      read(`preview "${preview}" of component "${id}"`, async (backend) => {
+        const record = await backend.getComponentDetail(id);
+        if (!record) {
+          return componentNotFound(id);
+        }
+        const artifact = await readComponentArtifact(backend, id);
+        const previews = artifact?.previews ?? record.previews ?? {};
+        const found = previews[preview];
+        if (!found) {
+          const ids = Object.keys(previews);
+          return fail(
+            `Component "${id}" has no preview "${preview}". ${ids.length ? `Its previews are: ${ids.join(', ')}.` : 'It has no previews.'}`
+          );
+        }
+        return ok(toPreviewResult(record, preview, found, basePath(), await readPreviewDocument(backend, id, preview)));
+      })
+  );
+
+  server.registerTool(
+    'handoff_get_component_source',
+    {
+      title: 'Get component source',
+      description:
+        'The implementation of a component: `code` (the component or template) and, when present, ' +
+        '`css`, `sass` and `js`. Use it only when handoff_get_component is not enough. The source ' +
+        'fields are absent when the component is not built.',
+      annotations: { readOnlyHint: true, openWorldHint: false },
+      inputSchema: {
+        id: z.string().describe('Component id, as returned by handoff_search_components.'),
+      },
+    },
+    async ({ id }) =>
+      read(`source of component "${id}"`, async (backend) => {
+        const record = await backend.getComponentDetail(id);
+        if (!record) {
+          return componentNotFound(id);
+        }
+        return ok(toComponentSource(record, await readComponentArtifact(backend, id)));
+      })
+  );
 };
 
-export const toPageResult = (page: PageDetail) => ({
-  id: page.id,
-  url: page.path,
-  title: page.title,
-  description: page.description,
-  group: page.group,
-  external: page.external,
-  content: page.content,
-});
+const componentNotFound = (id: string) =>
+  fail(`Component "${id}" was not found. Use handoff_search_components to list the components that exist.`);
+
+/** One preview's rendered document, or `undefined` when the component has not been built. */
+const readPreviewDocument = async (backend: DocsBackend, id: string, previewId: string): Promise<string | undefined> => {
+  const artifact = await backend.resolveArtifact(['component', `${id}-${previewId}.html`]);
+  return artifact?.body.toString() || undefined;
+};
+
+/** Read and parse a component's build artifact, or `null` when the component has not been built. */
+const readComponentArtifact = async (backend: DocsBackend, id: string): Promise<TransformComponentTokensResult | null> => {
+  const artifact = await backend.resolveArtifact(['component', `${id}.json`]);
+  if (!artifact) {
+    return null;
+  }
+  try {
+    return JSON.parse(artifact.body.toString()) as TransformComponentTokensResult;
+  } catch {
+    // A corrupt artifact should not sink the metadata the agent can still use.
+    return null;
+  }
+};
 
 /**
  * One row of a component search result: identity and classification, and nothing else.
  *
  * Search answers "which component do I want", so a row carries only what tells one component from
- * another. Previews, properties and code belong to handoff_get_component.
+ * another. Previews, properties and usage belong to handoff_get_component.
  */
 export interface ComponentSummary {
   id: string;
@@ -62,14 +173,16 @@ export interface ComponentSummary {
   tags?: string[];
 }
 
+const nonEmpty = (values: string[] | undefined): string[] | undefined => (values?.length ? values : undefined);
+
 export const toComponentSummary = (record: ComponentListObject): ComponentSummary => ({
   id: record.id,
   title: record.title,
   description: record.description || undefined,
   group: record.group || undefined,
   type: record.type || undefined,
-  categories: record.categories?.length ? record.categories : undefined,
-  tags: record.tags?.length ? record.tags : undefined,
+  categories: nonEmpty(record.categories),
+  tags: nonEmpty(record.tags),
 });
 
 /** Case-insensitive substring test that treats a missing haystack as no match. */
@@ -299,26 +412,27 @@ export const deriveVariants = (
   return axes;
 };
 
-export interface ComponentResult {
-  id: string;
-  title: string;
-  description?: string;
-  group?: string;
-  type?: string;
+export interface ComponentResult extends ComponentSummary {
   renderer?: string;
   /** Source format the implementation is written in, when the renderer alone does not say. */
   sourceFormat?: string;
-  categories?: string[];
-  tags?: string[];
   properties?: Record<string, ComponentProperty>;
   /** Which previews exist and where each is rendered; the bodies come from a preview read. */
   previews: ComponentPreviewSummary[];
   variants: Record<string, (string | number | boolean)[]>;
-  usage: { general?: string; shouldDo?: string[]; shouldNotDo?: string[] };
-  /** The component's source. Absent when it is not built. */
-  code?: Partial<Record<SourceField, string>>;
+  /** The first preview's usage snippet. Absent when the renderer generates none, as with handlebars. */
+  usage?: string;
+  guidelines?: { shouldDo?: string[]; shouldNotDo?: string[] };
   /** This component's token set, when its declaration names the Figma component it maps to. */
   tokens?: { set: string };
+}
+
+/** The component's source, as returned by handoff_get_component_source. */
+export interface ComponentSourceResult extends Partial<Record<SourceField, string>> {
+  id: string;
+  title: string;
+  renderer?: string;
+  sourceFormat?: string;
 }
 
 /**
@@ -344,10 +458,10 @@ const pickCode = (artifact: TransformComponentTokensResult): Partial<Record<Sour
  * Merge a component record with its build artifact into one agent-facing result.
  *
  * `artifact` is the `component/{id}.json` build output, and is `null` for a component that is
- * declared but not built. That still has usable metadata, so it comes back without `code` rather
- * than as an error. The compiled `sharedStyles` blob is left out: it is the bulk of the artifact and
- * is shared across every component, so it says nothing about this one. So are `validations`,
- * `docgen`, `page`, `options` and the Figma sync fields.
+ * declared but not built. That still has usable metadata, so it comes back without `usage` rather
+ * than as an error. The source is left out: it is most of the result and an agent writing markup
+ * needs the snippet, not the implementation, so it lives behind handoff_get_component_source. So are
+ * `sharedStyles`, `validations`, `docgen`, `page`, `options` and the Figma sync fields.
  */
 export const toComponentResult = (
   record: ComponentListObject,
@@ -356,35 +470,32 @@ export const toComponentResult = (
   tokenSetIds: readonly string[] = []
 ): ComponentResult => {
   const previews = artifact?.previews ?? record.previews;
-  const code = artifact ? pickCode(artifact) : undefined;
   const properties = toProperties(artifact?.properties ?? record.properties);
-  const usagePreviews = Object.values(previews ?? {}).map((preview) => preview.usage);
-  // The artifact's `usage` is one preview's snippet repeated at the top level. Only surface it when
-  // it is not already sitting in `previews`, so it does not read as component-level guidance.
-  const general = artifact?.usage && !usagePreviews.includes(artifact.usage) ? artifact.usage : undefined;
+  // The docs record does not carry the guidelines; the build artifact does.
+  const shouldDo = nonEmpty(artifact?.should_do ?? record.should_do);
+  const shouldNotDo = nonEmpty(artifact?.should_not_do ?? record.should_not_do);
 
   return {
-    id: record.id,
-    title: record.title,
-    description: record.description || undefined,
-    group: record.group || undefined,
-    type: record.type || undefined,
+    ...toComponentSummary(record),
     renderer: artifact?.renderer ?? record.renderer,
     sourceFormat: artifact?.sourceFormat ?? record.sourceFormat,
-    categories: record.categories?.length ? record.categories : undefined,
-    tags: record.tags?.length ? record.tags : undefined,
     properties,
     previews: toPreviewIndex(record.id, previews, basePath),
     variants: deriveVariants(previews, properties),
-    usage: {
-      general,
-      shouldDo: record.should_do?.length ? record.should_do : undefined,
-      shouldNotDo: record.should_not_do?.length ? record.should_not_do : undefined,
-    },
-    code: code && Object.keys(code).length > 0 ? code : undefined,
+    usage: Object.values(previews ?? {})[0]?.usage || undefined,
+    guidelines: shouldDo || shouldNotDo ? { shouldDo, shouldNotDo } : undefined,
     tokens: componentTokenSet(record, tokenSetIds),
   };
 };
+
+/** The component's source, or only its identity when it has not been built. */
+export const toComponentSource = (record: ComponentListObject, artifact: TransformComponentTokensResult | null): ComponentSourceResult => ({
+  id: record.id,
+  title: record.title,
+  renderer: artifact?.renderer ?? record.renderer,
+  sourceFormat: artifact?.sourceFormat ?? record.sourceFormat,
+  ...(artifact ? pickCode(artifact) : {}),
+});
 
 /**
  * The component's token set, when one can be named with certainty.
@@ -405,224 +516,4 @@ const componentTokenSet = (record: ComponentListObject, tokenSetIds: readonly st
   }
   const set = `component/${figmaId}`;
   return tokenSetIds.includes(set) ? { set } : undefined;
-};
-
-/**
- * Drop the Figma node id from every token record.
- *
- * Colors, typography, effects and component instances each carry an `id` that is a Figma node
- * reference, which an agent cannot use. Everything else (`sass`, `reference`, `machineName`,
- * `values`, `parts`, `variantProperties`) survives, so nothing that affects generated code is lost.
- */
-export const stripFigmaIds = (record: unknown): unknown => {
-  if (Array.isArray(record)) return record.map(stripFigmaIds);
-  if (record && typeof record === 'object') {
-    const { id: _id, ...rest } = record as Record<string, unknown>;
-    return Object.fromEntries(Object.entries(rest).map(([key, value]) => [key, stripFigmaIds(value)]));
-  }
-  return record;
-};
-
-/** The generated formats available for a token set, deduped and in artifact order. */
-export const availableFormats = (artifacts: TokenArtifactResource[]): string[] =>
-  Array.from(new Set(artifacts.map((artifact) => artifact.format)));
-
-/**
- * Foundation tokens, reshaped into what an agent needs to write code.
- *
- * Neither the stored record nor the generated stylesheet is usable on its own. The record says a type
- * style is called `Heading 1` but nothing in it yields the variable to emit: its `reference` is
- * `typography--heading-1` while the real variables are `--typography-heading-1-font-size` and
- * friends, and it carries raw Figma fields (`textAutoResize`, three competing `lineHeight*`
- * encodings) that never become CSS. The stylesheet has the right names and resolved values but has
- * flattened away the human name and the grouping.
- *
- * So the two are joined. Names and values come from the generated CSS, token identity from the
- * generated `types` list, and `name`/`group` from the record. Nothing is reconstructed from a naming
- * rule of our own, since the rule differs per set and typography would come out wrong.
- *
- * Foundations only. Component sets are multi-axis (part x state x theme x property) and their
- * `types` artifact lists axes rather than token names, so there is no honest join to make.
- */
-
-/** One foundation token: a single value, or a bundle of properties under a shared variable prefix. */
-export interface FoundationToken {
-  /** Human-facing name from the record, when it could be matched unambiguously. */
-  name?: string;
-  /** Record group (e.g. `primary`, `shadow`), when set. */
-  group?: string;
-  /** The CSS custom property, for a single-value token. */
-  css?: string;
-  /** Resolved value, for a single-value token. */
-  value?: string;
-  /** Shared variable prefix, for a bundled token: each property is `{cssPrefix}-{property}`. */
-  cssPrefix?: string;
-  /** Resolved values keyed by CSS property, for a bundled token. */
-  properties?: Record<string, string>;
-}
-
-/** Parse `--name: value;` declarations out of a generated stylesheet. */
-export const cssVariables = (content: string): Record<string, string> => {
-  const variables: Record<string, string> = {};
-  for (const line of content.split('\n')) {
-    const match = /^\s*--([\w-]+)\s*:\s*(.+?);\s*$/.exec(line);
-    if (match) {
-      variables[match[1]] = match[2].trim();
-    }
-  }
-  return variables;
-};
-
-/**
- * Token names from a generated `types` artifact, read out of its quoted string list (`$color-names`,
- * `$type-sizes`, `$effects`). Without it there is no telling whether `--color-primary-blue-darker`
- * is a `darker` property of `primary-blue` or a token in its own right. It is the latter, and only
- * this list says so.
- */
-export const tokenNamesFromTypes = (content: string): string[] =>
-  // `[^"]*` not `[^"]+`: the list can carry an empty entry (`$color-groups` ends with `""`), and a
-  // pattern that cannot match it pairs that entry's closing quote with the next entry's opening one,
-  // knocking every later name out of alignment. Empty names are dropped after matching, not during.
-  Array.from(new Set(Array.from(content.matchAll(/"([^"]*)"/g), (match) => match[1]))).filter(Boolean);
-
-/**
- * Assign a CSS variable to the longest token name that matches, returning the leftover as a property.
- * Longest first is what keeps `primary-blue-darker` from being read as `primary-blue` + `darker`.
- */
-const claimVariable = (variable: string, namesByLength: string[]): { token: string; property?: string } | null => {
-  for (const token of namesByLength) {
-    if (variable === token || variable.endsWith(`-${token}`)) {
-      return { token };
-    }
-    const at = variable.indexOf(`-${token}-`);
-    if (at >= 0) {
-      return { token, property: variable.slice(at + token.length + 2) };
-    }
-    if (variable.startsWith(`${token}-`)) {
-      return { token, property: variable.slice(token.length + 1) };
-    }
-  }
-  return null;
-};
-
-/** A foundation record, as far as the join cares. */
-type FoundationRecord = { name?: string; group?: string; reference?: string; machineName?: string; machine_name?: string };
-
-/**
- * The record describing one token. Matched on `reference`, which ends with the token name across all
- * three foundation kinds. More than one candidate means it is ambiguous, so nothing is attached: a
- * token without its label beats a token with the wrong one.
- */
-const recordFor = (token: string, records: FoundationRecord[]): FoundationRecord | null => {
-  const matches = records.filter(
-    (record) =>
-      record?.reference === token ||
-      record?.reference?.endsWith(`-${token}`) ||
-      record?.machineName === token ||
-      record?.machine_name === token
-  );
-  return matches.length === 1 ? matches[0] : null;
-};
-
-/**
- * Reshape a foundation set. Returns `null` when the inputs are missing (no CSS or `types` artifact,
- * or nothing parsed out of them) so the caller can fall back to the stylesheet or the record.
- */
-export const synthesizeFoundationTokens = (record: unknown, artifacts: TokenArtifactResource[]): Record<string, FoundationToken> | null => {
-  const css = artifacts.find((artifact) => artifact.format === 'css');
-  const types = artifacts.find((artifact) => artifact.format === 'types');
-  if (!css || !types) {
-    return null;
-  }
-
-  const variables = cssVariables(css.content);
-  const namesByLength = tokenNamesFromTypes(types.content).sort((a, b) => b.length - a.length);
-  if (Object.keys(variables).length === 0 || namesByLength.length === 0) {
-    return null;
-  }
-
-  const records: FoundationRecord[] = Array.isArray(record) ? record : [];
-  const tokens: Record<string, FoundationToken> = {};
-
-  for (const [variable, value] of Object.entries(variables)) {
-    const claim = claimVariable(variable, namesByLength);
-    if (!claim) {
-      continue;
-    }
-    const entry = (tokens[claim.token] ??= {});
-    if (!entry.name) {
-      const matched = recordFor(claim.token, records);
-      if (matched?.name) entry.name = matched.name;
-      if (matched?.group) entry.group = matched.group;
-    }
-    if (claim.property) {
-      entry.cssPrefix = `--${variable.slice(0, variable.length - claim.property.length - 1)}`;
-      (entry.properties ??= {})[claim.property] = value;
-    } else {
-      entry.css = `--${variable}`;
-      entry.value = value;
-    }
-  }
-
-  return Object.keys(tokens).length > 0 ? tokens : null;
-};
-
-/** One variant of a component: the axis values it applies to, and the variables it sets. */
-export interface ComponentTokenVariant {
-  /** Axis values, e.g. `{ state: 'disabled', theme: 'dark' }`. Empty for a component with no variants. */
-  variant: Record<string, string>;
-  /** Full CSS custom property names to resolved values. */
-  variables: Record<string, string>;
-}
-
-/**
- * Component tokens, grouped by the variant they belong to.
- *
- * A component set is keyed by part x variant x property and the variable name runs them together
- * (`--select-additional-disabled-dark-border-color`) with no boundary that can be split on safely.
- * The generated stylesheet already labels each group, though: `getComponentCommentBlock` emits
- * `/* Select, state: disabled, theme: dark *\/` ahead of every block, built from the instance's
- * `variantProperties`. So the grouping is read off the generator's own output and variables are kept
- * whole rather than split by a guessed rule.
- *
- * No axes are advertised and nothing is resolved per brand or scheme. The variants already exist in
- * the build output; this only groups them.
- */
-export const synthesizeComponentTokens = (artifacts: TokenArtifactResource[]): ComponentTokenVariant[] | null => {
-  const css = artifacts.find((artifact) => artifact.format === 'css');
-  if (!css) {
-    return null;
-  }
-
-  const variants: ComponentTokenVariant[] = [];
-  let current: ComponentTokenVariant | null = null;
-
-  for (const line of css.content.split('\n')) {
-    const comment = /^\s*\/\*\s*(.+?)\s*\*\/\s*$/.exec(line);
-    if (comment) {
-      // The first comma-separated part is the component name; the rest are `key: value` axis pairs.
-      const variant: Record<string, string> = {};
-      for (const part of comment[1].split(',').slice(1)) {
-        const [key, ...rest] = part.split(':');
-        if (rest.length > 0) {
-          variant[key.trim().toLowerCase()] = rest.join(':').trim();
-        }
-      }
-      current = { variant, variables: {} };
-      variants.push(current);
-      continue;
-    }
-    const declaration = /^\s*--([\w-]+)\s*:\s*(.+?);\s*$/.exec(line);
-    if (declaration) {
-      // A component with no variants emits no header, so open an unlabelled group for it.
-      if (!current) {
-        current = { variant: {}, variables: {} };
-        variants.push(current);
-      }
-      current.variables[`--${declaration[1]}`] = declaration[2].trim();
-    }
-  }
-
-  const populated = variants.filter((entry) => Object.keys(entry.variables).length > 0);
-  return populated.length > 0 ? populated : null;
 };

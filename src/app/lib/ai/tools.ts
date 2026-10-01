@@ -43,7 +43,7 @@ const sourcesOf = (toolName: string, payload: unknown): AiSource[] => {
   const record = asRecord(payload);
   if (!record) return [];
 
-  if (toolName === 'handoff_get_component') {
+  if (toolName === 'handoff_get_component' || toolName === 'handoff_get_component_source') {
     const id = text(record.id);
     return id ? [{ url: componentUrl(id), title: text(record.title) ?? id }] : [];
   }

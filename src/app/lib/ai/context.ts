@@ -1,7 +1,7 @@
 import type { UIMessage } from 'ai';
 
 import type { DocsBackend } from '../docs-api/backend';
-import { pageIdFromUrl } from '../mcp/shape';
+import { pageIdFromUrl } from '../mcp/page-url';
 
 /**
  * The page a question was asked from.
