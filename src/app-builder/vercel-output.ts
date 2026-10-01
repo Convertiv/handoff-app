@@ -69,10 +69,11 @@ export const writeStaticVercelOutput = async (handoff: Handoff, exportDir: strin
 /**
  * Node.js runtime identifier baked into the registry function's `.vc-config.json`. The `pg` driver
  * (and the Neon serverless driver in its Node fallback) need the Node.js runtime, not the edge
- * runtime — this is the required baseline. Vercel resolves the patch
- * version within this major; pinning the major keeps the artifact stable.
+ * runtime. The major matches the package `engines` minimum, and the Vercel project's Node.js setting
+ * does not override it. Vercel resolves the patch version within this major; pinning the major keeps
+ * the artifact stable.
  */
-const VERCEL_NODE_RUNTIME = 'nodejs20.x';
+const VERCEL_NODE_RUNTIME = 'nodejs22.x';
 
 /** Name (sans `.func`) of the single registry function. Served at `/` and the catch-all route. */
 const REGISTRY_FUNCTION_NAME = 'index';
