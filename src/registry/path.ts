@@ -13,6 +13,17 @@ export const isSafeRelativePath = (value: string): boolean => {
 
 export const normalizeRelativePath = (value: string): string => value.replace(/\\/g, '/');
 
+/** Unlike {@link isSafeRelativePath}, it can start with `../`. */
+export const isWorkspaceRelativePath = (value: unknown): value is string =>
+  typeof value === 'string' &&
+  value !== '' &&
+  value !== '.' &&
+  !value.includes('\0') &&
+  !value.includes('\\') &&
+  !value.startsWith('/') &&
+  !/^[a-zA-Z]:/.test(value) &&
+  path.posix.normalize(value) === value;
+
 export const isSafePathSegment = (value: string): boolean =>
   typeof value === 'string' && value === value.trim() && isSafeRelativePath(value) && !normalizeRelativePath(value).includes('/');
 

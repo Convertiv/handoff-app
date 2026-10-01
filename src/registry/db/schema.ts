@@ -112,6 +112,8 @@ export const components = pgTable(
     sourceFormat: text('source_format'),
     tags: jsonb('tags').$type<string[]>(),
     categories: jsonb('categories').$type<string[]>(),
+    /** Workspace-relative directory the component was published from. */
+    sourceDir: text('source_dir'),
     /** Full normalized component record. */
     record: jsonb('record').$type<ComponentListObject>().notNull(),
     /** Registry-only review/catalog metadata (management-API allowlist; never a render input). */
@@ -165,6 +167,8 @@ export const patterns = pgTable(
     tags: jsonb('tags').$type<string[]>(),
     /** Pattern component references. */
     components: jsonb('components').$type<PatternComponentEntry[]>(),
+    /** Workspace-relative directory the pattern was published from. */
+    sourceDir: text('source_dir'),
     /** Full normalized pattern record. */
     record: jsonb('record').$type<PatternListObject>().notNull(),
     /** Registry-only review/catalog metadata (management-API allowlist; never a render input). */

@@ -10,7 +10,7 @@ import {
   patternFiles,
   patterns,
 } from '@handoff/registry/db/schema';
-import { isSafePathSegment, isSafeRelativePath } from '@handoff/registry/path';
+import { isSafePathSegment, isSafeRelativePath, isWorkspaceRelativePath } from '@handoff/registry/path';
 import type { TransferArtifact, TransferBuild, TransferEntityKind, TransferFile, TransferPackage } from '@handoff/registry/transfer';
 import { and, eq, inArray } from 'drizzle-orm';
 import type { NextApiRequest, NextApiResponse } from 'next';
@@ -89,6 +89,14 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
   if (itemId !== undefined && itemId !== id) {
     return invalid(`Package item id "${itemId}" does not match the publish target "${id}".`, { rejectedFields: ['item.id'] });
   }
+
+  if (body.sourceDir !== undefined && (kind === 'page' || !isWorkspaceRelativePath(body.sourceDir))) {
+    return invalid(
+      kind === 'page' ? 'Page publishes cannot contain `sourceDir`.' : '`sourceDir` must be a normalized workspace-relative path.',
+      { rejectedFields: ['sourceDir'] }
+    );
+  }
+  const sourceDir = body.sourceDir as string | undefined;
 
   const rawFiles = body.files ?? [];
   if (!Array.isArray(rawFiles)) {
@@ -275,7 +283,7 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     return invalid(buildValidation.message, buildValidation.details);
   }
 
-  return { ok: true, value: { item, files, artifacts, build: buildValidation.value } };
+  return { ok: true, value: { item, sourceDir, files, artifacts, build: buildValidation.value } };
 };
 
 /**
@@ -321,7 +329,8 @@ const upsertEntityRecord = async (
   db: RegistryDatabase,
   kind: TransferEntityKind,
   id: string,
-  item: Record<string, unknown>
+  item: Record<string, unknown>,
+  sourceDir: string | undefined
 ): Promise<void> => {
   const spec = ENTITY[kind];
   const record = { ...item, id };
@@ -346,9 +355,15 @@ const upsertEntityRecord = async (
           // Drizzle omits an `undefined` column from the UPDATE, so only null clears a source format the item no longer has.
           sourceFormat: asString(item.sourceFormat) ?? null,
           categories: asStringArray(item.categories),
+          sourceDir: sourceDir ?? null,
         }
       : kind === 'pattern'
-        ? { ...base, tags: asStringArray(item.tags), components: Array.isArray(item.components) ? item.components : [] }
+        ? {
+            ...base,
+            tags: asStringArray(item.tags),
+            components: Array.isArray(item.components) ? item.components : [],
+            sourceDir: sourceDir ?? null,
+          }
         : { ...base, weight: typeof item.weight === 'number' ? item.weight : null };
 
   if (existing[0]) {
@@ -473,6 +488,12 @@ export const handleEntitySummaryRoute = (req: NextApiRequest, res: NextApiRespon
     sendRegistryData(res, 200, { entities }, buildMeta());
   });
 
+const readSourceDir = async (db: RegistryDatabase, kind: 'component' | 'pattern', id: string): Promise<string | undefined> => {
+  const table = ENTITY[kind].table;
+  const rows = await db.select({ sourceDir: table.sourceDir }).from(table).where(eq(table.id, id)).limit(1);
+  return rows[0]?.sourceDir ?? undefined;
+};
+
 /**
  * Handle `GET /api/registry/transfer/{component|pattern}/:id` — checkout read. Returns the
  * normalized record plus its registry-safe source files so a connected workspace can reconstruct
@@ -504,8 +525,9 @@ export const handleCheckoutRoute = (req: NextApiRequest, res: NextApiResponse, k
     // Declarations are workspace-only and are never persisted as registry file records (their kind
     // is excluded from `RegistryTextFileKind`), so the stored files are already declaration-free.
     const files = await listEntityFiles(db, kind, id);
+    const sourceDir = kind === 'page' ? undefined : await readSourceDir(db, kind, id);
 
-    sendRegistryData(res, 200, { kind, item: entity.data, files }, buildMeta(entity.build));
+    sendRegistryData(res, 200, { kind, item: entity.data, sourceDir, files }, buildMeta(entity.build));
   });
 
 /**
@@ -536,7 +558,7 @@ export const applyEntityPackage = async (
 
   await db.transaction(async (tx) => {
     const transactionalDb = tx as unknown as RegistryDatabase;
-    await upsertEntityRecord(transactionalDb, kind, id, pkg.item);
+    await upsertEntityRecord(transactionalDb, kind, id, pkg.item, pkg.sourceDir);
     await replaceEntityFiles(transactionalDb, kind, id, pkg.files);
     await ingestArtifacts(transactionalDb, kind, id, pkg.artifacts);
     await upsertBuildMetadata(transactionalDb, kind, id, pkg.build);

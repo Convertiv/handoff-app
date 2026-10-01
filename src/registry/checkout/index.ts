@@ -6,7 +6,8 @@
  * into the local workspace in standard authoring form. The local **declaration is synthesized
  * locally** in the configured `runtime.workspace.declarationFormat` — declarations are never read
  * from the registry (they are workspace-only). Identity is matched by stable `id`, so a checked-out
- * entity maps to the correct logical component/pattern and can be re-authored and re-published.
+ * entity maps to the correct logical component/pattern and can be re-authored and re-published. A
+ * new entity goes to the directory it was published from (`sourceDir`).
  *
  * Available only from a connected workspace (`runtime.mode: workspace` + a configured
  * `registryConnection`). Overwriting existing local files is explicit: a `--force` flag or an
@@ -30,14 +31,14 @@ import {
   type RendererKind,
   type SourceFormat,
 } from '../../catalog/renderers';
-import { addToCatalog, isIncluded } from '../../config/catalog-include';
 import { isComponentDirectory, resolveComponentDeclaration } from '../../config/runtime';
 import Handoff from '../../index';
 import type { DeclarationFormat } from '../../types/config';
 import { Logger } from '../../utils/logger';
+import { arePathsEqual } from '../../utils/path';
 import { createRegistryClient, type RegistryClient, RegistryClientError } from '../client';
 import { loginCommandHint, resolveAuthenticatedRegistryConnection, unusedLoginNote } from '../connection';
-import { isSafePathSegment, isSafeRelativePath, resolvePathWithin } from '../path';
+import { isSafePathSegment, isSafeRelativePath, isWorkspaceRelativePath, resolvePathWithin } from '../path';
 import { quoteIds, selectIds, splitCatalogIds } from '../selection';
 import type { CheckoutPayload, TransferEntityKind, TransferFile } from '../transfer';
 
@@ -52,12 +53,7 @@ export class CheckoutError extends Error {
 /** Default authoring format synthesized when no existing file or configured preference applies. */
 const DEFAULT_DECLARATION_FORMAT: DeclarationFormat = 'ts';
 
-/** Default workspace subdirectory an entity is written into when none is configured. */
-const DEFAULT_ENTITY_DIR: Record<TransferEntityKind, string> = {
-  component: 'components',
-  pattern: 'patterns',
-  page: 'pages',
-};
+const PAGES_DIR = 'pages';
 
 /** Source-file extensions stripped to form a module specifier for a React component import. */
 const COMPONENT_EXTENSION = /\.(tsx|jsx|ts|js|cjs|mjs)$/i;
@@ -108,88 +104,48 @@ const describeFetchFailure = (error: RegistryClientError, kind: TransferEntityKi
   }
 };
 
-/**
- * Ask the user which collection directory a new entity should land in when the config is ambiguous.
- * Under `--force` (or any non-interactive run) there's no one to ask, so we fail with an actionable
- * message rather than guessing a root.
- */
-const promptForCollectionRoot = async (handoff: Handoff, kind: TransferEntityKind, roots: string[]): Promise<string> => {
-  const relative = (root: string) => path.relative(handoff.workingPath, root) || '.';
-  if (handoff.force) {
-    throw new CheckoutError(
-      `Cannot determine where to checkout the ${kind}: catalog.include declares directories under different ` +
-        `parents (${roots.map(relative).join(', ')}), and none is named "${DEFAULT_ENTITY_DIR[kind]}". Declare a single ` +
-        `collection directory in handoff.config, or run checkout without --force to choose interactively.`
-    );
-  }
-  const choice = await p.select({
-    message: `Where should the new ${kind} be checked out?`,
-    options: roots.map((root) => ({ value: root, label: relative(root) })),
-    initialValue: roots[0],
+/** `dir` is a `catalog.include` entry, or a direct child of a collection entry. */
+const isInCatalog = (handoff: Handoff, dir: string): boolean =>
+  (handoff.config?.catalog?.include ?? []).some((entry) => {
+    const included = path.resolve(handoff.workingPath, entry);
+    return arePathsEqual(included, dir) || (!isComponentDirectory(included) && arePathsEqual(included, path.dirname(dir)));
   });
-  if (p.isCancel(choice)) {
-    throw new CheckoutError('Checkout cancelled; no target directory chosen.');
-  }
-  return choice as string;
-};
 
-/**
- * Resolve the collection directory a new entity is cloned into from the configured
- * `catalog.include`. Each entry is either a collection directory (used as-is) or a
- * single declared entity directory, in which case its parent is the collection root so the new
- * entity lands as a sibling rather than nested inside. Different parents are settled by the
- * conventional directory name for the kind, and only then by asking the user. With nothing
- * configured we fall back to the default subdir.
- */
-const resolveCollectionRoot = async (handoff: Handoff, kind: TransferEntityKind): Promise<string> => {
-  const configuredRoots = handoff.config?.catalog?.include;
-  if (!configuredRoots?.length) {
-    return path.resolve(handoff.workingPath, DEFAULT_ENTITY_DIR[kind]);
-  }
-
-  const roots = [
-    ...new Set(
-      configuredRoots.map((entry) => {
-        const resolved = path.resolve(handoff.workingPath, entry);
-        return isComponentDirectory(resolved) ? path.dirname(resolved) : resolved;
-      })
-    ),
-  ];
-
-  if (roots.length === 1) {
-    return roots[0];
-  }
-
-  // `catalog.include` is one list for both lanes, so a project that registers `components` and
-  // `patterns` offers two roots for every checkout. Without this, every such project prompts, and a
-  // non-interactive `--force` run fails.
-  const conventional = roots.filter((root) => path.basename(root) === DEFAULT_ENTITY_DIR[kind]);
-  if (conventional.length === 1) {
-    return conventional[0];
-  }
-
-  return promptForCollectionRoot(handoff, kind, roots);
-};
-
-/**
- * Resolve the local directory the entity is written into. An already-checked-out or locally-declared
- * entity keeps its existing source directory (matched by stable `id`); otherwise it lands as a
- * sibling under its configured collection root (see {@link resolveCollectionRoot}).
- */
-const resolveTargetDir = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<string> => {
+/** A locally declared entity keeps its directory. A new one goes to the directory it was published from. */
+const resolveTargetDir = async (
+  handoff: Handoff,
+  kind: TransferEntityKind,
+  id: string,
+  sourceDir: string | undefined
+): Promise<{ dir: string; isInCatalog: boolean }> => {
   const store = kind === 'component' ? handoff.store.components : handoff.store.patterns;
   const existing = await store.get(id);
   const existingDir = (existing as { path?: string } | null)?.path;
   if (existingDir) {
-    return existingDir;
+    return { dir: existingDir, isInCatalog: true };
   }
 
-  const root = await resolveCollectionRoot(handoff, kind);
-  const targetDir = resolvePathWithin(root, id);
-  if (!targetDir) {
-    throw new CheckoutError(`Cannot checkout ${kind} with unsafe id "${id}".`);
+  if (!isWorkspaceRelativePath(sourceDir)) {
+    throw new CheckoutError(`The registry has no valid source directory for ${kind} "${id}". Republish it, then checkout again.`);
   }
-  return targetDir;
+  const dir = path.resolve(handoff.workingPath, sourceDir);
+  return { dir, isInCatalog: isInCatalog(handoff, dir) };
+};
+
+/** `--force` fails here: it skips overwrite prompts, not approval of a location the registry chose. */
+const confirmLocation = async (handoff: Handoff, kind: TransferEntityKind, id: string, dir: string): Promise<boolean> => {
+  const relative = path.relative(handoff.workingPath, dir) || '.';
+  if (handoff.force) {
+    throw new CheckoutError(
+      `The registry places ${kind} "${id}" at ${relative}, which is outside catalog.include. ` +
+        `Add "${relative}" or its parent directory to catalog.include, or run checkout without --force to accept the location.`
+    );
+  }
+  const proceed = await p.confirm({
+    message: `The registry places ${kind} "${id}" at ${relative}, which is outside catalog.include. Write it there?`,
+    initialValue: false,
+  });
+  return !p.isCancel(proceed) && proceed === true;
 };
 
 /** Read the extension of an existing local declaration in `dir`, if any maps to a known format. */
@@ -761,7 +717,7 @@ export const reportPlannedWrites = (handoff: Handoff, label: string, targets: st
  * markdown file is itself the authored source — so the page round-trips byte-for-byte.
  */
 const checkoutPage = async (handoff: Handoff, id: string, payload: CheckoutPayload): Promise<void> => {
-  const pagesRoot = path.resolve(handoff.workingPath, DEFAULT_ENTITY_DIR.page);
+  const pagesRoot = path.resolve(handoff.workingPath, PAGES_DIR);
   const targets = payload.files.map((file) => {
     const target = resolvePathWithin(pagesRoot, file.path);
     if (!target) {
@@ -799,7 +755,7 @@ const checkoutSingle = async (
   id: string,
   client: RegistryClient,
   registryUrl: string
-): Promise<string | null> => {
+): Promise<void> => {
   const validId = kind === 'page' ? isSafeRelativePath(id) : isSafePathSegment(id);
   if (!validId) {
     throw new CheckoutError(`Cannot checkout ${kind} with unsafe id "${id}".`);
@@ -816,14 +772,15 @@ const checkoutSingle = async (
     throw error;
   }
 
-  // Pages round-trip as a single verbatim `.md` with no declaration synthesis, and aren't
-  // listed in `catalog.include`, so there's nothing to register.
   if (kind === 'page') {
     await checkoutPage(handoff, id, payload);
-    return null;
+    return;
   }
 
-  const targetDir = await resolveTargetDir(handoff, kind, id);
+  const target = await resolveTargetDir(handoff, kind, id, payload.sourceDir);
+  const targetDir = target.dir;
+  const relativeDir = path.relative(handoff.workingPath, targetDir) || '.';
+  const outsideCatalogWarning = `Add "${relativeDir}" to catalog.include, or the build will not load ${kind} "${id}".`;
   const format = resolveDeclarationFormat(handoff, targetDir);
   const declarationFileName = resolveDeclarationFileName(targetDir, id, format);
   const declarationPath = path.join(targetDir, declarationFileName);
@@ -840,13 +797,19 @@ const checkoutSingle = async (
   const plannedWrites = [...sourceTargets.map((entry) => entry.absolutePath), declarationPath];
   const conflicts = plannedWrites.filter((file) => fs.existsSync(file));
   if (handoff.dryRun) {
-    // Returning null also skips `registerCheckedOut`, so a dry run never edits handoff.config either.
     reportPlannedWrites(handoff, `${kind} "${id}"`, plannedWrites, conflicts);
-    return null;
+    if (!target.isInCatalog) {
+      Logger.warn(`${relativeDir} is outside catalog.include. ${outsideCatalogWarning}`);
+    }
+    return;
+  }
+  if (!target.isInCatalog && !(await confirmLocation(handoff, kind, id, targetDir))) {
+    Logger.warn(`Checkout of ${kind} "${id}" cancelled; no files were written.`);
+    return;
   }
   if (!(await confirmOverwrite(handoff, conflicts))) {
     Logger.warn(`Checkout of ${kind} "${id}" cancelled; no files were written.`);
-    return null;
+    return;
   }
 
   await fs.ensureDir(targetDir);
@@ -858,41 +821,10 @@ const checkoutSingle = async (
   await fs.writeFile(declarationPath, declaration, 'utf8');
   written.push(declarationPath);
 
-  Logger.success(
-    `Checked out ${kind} "${id}" into ${path.relative(handoff.workingPath, targetDir) || '.'} ` +
-      `(${payload.files.length} source file(s) + ${declarationFileName}).`
-  );
-  return targetDir;
-};
-
-/**
- * Declare freshly checked-out entities in `catalog.include` so the workspace build
- * picks them up. Ones already covered by a collection directory load on their own and are left
- * alone; the rest are added to the config automatically. If the config can't be edited (a computed
- * or unusual `include` array), we print the paths for the user to add so nothing is silently orphaned.
- */
-const registerCheckedOut = async (handoff: Handoff, kind: TransferEntityKind, targetDirs: string[]): Promise<void> => {
-  if (kind === 'page') {
-    return;
+  Logger.success(`Checked out ${kind} "${id}" into ${relativeDir} (${payload.files.length} source file(s) + ${declarationFileName}).`);
+  if (!target.isInCatalog) {
+    Logger.warn(outsideCatalogWarning);
   }
-  const kindLabel = kind === 'component' ? 'components' : 'patterns';
-  const unlisted = targetDirs.filter((dir) => !isIncluded(handoff, dir));
-  if (unlisted.length === 0) {
-    return;
-  }
-
-  const result = await addToCatalog(handoff, unlisted);
-  if (result.status === 'added') {
-    const where = result.configPath
-      ? path.relative(handoff.workingPath, result.configPath) || path.basename(result.configPath)
-      : 'handoff.config';
-    Logger.success(`Updated ${where} with ${result.added.length} ${kindLabel} path(s).`);
-    return;
-  }
-
-  const where = result.configPath ? path.relative(handoff.workingPath, result.configPath) : 'handoff.config';
-  Logger.warn(`Could not update ${where} automatically. Add these to catalog.include manually:`);
-  result.pending.forEach((rel) => Logger.warn(`  - ${rel}`));
 };
 
 /**
@@ -902,10 +834,7 @@ const registerCheckedOut = async (handoff: Handoff, kind: TransferEntityKind, ta
 export const checkoutEntity = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
   const connection = await resolveConnectionOrThrow(handoff);
   const client = createRegistryClient({ baseUrl: connection.url, accessToken: connection.accessToken });
-  const targetDir = await checkoutSingle(handoff, kind, id, client, connection.url);
-  if (targetDir) {
-    await registerCheckedOut(handoff, kind, [targetDir]);
-  }
+  await checkoutSingle(handoff, kind, id, client, connection.url);
 };
 
 /** List the ids the registry publishes for one kind, naming the registry in a listing failure. */
@@ -922,7 +851,7 @@ const listPublishedIds = async (kind: TransferEntityKind, client: RegistryClient
 };
 
 /**
- * Check out the given ids of one kind and register what landed. The caller selects the ids, because a
+ * Check out the given ids of one kind. The caller selects the ids, because a
  * catalog run resolves them across both entity lanes before any of them is written.
  *
  * A per-entity failure is collected and never aborts the rest. Failures are reported here, and the
@@ -937,21 +866,14 @@ const checkoutSelected = async (
 ): Promise<number> => {
   let checkedOut = 0;
   const failed: { id: string; message: string }[] = [];
-  const targetDirs: string[] = [];
   for (const id of targets) {
     try {
-      const targetDir = await checkoutSingle(handoff, kind, id, client, registryUrl);
-      if (targetDir) {
-        targetDirs.push(targetDir);
-      }
+      await checkoutSingle(handoff, kind, id, client, registryUrl);
       checkedOut += 1;
     } catch (error) {
       failed.push({ id, message: error instanceof Error ? error.message : String(error) });
     }
   }
-
-  // Register everything checked out in one pass, so the config is edited (and confirmed) once.
-  await registerCheckedOut(handoff, kind, targetDirs);
 
   Logger.success(
     `${kind[0].toUpperCase()}${kind.slice(1)}s checkout complete — ${checkedOut} ${handoff.dryRun ? 'would be checked out' : 'checked out'}` +

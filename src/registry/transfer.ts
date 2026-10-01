@@ -65,6 +65,8 @@ export interface TransferBuild {
 export interface TransferPackage {
   /** Normalized component, pattern, or page record stored as the served record. */
   item: Record<string, unknown>;
+  /** Workspace-relative entity directory, for components and patterns. It can start with `../`. */
+  sourceDir?: string;
   files: TransferFile[];
   artifacts: TransferArtifact[];
   build: TransferBuild;
@@ -78,6 +80,8 @@ export interface CheckoutPayload {
   kind: TransferEntityKind;
   /** Normalized record used to reconstruct the entity. */
   item: Record<string, unknown>;
+  /** The published {@link TransferPackage.sourceDir}. */
+  sourceDir?: string;
   files: TransferFile[];
 }
 

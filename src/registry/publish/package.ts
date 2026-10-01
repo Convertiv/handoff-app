@@ -88,6 +88,13 @@ const enrichItem = async (
   return item;
 };
 
+const findSourceDir = async (handoff: Handoff, kind: RenderedEntityKind, id: string): Promise<string | undefined> => {
+  const runtime = kind === 'component' ? await handoff.store.components.get(id) : await handoff.store.patterns.get(id);
+  const sourceDir = (runtime as { path?: string } | null)?.path;
+  const relativeDir = sourceDir ? path.relative(handoff.workingPath, sourceDir) : '';
+  return relativeDir && !path.isAbsolute(relativeDir) ? relativeDir.split(path.sep).join('/') : undefined;
+};
+
 /** Map an entity's related source files to transfer files, dropping workspace-only declarations. */
 const collectSourceFiles = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<TransferFile[]> => {
   const store = kind === 'component' ? handoff.store.components : kind === 'pattern' ? handoff.store.patterns : handoff.store.pages;
@@ -164,6 +171,7 @@ const buildComponentPackage = async (handoff: Handoff, id: string): Promise<Tran
   const artifacts = Array.from(byPath.values());
   return {
     item: await enrichItem(handoff, 'component', id, summary as unknown as Record<string, unknown>),
+    sourceDir: await findSourceDir(handoff, 'component', id),
     files: await collectSourceFiles(handoff, 'component', id),
     artifacts,
     build: createArtifactBuild(artifacts),
@@ -214,6 +222,7 @@ const buildPatternPackage = async (handoff: Handoff, id: string): Promise<Transf
   const artifacts = Array.from(byPath.values());
   return {
     item: await enrichItem(handoff, 'pattern', id, summary as unknown as Record<string, unknown>),
+    sourceDir: await findSourceDir(handoff, 'pattern', id),
     files: await collectSourceFiles(handoff, 'pattern', id),
     artifacts,
     build: createArtifactBuild(artifacts),
