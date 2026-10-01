@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
+import { ConfirmDialog, type ConfirmDialogProps } from '../../components/ui/confirm-dialog';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
@@ -54,6 +55,7 @@ function RegistryUsersPage({ config }: { config: ClientConfig }) {
   const [manualLink, setManualLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [emailConfigured, setEmailConfigured] = useState<boolean | null>(null);
+  const [confirmation, setConfirmation] = useState<Omit<ConfirmDialogProps, 'open' | 'onOpenChange'> | null>(null);
 
   useEffect(() => {
     if (sessionStatus === 'authenticated' && currentUser?.role !== 'admin') void router.replace('/account');
@@ -293,10 +295,15 @@ function RegistryUsersPage({ config }: { config: ClientConfig }) {
                             size="sm"
                             variant="ghost"
                             disabled={pending}
-                            onClick={() => {
-                              if (window.confirm(`Create a password reset link for ${user.email}?`))
-                                void mutate(user, 'reset', {}, `Password reset link created for ${user.email}.`);
-                            }}
+                            onClick={() =>
+                              setConfirmation({
+                                title: `Create a password reset link for ${user.email}?`,
+                                description: 'They can use the link to set a new password.',
+                                confirmLabel: 'Create link',
+                                pendingLabel: 'Creating…',
+                                onConfirm: () => mutate(user, 'reset', {}, `Password reset link created for ${user.email}.`),
+                              })
+                            }
                           >
                             <KeyRound /> Reset password
                           </Button>
@@ -308,11 +315,25 @@ function RegistryUsersPage({ config }: { config: ClientConfig }) {
                             disabled={pending || (user.id === currentUser?.id && user.status === 'active')}
                             onClick={() => {
                               const nextStatus = user.status === 'active' ? 'deactivated' : 'active';
-                              const message =
+                              const onConfirm = () => mutate(user, 'status', { status: nextStatus }, `Updated ${user.email}.`);
+                              setConfirmation(
                                 nextStatus === 'active'
-                                  ? `Reactivate ${user.email}?`
-                                  : `Deactivate ${user.email} and revoke their credentials?`;
-                              if (window.confirm(message)) void mutate(user, 'status', { status: nextStatus }, `Updated ${user.email}.`);
+                                  ? {
+                                      title: `Reactivate ${user.email}?`,
+                                      description: 'They can sign in again. Access tokens revoked at deactivation stay revoked.',
+                                      confirmLabel: 'Reactivate',
+                                      pendingLabel: 'Reactivating…',
+                                      onConfirm,
+                                    }
+                                  : {
+                                      title: `Deactivate ${user.email}?`,
+                                      description: 'They can no longer sign in, and all their access tokens are revoked.',
+                                      confirmLabel: 'Deactivate',
+                                      pendingLabel: 'Deactivating…',
+                                      variant: 'destructive',
+                                      onConfirm,
+                                    }
+                              );
                             }}
                           >
                             {user.status === 'active' ? 'Deactivate' : 'Reactivate'}
@@ -334,6 +355,16 @@ function RegistryUsersPage({ config }: { config: ClientConfig }) {
           </CardContent>
         </Card>
       </div>
+
+      {confirmation ? (
+        <ConfirmDialog
+          {...confirmation}
+          open
+          onOpenChange={(open) => {
+            if (!open) setConfirmation(null);
+          }}
+        />
+      ) : null}
     </AccountLayout>
   );
 }

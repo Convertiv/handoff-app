@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '../../components/ui/alert';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../../components/ui/card';
+import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { Input } from '../../components/ui/input';
 
 /**
@@ -45,6 +46,7 @@ function RegistryAiKeysPage({ config }: { config: ClientConfig }) {
   const [pending, setPending] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+  const [connectionToRemove, setConnectionToRemove] = useState<AiKeyConnection | null>(null);
 
   const load = useCallback(async () => {
     const response = await fetch(authApiUrl('/api/account/ai/keys'), { credentials: 'include', cache: 'no-store' });
@@ -86,7 +88,6 @@ function RegistryAiKeysPage({ config }: { config: ClientConfig }) {
   };
 
   const remove = async (connection: AiKeyConnection) => {
-    if (!window.confirm(`Remove your ${connection.label} API key?`)) return;
     setPending(connection.id);
     setError(null);
     setSaved(null);
@@ -136,7 +137,7 @@ function RegistryAiKeysPage({ config }: { config: ClientConfig }) {
               </CardHeader>
               <CardContent>
                 {connection.configured ? (
-                  <Button variant="outline" onClick={() => void remove(connection)} disabled={pending === connection.id}>
+                  <Button variant="outline" onClick={() => setConnectionToRemove(connection)} disabled={pending === connection.id}>
                     <Trash2 className="mr-2 h-4 w-4" />
                     Remove
                   </Button>
@@ -162,6 +163,21 @@ function RegistryAiKeysPage({ config }: { config: ClientConfig }) {
           ))
         )}
       </div>
+
+      {connectionToRemove ? (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setConnectionToRemove(null);
+          }}
+          title={`Remove your ${connectionToRemove.label} API key?`}
+          description="You can add a new key at any time."
+          confirmLabel="Remove"
+          pendingLabel="Removing…"
+          variant="destructive"
+          onConfirm={() => remove(connectionToRemove)}
+        />
+      ) : null}
     </AccountLayout>
   );
 }

@@ -7,6 +7,7 @@ import { Alert, AlertDescription, AlertTitle } from '../../components/ui/alert';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../../components/ui/card';
+import { ConfirmDialog } from '../../components/ui/confirm-dialog';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
@@ -51,6 +52,7 @@ function RegistryTokensPage({ config }: { config: ClientConfig }) {
   const [copied, setCopied] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tokenToRevoke, setTokenToRevoke] = useState<AccessToken | null>(null);
 
   const load = useCallback(async () => {
     const response = await fetch(authApiUrl('/api/account/tokens'), { credentials: 'include', cache: 'no-store' });
@@ -94,7 +96,6 @@ function RegistryTokensPage({ config }: { config: ClientConfig }) {
   };
 
   const revoke = async (token: AccessToken) => {
-    if (!window.confirm(`Revoke “${token.name}”? Applications using it will immediately lose access.`)) return;
     setPending(true);
     setError(null);
     try {
@@ -218,7 +219,12 @@ function RegistryTokensPage({ config }: { config: ClientConfig }) {
                       <TableCell>{formatDate(token.lastUsedAt)}</TableCell>
                       <TableCell>{formatDate(token.expiresAt)}</TableCell>
                       <TableCell className="text-right">
-                        <Button size="sm" variant="ghost" disabled={pending || Boolean(token.revokedAt)} onClick={() => void revoke(token)}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          disabled={pending || Boolean(token.revokedAt)}
+                          onClick={() => setTokenToRevoke(token)}
+                        >
                           <Trash2 /> Revoke
                         </Button>
                       </TableCell>
@@ -236,6 +242,21 @@ function RegistryTokensPage({ config }: { config: ClientConfig }) {
           </CardContent>
         </Card>
       </div>
+
+      {tokenToRevoke ? (
+        <ConfirmDialog
+          open
+          onOpenChange={(open) => {
+            if (!open) setTokenToRevoke(null);
+          }}
+          title={`Revoke “${tokenToRevoke.name}”?`}
+          description="Applications that use this token lose access immediately."
+          confirmLabel="Revoke"
+          pendingLabel="Revoking…"
+          variant="destructive"
+          onConfirm={() => revoke(tokenToRevoke)}
+        />
+      ) : null}
     </AccountLayout>
   );
 }
