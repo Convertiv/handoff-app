@@ -302,11 +302,19 @@ export interface HandoffRuntimeConfig {
   };
 }
 
+/** Connections to external services. */
+export interface ConfigIntegrations {
+  /** The Figma file that `fetch` reads foundations from. In a terminal, `fetch` asks for an empty value. */
+  figma?: {
+    /** The Figma file ID. @default fromEnv('HANDOFF_FIGMA_PROJECT_ID', { default: null }) */
+    projectId?: EnvValue<string | null>;
+    /** A Figma personal access token. Accepts only an environment reference. @default fromEnv('HANDOFF_DEV_ACCESS_TOKEN', { default: null }) */
+    accessToken?: EnvSecret<string | null>;
+  };
+}
+
 export interface Config {
-  dev_access_token?: EnvSecret<string | null>;
-  devAccessToken?: EnvSecret<string | null>;
-  figma_project_id?: EnvValue<string | null>;
-  figmaProjectId?: EnvValue<string | null>;
+  integrations?: ConfigIntegrations;
   exportsOutputDirectory?: EnvValue<string>;
   sitesOutputDirectory?: EnvValue<string>;
   useVariables?: EnvValue<boolean>;
@@ -518,20 +526,14 @@ export interface ClientRuntimeConfig {
 /** Values available after config loading. Deferred references retain their names. */
 export type ResolvedConfig = Omit<
   Config,
-  | 'dev_access_token'
-  | 'devAccessToken'
-  | 'figma_project_id'
-  | 'figmaProjectId'
+  | 'integrations'
   | 'exportsOutputDirectory'
   | 'sitesOutputDirectory'
   | 'useVariables'
   | 'app'
   | 'runtime'
 > & {
-  dev_access_token?: string | null;
-  devAccessToken?: string | null;
-  figma_project_id?: string | null;
-  figmaProjectId?: string | null;
+  integrations?: { figma?: { projectId?: string | null; accessToken?: string | null } };
   exportsOutputDirectory?: string;
   sitesOutputDirectory?: string;
   useVariables?: boolean;

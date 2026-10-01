@@ -44,6 +44,15 @@ export default defineConfig({
   // subdirectories are each an item.
   // catalog: { include: ["components", "patterns"] },
 
+  // Figma: `fetch` reads the file ID and token from these variables. Defaults shown. If a value is
+  // empty, `fetch` asks for it. The token accepts only an environment reference.
+  // integrations: {
+  //   figma: {
+  //     projectId: fromEnv("HANDOFF_FIGMA_PROJECT_ID", { default: null }),
+  //     accessToken: fromEnv("HANDOFF_DEV_ACCESS_TOKEN", { default: null }),
+  //   },
+  // },
+
   // `mode` selects the runtime: "workspace" (no database) or "registry" (Postgres). The registry
   // block is read only by `build --target registry` and `db:migrate`, and secrets are referenced by
   // env var name. A named profile (`handoff.config.registry.*`, `--profile registry`) is a good home

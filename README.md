@@ -358,6 +358,23 @@ HANDOFF_FIGMA_PROJECT_ID=figma-file-id
 HANDOFF_DEV_ACCESS_TOKEN=figma-personal-access-token
 ```
 
+These are the defaults of `integrations.figma` in `handoff.config`. Set the block
+only to use other variable names, to commit the file ID, or to change the file
+for a profile. The access token accepts only an environment reference:
+
+```ts
+integrations: {
+  figma: {
+    projectId: fromEnv("HANDOFF_FIGMA_PROJECT_ID", { default: null }),
+    accessToken: fromEnv("HANDOFF_DEV_ACCESS_TOKEN", { default: null }),
+  },
+},
+```
+
+If a value is empty, `fetch` asks for it in a terminal and can save it to `.env`,
+or to `.env.<profile>` when a profile is selected. Without a terminal, such as
+in CI, `fetch` stops with an error that names the missing variable.
+
 The `file_content:read` and `library_content:read` scopes must be granted to the
 personal access token. The configured library is fetched with:
 
@@ -833,6 +850,7 @@ Useful environment variables:
 | `HANDOFF_AI_KEY_SECRET` | Encrypts reader-supplied AI provider keys, at least 32 characters |
 | `HANDOFF_AI_CONNECTIONS` | JSON array of AI connections, merged over the baked list by `id` |
 | `HANDOFF_OUTPUT_DIR` | Override the fetched output directory |
+| `HANDOFF_CREATE_ASSETS_ZIP_FILES` | Set to `false` to skip the icon and logo zip files in `fetch` |
 | `HANDOFF_SITES_DIR` | Override the build output directory |
 | `HANDOFF_WORKING_PATH` | Directory holding `handoff.config.ts`; defaults to the current directory |
 | `HANDOFF_APP_PORT` | Workspace documentation server port |

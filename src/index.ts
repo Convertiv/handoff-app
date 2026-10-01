@@ -12,9 +12,9 @@ import {
   initRuntimeConfig,
   loadProfileEnv,
   resolveProfileSelection,
-  validateConfig,
 } from './config';
 import pipeline, { buildComponents, buildPatterns } from './pipeline';
+import { resolveFigmaConnection } from './pipeline/figma';
 import {
   ALL_KIND_ORDER,
   ENTITY_WIRE_KIND,
@@ -248,12 +248,9 @@ class Handoff {
     return this;
   }
 
-  preRunner(validate?: boolean): Handoff {
+  preRunner(): Handoff {
     if (!this.config) {
       throw Error('Handoff not initialized');
-    }
-    if (validate) {
-      this.config = validateConfig(this.config);
     }
     return this;
   }
@@ -529,13 +526,8 @@ class Handoff {
       return this._handoffRunner;
     }
 
-    const apiCredentials = {
-      projectId: this.config.figma_project_id,
-      accessToken: this.config.dev_access_token,
-    };
-
-    // Initialize the provider
-    const provider = Providers.RestApiProvider(apiCredentials);
+    const { projectId, accessToken } = resolveFigmaConnection(this.config);
+    const provider = Providers.RestApiProvider({ projectId, accessToken });
 
     this._handoffRunner = HandoffRunner(
       provider,
@@ -564,12 +556,13 @@ class Handoff {
   }
 
   /**
-   * Gets the project ID, falling back to filesystem-safe working path if figma_project_id is missing
+   * Gets the project ID, falling back to filesystem-safe working path if no Figma file ID is set
    * @returns {string} The project ID to use for path construction
    */
   getProjectId(): string {
-    if (this.config?.figma_project_id) {
-      return this.config.figma_project_id;
+    const { projectId } = resolveFigmaConnection(this.config);
+    if (projectId) {
+      return projectId;
     }
     // Fallback to filesystem-safe transformation of working path
     return generateFilesystemSafeId(this.workingPath);

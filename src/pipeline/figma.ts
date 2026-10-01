@@ -4,29 +4,74 @@ import { Types as HandoffTypes } from 'handoff-core';
 import * as stream from 'node:stream';
 import path from 'path';
 import Handoff from '..';
+import { HandoffConfigError } from '../config/errors';
+import { configEnvName } from '../config/resolve-env';
+import type { ResolvedConfig } from '../types/config';
 import { Logger } from '../utils/logger';
 import { zipAssets } from './archive';
 import { createDocumentationObject } from './documentation';
 
+/** Figma values resolved at config load, with the variable names they come from. */
+export type FigmaConnection = {
+  projectId: string;
+  accessToken: string;
+  /** Unset when the config gives a literal file ID. */
+  projectIdEnv?: string;
+  accessTokenEnv?: string;
+};
+
+export const resolveFigmaConnection = (config: ResolvedConfig | null | undefined): FigmaConnection => {
+  const figma = config?.integrations?.figma;
+  return {
+    projectId: figma?.projectId?.trim() || '',
+    accessToken: figma?.accessToken?.trim() || '',
+    projectIdEnv: configEnvName(config, 'integrations.figma.projectId'),
+    accessTokenEnv: configEnvName(config, 'integrations.figma.accessToken'),
+  };
+};
+
+const describeSource = (envName: string | undefined, configPath: string): string =>
+  envName ? `${envName} (${configPath})` : configPath;
+
+/** Replaces each variable that the file already sets and appends the others. */
+const saveEnvValues = async (filePath: string, values: Record<string, string>): Promise<void> => {
+  const lines = fs.existsSync(filePath) ? (await fs.readFile(filePath, 'utf8')).split(/\r?\n/) : [];
+  while (lines.length && !lines[lines.length - 1].trim()) lines.pop();
+  for (const [name, value] of Object.entries(values)) {
+    const line = `${name}="${value}"`;
+    const index = lines.findIndex((existing) => new RegExp(`^\\s*(export\\s+)?${name}\\s*=`).test(existing));
+    if (index === -1) lines.push(line);
+    else lines[index] = line;
+  }
+  await fs.writeFile(filePath, `${lines.join('\n')}\n`);
+};
+
 /**
- * Validate the figma auth tokens.
- * Prompts the user interactively if credentials are missing.
+ * Makes sure that `fetch` has a Figma file ID and access token. In a terminal, it asks for an empty
+ * value and can save it to the env file of the selected profile. Without a terminal, it throws
+ * `HandoffConfigError`.
  */
 export const validateFigmaAuth = async (handoff: Handoff): Promise<void> => {
-  let DEV_ACCESS_TOKEN = handoff.config.dev_access_token;
-  let FIGMA_PROJECT_ID = handoff.config.figma_project_id;
+  const connection = resolveFigmaConnection(handoff.config);
+  let { projectId, accessToken } = connection;
 
-  if (DEV_ACCESS_TOKEN && FIGMA_PROJECT_ID) {
+  if (projectId && accessToken) {
     return;
   }
 
-  let missingEnvVars = false;
+  const profile = handoff.getProfile();
+  if (!process.stdin.isTTY) {
+    const missing = [
+      !accessToken && describeSource(connection.accessTokenEnv, 'integrations.figma.accessToken'),
+      !projectId && describeSource(connection.projectIdEnv, 'integrations.figma.projectId'),
+    ].filter(Boolean);
+    throw new HandoffConfigError(`Figma is not configured (profile "${profile ?? 'default'}"). Set ${missing.join(' and ')}.`);
+  }
 
-  if (!DEV_ACCESS_TOKEN) {
-    missingEnvVars = true;
+  if (!accessToken) {
     p.log.warn(
-      `Figma developer access token not found. You can supply it as an environment variable or .env file at HANDOFF_DEV_ACCESS_TOKEN.\n` +
-      `Use these instructions to generate them: https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens`
+      `Figma access token not found. Set ${describeSource(connection.accessTokenEnv, 'integrations.figma.accessToken')}.\n` +
+        `Use these instructions to generate one: https://help.figma.com/hc/en-us/articles/8085703771159-Manage-personal-access-tokens`
     );
     const token = await p.password({
       message: 'Figma Developer Key:',
@@ -35,68 +80,55 @@ export const validateFigmaAuth = async (handoff: Handoff): Promise<void> => {
       p.cancel('Authentication cancelled.');
       process.exit(0);
     }
-    DEV_ACCESS_TOKEN = token as string;
+    accessToken = (token as string).trim();
   }
 
-  if (!FIGMA_PROJECT_ID) {
-    missingEnvVars = true;
+  if (!projectId) {
     p.log.warn(
-      `Figma project ID not found. Provide HANDOFF_FIGMA_PROJECT_ID via environment variable or .env file.\n` +
-      `Find it in your Figma file URL (e.g., figma.com/file/{PROJECT_ID}/...).`
+      `Figma project ID not found. Set ${describeSource(connection.projectIdEnv, 'integrations.figma.projectId')}.\n` +
+        `Find it in your Figma file URL (e.g., figma.com/file/{PROJECT_ID}/...).`
     );
-    const projectId = await p.text({
+    const value = await p.text({
       message: 'Figma Project Id:',
       validate: (value) => {
         if (!value.trim()) return 'Project ID is required';
       },
     });
-    if (p.isCancel(projectId)) {
+    if (p.isCancel(value)) {
       p.cancel('Authentication cancelled.');
       process.exit(0);
     }
-    FIGMA_PROJECT_ID = projectId as string;
+    projectId = (value as string).trim();
   }
 
-  if (missingEnvVars) {
-    p.log.info(`To simplify future runs, we can save these variables to a local .env file.`);
+  const values: Record<string, string> = {};
+  if (!connection.accessToken && connection.accessTokenEnv) values[connection.accessTokenEnv] = accessToken;
+  if (!connection.projectId && connection.projectIdEnv) values[connection.projectIdEnv] = projectId;
 
-    const writeEnvFile = await p.confirm({
-      message: 'Write environment variables to .env file?',
+  const envFileName = profile ? `.env.${profile}` : '.env';
+  if (Object.keys(values).length) {
+    const save = await p.confirm({
+      message: `Save ${Object.keys(values).join(' and ')} to ${envFileName} for future runs?`,
       initialValue: true,
     });
 
-    if (p.isCancel(writeEnvFile) || writeEnvFile === false) {
-      p.log.info(`Skipped .env file creation. Please provide these variables manually.`);
+    if (p.isCancel(save) || save === false) {
+      p.log.info(`Skipped saving. Set these variables before the next run.`);
     } else {
-      const envFilePath = path.resolve(handoff.workingPath, '.env');
-      const envFileContent = `
-HANDOFF_DEV_ACCESS_TOKEN="${DEV_ACCESS_TOKEN}"
-HANDOFF_FIGMA_PROJECT_ID="${FIGMA_PROJECT_ID}"
-`;
-
       try {
-        const fileExists = await fs
-          .access(envFilePath)
-          .then(() => true)
-          .catch(() => false);
-
-        if (fileExists) {
-          await fs.appendFile(envFilePath, envFileContent);
-          p.log.success(
-            `The .env file was found and updated with new content. Since these are sensitive variables, please do not commit this file.`
-          );
-        } else {
-          await fs.writeFile(envFilePath, envFileContent.replace(/^\s*[\r\n]/gm, ''));
-          p.log.success(`Created .env file. Do not commit sensitive variables.`);
-        }
+        await saveEnvValues(path.resolve(handoff.workingPath, envFileName), values);
+        const secretNote = connection.accessTokenEnv && values[connection.accessTokenEnv] ? ' It contains a secret, so do not commit it.' : '';
+        p.log.success(`Saved to ${envFileName}.${secretNote}`);
       } catch (error) {
-        Logger.error('Error handling the .env file:', error);
+        Logger.error(`Could not save ${envFileName}:`, error);
       }
     }
   }
 
-  handoff.config.dev_access_token = DEV_ACCESS_TOKEN;
-  handoff.config.figma_project_id = FIGMA_PROJECT_ID;
+  handoff.config.integrations = {
+    ...handoff.config.integrations,
+    figma: { ...handoff.config.integrations?.figma, projectId, accessToken },
+  };
 };
 
 /**
@@ -108,10 +140,11 @@ export const figmaExtract = async (handoff: Handoff): Promise<HandoffTypes.IDocu
   await fs.emptyDir(handoff.getOutputPath());
 
   const documentationObject = await createDocumentationObject(handoff);
+  const createZipFiles = process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false';
 
   await Promise.all([
     fs.writeJSON(handoff.getTokensFilePath(), documentationObject, { spaces: 2 }),
-    ...(!process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES || process.env.HANDOFF_CREATE_ASSETS_ZIP_FILES !== 'false'
+    ...(createZipFiles
       ? [
           zipAssets(documentationObject.assets.icons, fs.createWriteStream(handoff.getIconsZipFilePath())).then((writeStream) =>
             stream.promises.finished(writeStream)
@@ -122,6 +155,10 @@ export const figmaExtract = async (handoff: Handoff): Promise<HandoffTypes.IDocu
         ]
       : []),
   ]);
+
+  if (!createZipFiles) {
+    return documentationObject;
+  }
 
   // define the output folder
   const outputFolder = path.resolve(handoff.modulePath, '.handoff', `${handoff.getProjectId()}`, 'public');

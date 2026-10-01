@@ -14,18 +14,16 @@ Handles loading, validation, and resolution of handoff configuration.
 | `loader.ts` | `initConfig()` — reads `handoff.config.ts/.js/.cjs/.json` (in that order) plus the selected profile sidecar, warns on conflicts, and merges every layer |
 | `runtime.ts` | `initRuntimeConfig()` — one pass over every registered catalog directory: loads each declaration, normalizes it into a component or pattern record, skips a declaration with a taken id, resolves SCSS/JS paths and transformer options |
 | `catalog-include.ts` | `isIncluded()` / `addToCatalog()` — registers a directory under `catalog.include` |
-| `validator.ts` | `validateConfig()` — ensures required Figma credentials are present |
 | `helpers.ts` | `defineConfig()` — typed authoring; maps camelCase keys to the runtime keys |
 | `index.ts` | Barrel re-exports |
 
 ## Usage
 
 ```ts
-import { initConfig, initRuntimeConfig, validateConfig } from './config';
+import { initConfig, initRuntimeConfig } from './config';
 
 const config = initConfig(overrides);
 const [runtimeConfig, configPaths] = initRuntimeConfig({ config, workingPath });
-const validated = validateConfig(config);
 ```
 
 ## Main Config Precedence

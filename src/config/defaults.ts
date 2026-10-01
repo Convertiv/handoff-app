@@ -15,8 +15,12 @@ export const isMcpEnabled = (config: Pick<Config, 'runtime'> | Pick<ResolvedConf
   config?.runtime?.mcp !== false;
 
 export const defaultConfig = (): Config => ({
-  dev_access_token: fromEnv('HANDOFF_DEV_ACCESS_TOKEN', { default: null }),
-  figma_project_id: fromEnv('HANDOFF_FIGMA_PROJECT_ID', { default: null }),
+  integrations: {
+    figma: {
+      projectId: fromEnv('HANDOFF_FIGMA_PROJECT_ID', { default: null }),
+      accessToken: fromEnv('HANDOFF_DEV_ACCESS_TOKEN', { default: null }),
+    },
+  },
   runtime: {
     mode: 'workspace',
     registryConnection: {

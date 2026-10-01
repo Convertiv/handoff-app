@@ -15,9 +15,6 @@ export { defineConfig } from './helpers';
 // Runtime config resolution
 export { initRuntimeConfig } from './runtime';
 
-// Config validation
-export { validateConfig } from './validator';
-
 // Registering catalog item directories under `catalog.include`
 export { addToCatalog, isIncluded } from './catalog-include';
 export type { AddToCatalogResult } from './catalog-include';

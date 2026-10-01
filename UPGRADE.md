@@ -19,7 +19,7 @@ Each feature section identifies the affected projects and the required changes.
 | Change | Affected projects |
 | --- | --- |
 | [Node.js 22](#nodejs-22) | All projects |
-| [Figma token environment references](#figma-token-environment-references) | Projects that put a Figma token directly in config |
+| [Figma settings](#figma-settings) | Projects that set Figma values in config |
 | [Catalog items](#catalog-items) | Projects with component or pattern declarations |
 
 <!-- Add future breaking changes as feature sections before "Verify the upgrade". Add each section to this table. -->
@@ -39,24 +39,32 @@ Change it to:
 }
 ```
 
-### Figma token environment references
+### Figma settings
 
-`devAccessToken` and its legacy spelling `dev_access_token` now accept only an environment reference.
+The Figma file ID and access token moved to `integrations.figma`.
+The top-level `figmaProjectId`, `figma_project_id`, `devAccessToken`, and `dev_access_token` were removed, and Handoff ignores them.
+If you use `HANDOFF_FIGMA_PROJECT_ID` and `HANDOFF_DEV_ACCESS_TOKEN` and do not set Figma values in config, no change is required.
+
+The access token accepts only an environment reference.
 A literal token throws `HandoffConfigError`, including in JavaScript and JSON configs.
-Move the token to the environment and replace the literal:
+Replace the old keys. Move a literal token to the environment:
 
 ```ts
 import { defineConfig, fromEnv } from 'handoff-app';
 
 export default defineConfig({
-  devAccessToken: fromEnv('HANDOFF_DEV_ACCESS_TOKEN'),
+  integrations: {
+    figma: {
+      projectId: 'your-figma-file-id',
+      accessToken: fromEnv('HANDOFF_DEV_ACCESS_TOKEN'),
+    },
+  },
 });
 ```
 
-For JSON, use `"devAccessToken": { "$env": "HANDOFF_DEV_ACCESS_TOKEN" }`.
-If you already use `HANDOFF_DEV_ACCESS_TOKEN` and omit the config property, no change is required.
-Environment references resolve after profile merging. Higher-layer literals still override default
-environment seeds for properties that allow literals, such as output directories.
+For JSON, use `"accessToken": { "$env": "HANDOFF_DEV_ACCESS_TOKEN" }`.
+Environment references resolve after profile merging. A profile can change one value, such as `integrations.figma.projectId`, and keep the other.
+A literal in a higher layer, such as `projectId: 'your-figma-file-id'`, overrides the default environment variable.
 
 ### Catalog items
 

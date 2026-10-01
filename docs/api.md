@@ -80,10 +80,12 @@ class constructor
 handoff.fetch();
 ```
 
-Fetch will connect to the defined Figma file id provided in the
-`env`. If no env or file is found, it will interactively request one. Then it
-will export all of the tokens and generated data into an `exported` directory
-in the local working root.
+Fetch reads the Figma file ID and access token from `integrations.figma`. By
+default, they come from `HANDOFF_FIGMA_PROJECT_ID` and
+`HANDOFF_DEV_ACCESS_TOKEN`. In a terminal, fetch asks for an empty value.
+Without a terminal, it throws `HandoffConfigError`. Then it exports all of the
+tokens and generated data into an `exported` directory in the local working
+root.
 
 ### build
 

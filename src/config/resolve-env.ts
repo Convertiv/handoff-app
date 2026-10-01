@@ -28,7 +28,7 @@ export const DEFERRED_PATHS = [
  * are baked. `DEFERRED_PATHS` entries below them still reject literals.
  */
 const DEFERRED_PREFIXES = ['runtime.registry.email.options'];
-const SECRET_PATHS = new Set(['dev_access_token', 'devAccessToken', 'runtime.registryConnection.accessToken']);
+const SECRET_PATHS = new Set(['integrations.figma.accessToken', 'runtime.registryConnection.accessToken']);
 /** Path prefixes whose resolved contents are JSON-baked into the bundle, so a reference would bake its value. */
 const BAKED_PATHS = ['runtime.registry.assetStorage.options', 'runtime.ai.connections.*.options'];
 const isDeferred = (path: string): boolean => DEFERRED_PATHS.some((deferred) => pathMatches(deferred, path));
