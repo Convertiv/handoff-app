@@ -31,7 +31,10 @@ export const pageRefFromPath = (path: string): AiPageRef | null => {
 
 /** One line, bounded, and unable to open or close a tag, so an authored title cannot reshape the prompt. */
 const clean = (text: string, max: number): string => {
-  const line = text.replace(/[\u0000-\u001f\u007f<>]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const line = text
+    .replace(/[\u0000-\u001f\u007f<>]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   return line.length > max ? `${line.slice(0, max - 1)}…` : line;
 };
 
