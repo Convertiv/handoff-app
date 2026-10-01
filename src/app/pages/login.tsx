@@ -7,7 +7,7 @@ import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { FormEvent, useEffect, useState } from 'react';
 import { AuthShell } from '../components/Auth/AuthShell';
-import { authApiUrl } from '../components/Auth/api';
+import { loadInstallStatus } from '../components/Auth/installStatus';
 
 const safeCallbackUrl = (value: unknown): string =>
   typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') && !value.startsWith('/\\') ? value : '/';
@@ -37,12 +37,11 @@ function RegistryLoginPage() {
       setCheckingInstall(false);
       return;
     }
-    void fetch(authApiUrl('/api/install'), { credentials: 'include', cache: 'no-store' })
-      .then(async (response) => {
-        if (!response.ok) return;
-        const body = (await response.json()) as { installed?: boolean; emailConfigured?: boolean };
-        if (body.installed === false) await router.replace('/install');
-        setEmailConfigured(body.emailConfigured !== false);
+    void loadInstallStatus()
+      .then(async (status) => {
+        if (!status) return;
+        if (status.installed === false) await router.replace('/install');
+        setEmailConfigured(status.emailConfigured !== false);
       })
       .finally(() => setCheckingInstall(false));
   }, [router]);

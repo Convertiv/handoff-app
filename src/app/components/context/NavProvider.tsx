@@ -1,6 +1,7 @@
 'use client';
 
 import type { NavData, SectionLink } from '@handoff/nav';
+import { useRouter } from 'next/router';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 
 export type { NavData, NavEntity } from '@handoff/nav';
@@ -13,6 +14,8 @@ interface INavContext {
 const EMPTY_NAV: NavData = { shell: [] };
 const NavContext = createContext<INavContext>({ nav: EMPTY_NAV, currentSectionId: '' });
 const isRegistryMode = process.env.HANDOFF_RUNTIME_MODE === 'registry';
+/** Routes that render no navigation, so they do not fetch it. */
+const NAVLESS_ROUTES = ['/install', '/login', '/reset-password'];
 
 // A module-level fulfilled cache and in-flight guard make the registry refresh a single hard-load
 // operation, including StrictMode remounts. A browser hard reload resets both and observes publishes.
@@ -43,9 +46,11 @@ export const NavProvider: React.FC<{
   // Registry alone owns refresh state. Workspace renders the latest page prop directly, so soft
   // navigation cannot briefly expose the preceding page's tree and triggers no provider effect.
   const [registryNav, setRegistryNav] = useState<NavData>(() => cachedNav ?? initialNav);
+  const { pathname } = useRouter();
+  const hasNav = !NAVLESS_ROUTES.includes(pathname);
 
   useEffect(() => {
-    if (!isRegistryMode || cachedNav) return;
+    if (!isRegistryMode || !hasNav || cachedNav) return;
     let active = true;
     loadNav().then((data) => {
       if (active && data) setRegistryNav(data);
@@ -53,8 +58,7 @@ export const NavProvider: React.FC<{
     return () => {
       active = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [hasNav]);
 
   const nav = isRegistryMode ? registryNav : initialNav;
   return <NavContext.Provider value={{ nav, currentSectionId }}>{children}</NavContext.Provider>;
