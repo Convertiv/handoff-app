@@ -279,7 +279,10 @@ export interface HandoffRuntimeConfig {
       module?: string;
       /** Max bytes kept inline in the database `bytea` column (larger uploads are rejected). @default 4194304 */
       maxInlineBytes?: number;
-      /** Non-secret options, JSON-encoded into the bundle. Environment references are rejected. Pass variable names instead. */
+      /**
+       * Options passed to the adapter factory. Literals are baked. Environment references are resolved
+       * at request time, so secrets must be environment references.
+       */
       options?: Record<string, unknown>;
     };
     /**

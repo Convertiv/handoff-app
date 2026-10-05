@@ -39,8 +39,8 @@ const bytea = customType<{ data: Buffer; driverData: Buffer }>({
   },
 });
 
-/** Where an asset blob's bytes live: inline in the database (`database`) or a custom provider id. */
-export type AssetStorageProvider = 'database' | (string & {});
+/** Where an asset blob's bytes live: inline in the database (`database`) or in the custom adapter (`custom`). */
+export type AssetStorageProvider = 'database' | 'custom';
 import type { ComponentListObject, PageListObject, PatternComponentEntry, PatternListObject } from '../../transformers/preview/types';
 
 /** Registry account role. Administrators may issue write-scoped credentials. */

@@ -1,7 +1,7 @@
-import { isEnvReference } from '@handoff/config/from-env';
+import { isEnvReference, resolveEnvReferences } from '@handoff/config/from-env';
 import { createResendProvider } from '@handoff/registry/email/adapters/resend';
 import { createSmtpProvider } from '@handoff/registry/email/adapters/smtp';
-import { resolveEmailOptions, type EmailProviderKind, type EmailSettings } from '@handoff/registry/email/resolve';
+import type { EmailProviderKind, EmailSettings } from '@handoff/registry/email/resolve';
 import type { EmailProvider, EmailProviderFactory } from '@handoff/registry/email/types';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 import { importServerModule } from '../server-module';
@@ -15,7 +15,7 @@ const REQUIRED_OPTIONS: Record<EmailProviderKind, readonly string[]> = { resend:
  */
 export const missingRegistryEmailSettings = (): string[] => {
   const settings = getServerRuntimeConfig().email;
-  const options = resolveEmailOptions(settings.options, process.env);
+  const options = resolveEnvReferences(settings.options, process.env);
   const missing = settings.from ? [] : ['runtime.registry.email.from'];
   if (settings.provider === 'custom' && !settings.module) missing.push('runtime.registry.email.module');
   for (const key of REQUIRED_OPTIONS[settings.provider]) {
@@ -98,7 +98,7 @@ const renderText = ({ heading, message, actionLabel, actionUrl }: AuthEmail): st
 export const sendRegistryAuthEmail = async (email: AuthEmail): Promise<boolean> => {
   if (!registryEmailIsConfigured()) return false;
   const settings = getServerRuntimeConfig().email;
-  const options = resolveEmailOptions(settings.options, process.env);
+  const options = resolveEnvReferences(settings.options, process.env);
 
   try {
     const provider = await getEmailProvider(settings, options);

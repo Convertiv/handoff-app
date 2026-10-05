@@ -7,8 +7,8 @@ the server never calls a URL a reader chose.
 Every connection speaks the OpenAI-compatible `/chat/completions` API. A connection that fits
 nothing else names a `defineAiProvider()` module instead of a base URL.
 
-Mirrors `registry/asset-storage`: only provider selection, module location, non-secret options, and
-env-var _names_ are ever persisted. Secret _values_ are read from `process.env` at request time.
+Only provider selection, module location, non-secret options, and env-var _names_ are ever
+persisted. Secret _values_ are read from `process.env` at request time.
 
 ## Files
 

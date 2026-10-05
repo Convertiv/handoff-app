@@ -81,13 +81,14 @@ numeric and boolean properties also retain their default's conversion when a ref
 fallback. Booleans are true only for `true`. Numbers must be finite. A lower-layer fallback never
 becomes the fallback for a replacement reference.
 
-`runtime.registry.assetStorage.options` is for non-secret values only. Its resolved contents are
+`runtime.ai.connections.*.options` is for non-secret values only. Its resolved contents are
 JSON-encoded into the bundle, so the loader rejects an environment reference anywhere inside it
-(`BAKED_PATHS`). For custom adapter secrets, put a variable name in options and read it through the
-adapter factory's `env` argument at runtime. A per-environment literal belongs in a profile.
+(`BAKED_PATHS`). For custom provider secrets, put a variable name in options and read it through the
+provider factory's `env` argument at runtime. A per-environment literal belongs in a profile.
 
-`runtime.registry.email.options` is a deferred prefix (`DEFERRED_PREFIXES`). A reference anywhere
-inside it keeps its name and is resolved by the deployed app. Literals are baked. `options.apiKey`
+`runtime.registry.email.options` and `runtime.registry.assetStorage.options` are deferred prefixes
+(`DEFERRED_PREFIXES`). A reference anywhere inside them keeps its name, and the deployed app resolves
+it with `resolveEnvReferences()` before it calls the module factory. Literals are baked. `options.apiKey`
 and `options.password` are also `DEFERRED_PATHS`, so a literal secret is rejected for every
 provider. Before the merge, a layer that changes `email.provider` drops `options` and `module` from
 the lower layers, so the settings of two providers never mix.

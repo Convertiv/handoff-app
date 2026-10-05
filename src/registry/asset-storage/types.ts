@@ -56,11 +56,11 @@ export interface AssetStorage {
   delete(storageRef: string): Promise<void>;
 }
 
-/** Context passed to a custom adapter factory: its non-secret config options + the process env. */
+/** Context passed to a custom adapter factory: its config options and the process env. */
 export interface AssetStorageContext {
-  /** Non-secret options from `runtime.registry.assetStorage.options` (bucket env-var names, region, …). */
+  /** `runtime.registry.assetStorage.options`, with each `fromEnv()` reference replaced by its value. */
   options: Record<string, unknown>;
-  /** The process environment. Read secret *values* here by the env-var *names* carried in options. */
+  /** The process environment. */
   env: NodeJS.ProcessEnv;
 }
 

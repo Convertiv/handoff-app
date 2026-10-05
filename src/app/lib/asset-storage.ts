@@ -1,13 +1,13 @@
 /**
- * Server-only asset storage runtime. Resolves the active provider from the baked server runtime
- * config and lazily builds/memoizes adapter instances. Writes use the active adapter; reads resolve
- * by each blob's recorded provider id, so DB-backed (`database`, inline bytea) and object-backed
- * blobs coexist and old blobs stay readable after the active provider changes. `database` is the
- * inline default with no adapter (bytes live directly in `asset_blobs.content`).
+ * Server-only asset storage runtime. Resolves the active adapter from the baked server runtime
+ * config and lazily builds and memoizes it. Writes use the active adapter. Reads resolve by each
+ * blob's recorded provider, so `database` blobs (inline bytea) stay readable when a `custom` adapter
+ * is active. `database` has no adapter: its bytes live directly in `asset_blobs.content`.
  *
  * Imported exclusively by registry API route handlers and the registry store.
  */
 
+import { resolveEnvReferences } from '@handoff/config/from-env';
 import { resolveAssetStorageSettings, type ResolvedAssetStorage } from '@handoff/registry/asset-storage/resolve';
 import type { AssetStorage, AssetStorageFactory } from '@handoff/registry/asset-storage/types';
 import type { AssetStorageProvider } from '@handoff/registry/db/schema';
@@ -40,7 +40,7 @@ const loadCustomAdapter = async (active: ResolvedAssetStorage): Promise<AssetSto
   }
   const mod = await importServerModule(active.module);
   const exported = mod?.default ?? mod;
-  const adapter: unknown = typeof exported === 'function' ? await (exported as AssetStorageFactory)({ options: active.options, env: process.env }) : exported;
+  const adapter: unknown = typeof exported === 'function' ? await (exported as AssetStorageFactory)({ options: resolveEnvReferences(active.options, process.env), env: process.env }) : exported;
   const candidate = adapter as Partial<AssetStorage> | null;
   if (!candidate || typeof candidate.put !== 'function' || typeof candidate.get !== 'function' || typeof candidate.delete !== 'function') {
     throw new AssetStorageError(`Custom asset storage module "${active.module}" must default-export a defineAssetStorage adapter.`);
@@ -49,7 +49,7 @@ const loadCustomAdapter = async (active: ResolvedAssetStorage): Promise<AssetSto
 };
 
 /**
- * Resolve the {@link AssetStorage} adapter for a provider id, or `null` when the provider is the
+ * Resolve the {@link AssetStorage} adapter for a recorded provider, or `null` when the provider is the
  * inline `database` default (there is no adapter; content lives in the DB row). Reading a blob whose
  * provider is no longer configured throws an actionable error rather than silently failing.
  */
@@ -62,10 +62,10 @@ export const getAssetStorageAdapter = async (provider: AssetStorageProvider): Pr
   }
 
   const active = getActiveAssetStorage();
-  if (active.adapterKind !== 'custom' || active.provider !== provider) {
+  if (active.adapterKind !== provider) {
     throw new AssetStorageError(
       `No asset storage adapter is configured for provider "${provider}". A blob was stored by that ` +
-        'provider but it is no longer selected. Restore its configuration (or migrate its objects) to read it.'
+        'provider but it is no longer selected. Restore its configuration to read it.'
     );
   }
   const adapter = await loadCustomAdapter(active);
@@ -75,7 +75,7 @@ export const getAssetStorageAdapter = async (provider: AssetStorageProvider): Pr
 };
 
 /** The adapter for the active provider (used for new uploads), or `null` for the inline database default. */
-export const getActiveAssetStorageAdapter = (): Promise<AssetStorage | null> => getAssetStorageAdapter(getActiveAssetStorage().provider);
+export const getActiveAssetStorageAdapter = (): Promise<AssetStorage | null> => getAssetStorageAdapter(getActiveAssetStorage().adapterKind);
 
 /** Reset memoized state (test seam only). */
 export const __resetAssetStorageCache = (): void => {

@@ -24,3 +24,36 @@ export const fromEnv = <T = string>(name: string, options?: { default: T }): Env
 
 export const isEnvReference = (value: unknown): value is EnvReference<unknown> =>
   value !== null && typeof value === 'object' && Object.prototype.hasOwnProperty.call(value, '$env');
+
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);
+
+/** Replace each reference nested in `options` with its value from `env`. An unset or empty variable becomes `undefined`. */
+export const resolveEnvReferences = (options: Record<string, unknown>, env: NodeJS.ProcessEnv): Record<string, unknown> => {
+  const resolve = (value: unknown): unknown => {
+    if (isEnvReference(value)) {
+      const resolved = typeof value.$env === 'string' ? env[value.$env]?.trim() : undefined;
+      return resolved || undefined;
+    }
+    if (Array.isArray(value)) return value.map(resolve);
+    if (isPlainRecord(value)) return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, resolve(entry)]));
+    return value;
+  };
+  return resolve(options) as Record<string, unknown>;
+};
+
+/** The variable names that the references nested in `options` use, for deployment instructions. */
+export const envReferenceNames = (options: Record<string, unknown>): string[] => {
+  const names = new Set<string>();
+  const collect = (value: unknown): void => {
+    if (isEnvReference(value)) {
+      if (typeof value.$env === 'string') names.add(value.$env);
+    } else if (Array.isArray(value)) {
+      value.forEach(collect);
+    } else if (isPlainRecord(value)) {
+      Object.values(value).forEach(collect);
+    }
+  };
+  collect(options);
+  return [...names];
+};

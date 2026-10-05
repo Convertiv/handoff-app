@@ -26,10 +26,10 @@ export const DEFERRED_PATHS = [
  * Path prefixes whose nested references the deployed app reads at request time. Literals below them
  * are baked. `DEFERRED_PATHS` entries below them still reject literals.
  */
-const DEFERRED_PREFIXES = ['runtime.registry.email.options'];
+const DEFERRED_PREFIXES = ['runtime.registry.email.options', 'runtime.registry.assetStorage.options'];
 const SECRET_PATHS = new Set(['integrations.figma.accessToken', 'runtime.registryConnection.accessToken']);
 /** Path prefixes whose resolved contents are JSON-baked into the bundle, so a reference would bake its value. */
-const BAKED_PATHS = ['runtime.registry.assetStorage.options', 'runtime.ai.connections.*.options'];
+const BAKED_PATHS = ['runtime.ai.connections.*.options'];
 const isDeferred = (path: string): boolean => DEFERRED_PATHS.some((deferred) => pathMatches(deferred, path));
 const isUnderDeferredPrefix = (path: string): boolean => DEFERRED_PREFIXES.some((prefix) => path.startsWith(`${prefix}.`));
 const isBaked = (path: string): boolean => BAKED_PATHS.some((baked) => pathMatches(baked, path, true));

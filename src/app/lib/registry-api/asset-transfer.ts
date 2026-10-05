@@ -318,10 +318,10 @@ export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse):
         'application/octet-stream';
       const active = getActiveAssetStorage();
 
-      let storageProvider = active.provider;
+      const storageProvider = active.adapterKind;
       let content: Buffer | null = null;
       let storageRef: string | null = null;
-      if (active.provider === 'database') {
+      if (active.adapterKind === 'database') {
         if (bytes.length > active.maxInlineBytes) {
           sendRegistryError(
             res,
@@ -334,11 +334,10 @@ export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse):
       } else {
         const adapter = await getActiveAssetStorageAdapter();
         if (!adapter) {
-          sendRegistryError(res, 'unexpected_error', `No storage adapter is available for provider "${active.provider}".`);
+          sendRegistryError(res, 'unexpected_error', `No storage adapter is available for provider "${active.adapterKind}".`);
           return;
         }
         ({ storageRef } = await adapter.put({ hash, bytes, contentType, size: bytes.length }));
-        storageProvider = active.provider;
       }
 
       await db
@@ -397,7 +396,7 @@ export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse):
 
 /** The active adapter when it supports direct uploads, otherwise `null` (the client then uses `PUT`). */
 const getDirectUploadAdapter = async (): Promise<AssetStorage | null> => {
-  if (getActiveAssetStorage().provider === 'database') {
+  if (getActiveAssetStorage().adapterKind === 'database') {
     return null;
   }
   const adapter = await getActiveAssetStorageAdapter();
@@ -488,7 +487,7 @@ export const handleAssetBlobCompleteRoute = (req: NextApiRequest, res: NextApiRe
       .insert(assetBlobs)
       .values({
         hash: input.hash,
-        storageProvider: getActiveAssetStorage().provider,
+        storageProvider: getActiveAssetStorage().adapterKind,
         content: null,
         storageRef,
         contentType: input.contentType,

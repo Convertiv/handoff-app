@@ -7,7 +7,6 @@
  */
 
 import { HandoffConfigError } from '../../config/errors';
-import { isEnvReference } from '../../config/from-env';
 import type { ResolvedConfig } from '../../types/config';
 
 export type EmailProviderKind = 'resend' | 'smtp' | 'custom';
@@ -92,34 +91,4 @@ export const parseEmailSettings = (raw: { from?: unknown; provider?: unknown; mo
     ...(module ? { module } : {}),
     options: isPlainRecord(options) ? options : {},
   };
-};
-
-/** Replace each `{ $env }` reference with its value from `env`. An unset or empty variable becomes `undefined`. */
-export const resolveEmailOptions = (options: Record<string, unknown>, env: NodeJS.ProcessEnv): Record<string, unknown> => {
-  const resolve = (value: unknown): unknown => {
-    if (isEnvReference(value)) {
-      const resolved = typeof value.$env === 'string' ? env[value.$env]?.trim() : undefined;
-      return resolved || undefined;
-    }
-    if (Array.isArray(value)) return value.map(resolve);
-    if (isPlainRecord(value)) return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, resolve(entry)]));
-    return value;
-  };
-  return resolve(options) as Record<string, unknown>;
-};
-
-/** The env-var names that the options reference, for deployment instructions. */
-export const emailOptionEnvNames = (options: Record<string, unknown>): string[] => {
-  const names = new Set<string>();
-  const collect = (value: unknown): void => {
-    if (isEnvReference(value)) {
-      if (typeof value.$env === 'string') names.add(value.$env);
-    } else if (Array.isArray(value)) {
-      value.forEach(collect);
-    } else if (isPlainRecord(value)) {
-      Object.values(value).forEach(collect);
-    }
-  };
-  collect(options);
-  return [...names];
 };

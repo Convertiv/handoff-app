@@ -744,11 +744,10 @@ runtime: {
       adapter: 'custom',
       module: './server/storage/s3.mjs',
       options: {
-        providerId: 's3',
         endpoint: 'http://127.0.0.1:8333',
         bucket: 'handoff-assets',
-        accessKeyEnv: 'S3_ACCESS_KEY',
-        secretKeyEnv: 'S3_SECRET_KEY',
+        accessKey: fromEnv('S3_ACCESS_KEY'),
+        secretKey: fromEnv('S3_SECRET_KEY'),
       },
     },
   },
@@ -760,12 +759,12 @@ runtime: {
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { defineAssetStorage } from 'handoff-app/define';
 
-export default defineAssetStorage(({ options, env }) => {
+export default defineAssetStorage(({ options }) => {
   const client = new S3Client({
     endpoint: options.endpoint,
     region: 'us-east-1',
     forcePathStyle: true,
-    credentials: { accessKeyId: env[options.accessKeyEnv], secretAccessKey: env[options.secretKeyEnv] },
+    credentials: { accessKeyId: options.accessKey, secretAccessKey: options.secretKey },
   });
   const Bucket = options.bucket;
   return {
@@ -784,9 +783,10 @@ export default defineAssetStorage(({ options, env }) => {
 });
 ```
 
-`options` cannot contain `fromEnv()`. As a result, the example gives the names
-of the credential variables and reads their values from `env`. `get` can also
-return `{ kind: 'bytes', bytes }` or `{ kind: 'redirect', url }`.
+Literals in `options` are baked into the build. The deployed registry reads
+each `fromEnv()` value and gives the resolved `options` to the module. Thus
+secrets must use `fromEnv()`. `get` can also return `{ kind: 'bytes', bytes }`
+or `{ kind: 'redirect', url }`.
 
 #### Direct uploads
 
@@ -822,11 +822,12 @@ The registry does not delete an uploaded object that it never records.
 
 #### Changing the provider
 
-The registry records the provider on each blob. For a custom adapter, the
-provider is `options.providerId`, or `custom` when it is not set. After a
-change of `providerId` or of the adapter, the registry cannot read the blobs of
-the previous provider, and a publish does not move them. Blobs in PostgreSQL
-stay readable.
+The registry records on each blob whether PostgreSQL or the custom adapter
+stores it. Blobs in PostgreSQL stay readable after you select a custom adapter.
+A publish does not move blobs. Thus, if you change the custom adapter or its
+storage, copy the stored objects first. The new adapter must find each object
+by the `storageRef` that the previous adapter returned. After a change back to
+`database`, the registry cannot read the blobs of the custom adapter.
 
 ### Email delivery
 

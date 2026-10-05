@@ -41,8 +41,8 @@ export interface ServerRuntimeConfig {
   ai: AiSettings;
   registry: ServerRegistryRuntimeConfig;
   /**
-   * Asset storage selection for registry mode (provider + non-secret options + env-var names). Secret
-   * values are resolved from `process.env` at request time, never persisted here.
+   * Asset storage adapter, module, and options for registry mode. Options hold `{ $env }` references,
+   * never secret values.
    */
   assetStorage: AssetStorageSettings;
   /** Registry email provider, sender, and options. Options hold `{ $env }` references, never secret values. */

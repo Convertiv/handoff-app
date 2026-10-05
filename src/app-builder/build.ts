@@ -6,11 +6,12 @@ import path from 'path';
 import Handoff from '..';
 import { resolveAiFromConfig, type AiSettings } from '../ai/connections';
 import { isMcpEnabled } from '../config';
+import { envReferenceNames } from '../config/from-env';
 import { buildComponents } from '../pipeline/components';
 import { buildPatterns } from '../pipeline/patterns';
-import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
+import { resolveAssetStorageFromConfig, type ResolvedAssetStorage } from '../registry/asset-storage/resolve';
 import { resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
-import { emailOptionEnvNames, resolveEmailFromConfig, type EmailSettings } from '../registry/email/resolve';
+import { resolveEmailFromConfig, type EmailSettings } from '../registry/email/resolve';
 import processComponents from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
 import { buildMainJS } from '../transformers/preview/component/javascript';
@@ -299,7 +300,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const escapedMcpEnabled = escapeForSingleQuotedJsString(String(isMcpEnabled(handoff.config)));
   const escapedRegistryDriver = escapeForSingleQuotedJsString(resolveRegistryDriver(handoff.config));
   const escapedDatabaseUrlEnv = escapeForSingleQuotedJsString(resolveDatabaseUrlEnv(handoff.config));
-  // Asset storage selection baked (provider + module + non-secret options JSON).
+  // Asset storage selection baked (adapter + module + options JSON with `{ $env }` references).
   const assetStorage = resolveAssetStorageFromConfig(handoff.config);
   const escapedAssetStorageAdapter = escapeForSingleQuotedJsString(assetStorage.adapterKind);
   const escapedAssetStorageModule = escapeForSingleQuotedJsString(assetStorage.module ?? '');
@@ -453,7 +454,8 @@ const writeRegistryDeploymentReadme = async (
   entryRelativePath: string,
   databaseUrlEnv: string,
   ai: AiSettings,
-  email: EmailSettings
+  email: EmailSettings,
+  assetStorage: ResolvedAssetStorage
 ): Promise<void> => {
   const serviceKeyEnvs = [...new Set(ai.connections.map((connection) => connection.apiKeyEnv).filter(Boolean))];
   const needsKeySecret = ai.connections.some((connection) => connection.credential === 'user');
@@ -471,7 +473,8 @@ merged over the list this build baked in, keyed by \`id\`. Use it to add or repo
 without rebuilding.
 `;
 
-  const emailEnvs = emailOptionEnvNames(email.options);
+  const assetStorageEnvs = assetStorage.adapterKind === 'custom' ? envReferenceNames(assetStorage.options) : [];
+  const emailEnvs = envReferenceNames(email.options);
   const emailSection = !email.from
     ? 'Email delivery is off because `runtime.registry.email.from` is not set. Invitation links are shown once to an administrator for manual delivery.'
     : `Invitation and password-reset emails are sent from \`${email.from}\` through the \`${email.provider}\` provider.${
@@ -494,7 +497,7 @@ and \`.next/static/\` already copied alongside so the server serves them.
 - \`${databaseUrlEnv}\` — PostgreSQL/Neon connection string, read at request time.
 - \`AUTH_SECRET\` — a long, random secret used to sign browser sessions.
 - \`AUTH_URL\` — the canonical public registry URL, including the configured base path.
-
+${assetStorageEnvs.map((name) => `- \`${name}\` — read by the custom asset storage adapter at request time.\n`).join('')}
 ${emailSection}
 ${aiSection}
 ## Database migrations
@@ -872,7 +875,8 @@ const buildRegistryApp = async (handoff: Handoff, buildPackage: BuildPackage = '
     entryRelativePath,
     resolveDatabaseUrlEnv(handoff.config),
     resolveAiFromConfig(handoff.config),
-    resolveEmailFromConfig(handoff.config)
+    resolveEmailFromConfig(handoff.config),
+    resolveAssetStorageFromConfig(handoff.config)
   );
 
   Logger.success(`Packaged registry app at ${output} (start: \`node ${entryRelativePath}\`, migrate: \`handoff-app db:migrate\`).`);
