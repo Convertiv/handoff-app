@@ -66,7 +66,6 @@ const buildServerRuntimeConfig = (config: ResolvedConfig, modeOverride?: Runtime
     assetStorage: {
       adapter: assetStorage.adapterKind,
       module: assetStorage.module,
-      tokenEnv: assetStorage.tokenEnv,
       maxInlineBytes: assetStorage.maxInlineBytes,
       options: assetStorage.options,
     },

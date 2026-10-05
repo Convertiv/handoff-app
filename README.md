@@ -517,23 +517,6 @@ same explicit database migration step is required before deployment.
 The registry stores asset blobs in PostgreSQL by default, with a limit of 4 MB
 for each blob. `maxInlineBytes` changes this limit.
 
-#### Vercel Blob
-
-The built-in adapter stores blobs in Vercel Blob:
-
-```ts
-runtime: {
-  registry: {
-    assetStorage: {
-      adapter: 'vercel-blob',
-    },
-  },
-},
-```
-
-The adapter reads its token from `BLOB_READ_WRITE_TOKEN`. To use a different
-variable, set `token: fromEnv('VARIABLE_NAME')`.
-
 #### Custom adapter
 
 A [custom server module](#custom-server-modules) can store blobs in a
@@ -941,7 +924,6 @@ Useful environment variables:
 | `AUTH_URL` | Canonical public registry URL |
 | `PORT` | Standalone registry server port |
 | `HOSTNAME` | Standalone registry bind hostname |
-| `BLOB_READ_WRITE_TOKEN` | Credential for the Vercel Blob asset adapter |
 | `HANDOFF_AI_KEY_SECRET` | Encrypts reader-supplied AI provider keys, at least 32 characters |
 | `HANDOFF_AI_CONNECTIONS` | JSON array of AI connections, merged over the baked list by `id` |
 | `HANDOFF_OUTPUT_DIR` | Override the fetched output directory |
@@ -951,9 +933,9 @@ Useful environment variables:
 | `HANDOFF_APP_PORT` | Workspace documentation server port |
 | `HANDOFF_WEBSOCKET_PORT` | Workspace live-reload server port |
 
-Registry assets are stored in PostgreSQL by default. Vercel Blob or a custom
-adapter can be selected through `runtime.registry.assetStorage`, as described
-under [Asset storage](#asset-storage). The `pg` or `neon` connection driver can be
+Registry assets are stored in PostgreSQL by default. A custom adapter can be
+selected through `runtime.registry.assetStorage`, as described under
+[Asset storage](#asset-storage). The `pg` or `neon` connection driver can be
 selected through `runtime.registry.database.driver`; PostgreSQL is used by
 both.
 

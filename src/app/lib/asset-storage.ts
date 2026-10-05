@@ -8,7 +8,6 @@
  * Imported exclusively by registry API route handlers and the registry store.
  */
 
-import { createVercelBlobStorage } from '@handoff/registry/asset-storage/adapters/vercel-blob';
 import { resolveAssetStorageSettings, type ResolvedAssetStorage } from '@handoff/registry/asset-storage/resolve';
 import type { AssetStorage, AssetStorageFactory } from '@handoff/registry/asset-storage/types';
 import type { AssetStorageProvider } from '@handoff/registry/db/schema';
@@ -63,17 +62,13 @@ export const getAssetStorageAdapter = async (provider: AssetStorageProvider): Pr
   }
 
   const active = getActiveAssetStorage();
-  let adapter: AssetStorage;
-  if (provider === 'vercel-blob') {
-    adapter = createVercelBlobStorage({ tokenEnv: active.tokenEnv, options: active.options });
-  } else if (active.adapterKind === 'custom' && active.provider === provider) {
-    adapter = await loadCustomAdapter(active);
-  } else {
+  if (active.adapterKind !== 'custom' || active.provider !== provider) {
     throw new AssetStorageError(
       `No asset storage adapter is configured for provider "${provider}". A blob was stored by that ` +
         'provider but it is no longer selected. Restore its configuration (or migrate its objects) to read it.'
     );
   }
+  const adapter = await loadCustomAdapter(active);
 
   adapterCache.set(provider, adapter);
   return adapter;

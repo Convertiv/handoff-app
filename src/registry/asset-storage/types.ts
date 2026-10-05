@@ -1,9 +1,9 @@
 /**
- * Server-only asset storage contract for object-backed providers (Vercel Blob + custom
- * {@link defineAssetStorage} modules), so callers need no provider-specific logic. The built-in
- * `database` provider is the inline default: bytes live in the `asset_blobs.content` bytea column,
- * read/written directly by the registry, so it needs no adapter. Object providers record a
- * `storageRef` + provider id so reads resolve back through whichever provider stored the blob.
+ * Server-only asset storage contract for custom {@link defineAssetStorage} object storage modules.
+ * The built-in `database` provider is the inline default: bytes live in the `asset_blobs.content`
+ * bytea column, read/written directly by the registry, so it needs no adapter. Object providers
+ * record a `storageRef` + provider id so reads resolve back through whichever provider stored the
+ * blob.
  */
 
 /** Input for storing one content-addressed blob. */

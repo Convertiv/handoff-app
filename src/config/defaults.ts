@@ -29,7 +29,6 @@ export const defaultConfig = (): Config => ({
     },
     registry: {
       database: { url: fromEnv('DATABASE_URL') },
-      assetStorage: { token: fromEnv('BLOB_READ_WRITE_TOKEN') },
     },
   },
   exportsOutputDirectory: fromEnv('HANDOFF_OUTPUT_DIR', { default: 'exported' }),

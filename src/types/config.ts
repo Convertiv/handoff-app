@@ -270,15 +270,13 @@ export interface HandoffRuntimeConfig {
      */
     assetStorage?: {
       /**
-       * Active storage provider for new uploads. `database` keeps bytes inline in Postgres; use the
-       * pre-packaged `vercel-blob` adapter or a `custom` module for object storage.
+       * Active storage provider for new uploads. `database` keeps bytes inline in Postgres; use a
+       * `custom` module for object storage.
        * @default "database"
        */
-      adapter?: 'database' | 'vercel-blob' | 'custom';
+      adapter?: 'database' | 'custom';
       /** For `adapter: "custom"` - server-only module path default-exporting a `defineAssetStorage` adapter. */
       module?: string;
-      /** For `adapter: "vercel-blob"` - environment reference to the Blob read/write token. @default fromEnv('BLOB_READ_WRITE_TOKEN') */
-      token?: RuntimeEnvReference<string>;
       /** Max bytes kept inline in the database `bytea` column (larger uploads are rejected). @default 4194304 */
       maxInlineBytes?: number;
       /** Non-secret options, JSON-encoded into the bundle. Environment references are rejected. Pass variable names instead. */

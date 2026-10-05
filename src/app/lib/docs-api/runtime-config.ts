@@ -79,9 +79,8 @@ const assetStorageFromEnv = (): AssetStorageSettings => {
   }
   const maxInline = Number(process.env.HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES);
   return {
-    adapter: adapter === 'vercel-blob' || adapter === 'custom' ? adapter : DEFAULT_ASSET_STORAGE_ADAPTER,
+    adapter: adapter === 'custom' ? adapter : DEFAULT_ASSET_STORAGE_ADAPTER,
     module: process.env.HANDOFF_ASSET_STORAGE_MODULE?.trim() || undefined,
-    tokenEnv: process.env.HANDOFF_ASSET_STORAGE_TOKEN_ENV?.trim() || undefined,
     maxInlineBytes: Number.isFinite(maxInline) && maxInline > 0 ? maxInline : undefined,
     options,
   };

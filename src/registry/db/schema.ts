@@ -39,8 +39,8 @@ const bytea = customType<{ data: Buffer; driverData: Buffer }>({
   },
 });
 
-/** Where an asset blob's bytes physically live: the default DB adapter, Vercel Blob, or a custom id. */
-export type AssetStorageProvider = 'database' | 'vercel-blob' | (string & {});
+/** Where an asset blob's bytes live: inline in the database (`database`) or a custom provider id. */
+export type AssetStorageProvider = 'database' | (string & {});
 import type { ComponentListObject, PageListObject, PatternComponentEntry, PatternListObject } from '../../transformers/preview/types';
 
 /** Registry account role. Administrators may issue write-scoped credentials. */
@@ -438,7 +438,7 @@ export const assets = pgTable(
 export const assetBlobs = pgTable('asset_blobs', {
   /** SHA-256 of the blob bytes (hex). */
   hash: text('hash').primaryKey(),
-  /** Which storage backed this blob when it was written (`database`|`vercel-blob`|custom id). */
+  /** Which storage backed this blob when it was written (`database`|custom id). */
   storageProvider: text('storage_provider').$type<AssetStorageProvider>().notNull(),
   /** Inline bytes; null when stored externally via `storageRef`. */
   content: bytea('content'),

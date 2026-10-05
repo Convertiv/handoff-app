@@ -299,11 +299,10 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const escapedMcpEnabled = escapeForSingleQuotedJsString(String(isMcpEnabled(handoff.config)));
   const escapedRegistryDriver = escapeForSingleQuotedJsString(resolveRegistryDriver(handoff.config));
   const escapedDatabaseUrlEnv = escapeForSingleQuotedJsString(resolveDatabaseUrlEnv(handoff.config));
-  // Asset storage selection baked (provider + module + env-var names + non-secret options JSON).
+  // Asset storage selection baked (provider + module + non-secret options JSON).
   const assetStorage = resolveAssetStorageFromConfig(handoff.config);
   const escapedAssetStorageAdapter = escapeForSingleQuotedJsString(assetStorage.adapterKind);
   const escapedAssetStorageModule = escapeForSingleQuotedJsString(assetStorage.module ?? '');
-  const escapedAssetStorageTokenEnv = escapeForSingleQuotedJsString(assetStorage.tokenEnv);
   const escapedAssetStorageMaxInline = escapeForSingleQuotedJsString(String(assetStorage.maxInlineBytes));
   const escapedAssetStorageOptions = escapeForSingleQuotedJsString(JSON.stringify(assetStorage.options ?? {}));
   const email = resolveEmailFromConfig(handoff.config);
@@ -332,7 +331,6 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_REGISTRY_DATABASE_URL_ENV%': escapedDatabaseUrlEnv,
     '%HANDOFF_ASSET_STORAGE_ADAPTER%': escapedAssetStorageAdapter,
     '%HANDOFF_ASSET_STORAGE_MODULE%': escapedAssetStorageModule,
-    '%HANDOFF_ASSET_STORAGE_TOKEN_ENV%': escapedAssetStorageTokenEnv,
     '%HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES%': escapedAssetStorageMaxInline,
     '%HANDOFF_ASSET_STORAGE_OPTIONS%': escapedAssetStorageOptions,
     '%HANDOFF_EMAIL_PROVIDER%': escapedEmailProvider,
@@ -597,10 +595,8 @@ const getRequiredRegistryRuntimeModules = (handoff: Handoff): string[] => {
   }
   const driver = resolveRegistryDriver(handoff.config);
   const driverModules = driver === 'neon' ? ['@neondatabase/serverless', 'ws'] : ['pg'];
-  // Custom adapter packages are copied by `copyCustomServerModules`.
-  const storage = resolveAssetStorageFromConfig(handoff.config).adapterKind === 'vercel-blob' ? ['@vercel/blob'] : [];
   const email = resolveEmailFromConfig(handoff.config).provider === 'smtp' ? ['nodemailer'] : [];
-  return [...base, ...driverModules, ...storage, ...email];
+  return [...base, ...driverModules, ...email];
 };
 
 /**
