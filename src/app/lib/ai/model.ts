@@ -1,11 +1,10 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { aiCredentialKind, type AiConnectionSettings } from '@handoff/ai/connections';
-import { resolveEnvReferences } from '@handoff/config/from-env';
 
-import type { AiProvider, AiProviderFactory } from '@handoff/ai/types';
+import type { AiProvider } from '@handoff/ai/types';
 import type { LanguageModel } from 'ai';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
-import { importServerModule } from '../server-module';
+import { loadServerModule } from '../server-module';
 
 /**
  * Server-only model construction.
@@ -59,13 +58,7 @@ export const resolveAiKey = async (connection: AiConnectionSettings, userId: str
 
 /** Load a custom provider module and coerce its default export (provider object or factory) to a provider. */
 const loadProviderModule = async (connection: AiConnectionSettings, apiKey: string | undefined): Promise<AiProvider> => {
-  const mod = await importServerModule(connection.module!);
-  const exported = mod?.default ?? mod;
-  const provider: unknown =
-    typeof exported === 'function'
-      ? await (exported as AiProviderFactory)({ options: resolveEnvReferences(connection.options ?? {}, process.env), env: process.env, apiKey })
-      : exported;
-  const candidate = provider as Partial<AiProvider> | null;
+  const candidate = (await loadServerModule(connection.module!, { options: connection.options, apiKey })) as Partial<AiProvider> | null;
   if (!candidate || typeof candidate.languageModel !== 'function') {
     throw new AiConnectionError(`Custom AI provider module "${connection.module}" must default-export a defineAiProvider provider.`);
   }

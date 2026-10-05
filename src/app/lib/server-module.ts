@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
+import { resolveEnvReferences } from '@handoff/config/from-env';
 
 /**
  * Import a consumer's server-only module (a custom asset storage adapter, AI provider or email
@@ -19,4 +20,15 @@ export const importServerModule = async (specifier: string): Promise<any> => {
       ];
   const target = candidates.find((candidate) => fs.existsSync(candidate)) ?? candidates[candidates.length - 1];
   return import(/* webpackIgnore: true */ pathToFileURL(target).href);
+};
+
+/**
+ * Import a custom module and return its default export. A factory export is called first, with
+ * `fromEnv()` values in `context.options` resolved.
+ */
+export const loadServerModule = async (specifier: string, context: { options?: Record<string, unknown>; [key: string]: unknown }): Promise<unknown> => {
+  const mod = await importServerModule(specifier);
+  const exported = mod?.default ?? mod;
+  if (typeof exported !== 'function') return exported;
+  return exported({ ...context, options: resolveEnvReferences(context.options ?? {}, process.env), env: process.env });
 };

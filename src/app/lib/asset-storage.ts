@@ -7,12 +7,11 @@
  * Imported exclusively by registry API route handlers and the registry store.
  */
 
-import { resolveEnvReferences } from '@handoff/config/from-env';
 import { resolveAssetStorageSettings, type ResolvedAssetStorage } from '@handoff/registry/asset-storage/resolve';
-import type { AssetStorage, AssetStorageFactory } from '@handoff/registry/asset-storage/types';
+import type { AssetStorage } from '@handoff/registry/asset-storage/types';
 import type { AssetStorageProvider } from '@handoff/registry/db/schema';
 import { getServerRuntimeConfig } from './docs-api/runtime-config';
-import { importServerModule } from './server-module';
+import { loadServerModule } from './server-module';
 
 let activeCache: ResolvedAssetStorage | null = null;
 const adapterCache = new Map<string, AssetStorage | null>();
@@ -38,10 +37,7 @@ const loadCustomAdapter = async (active: ResolvedAssetStorage): Promise<AssetSto
   if (!active.module) {
     throw new AssetStorageError('A custom asset storage adapter is selected but no module path is configured.');
   }
-  const mod = await importServerModule(active.module);
-  const exported = mod?.default ?? mod;
-  const adapter: unknown = typeof exported === 'function' ? await (exported as AssetStorageFactory)({ options: resolveEnvReferences(active.options, process.env), env: process.env }) : exported;
-  const candidate = adapter as Partial<AssetStorage> | null;
+  const candidate = (await loadServerModule(active.module, { options: active.options })) as Partial<AssetStorage> | null;
   if (!candidate || typeof candidate.put !== 'function' || typeof candidate.get !== 'function' || typeof candidate.delete !== 'function') {
     throw new AssetStorageError(`Custom asset storage module "${active.module}" must default-export a defineAssetStorage adapter.`);
   }

@@ -2,9 +2,9 @@ import { isEnvReference, resolveEnvReferences } from '@handoff/config/from-env';
 import { createResendProvider } from '@handoff/registry/email/adapters/resend';
 import { createSmtpProvider } from '@handoff/registry/email/adapters/smtp';
 import type { EmailProviderKind, EmailSettings } from '@handoff/registry/email/resolve';
-import type { EmailProvider, EmailProviderFactory } from '@handoff/registry/email/types';
+import type { EmailProvider } from '@handoff/registry/email/types';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
-import { importServerModule } from '../server-module';
+import { loadServerModule } from '../server-module';
 
 /** Options a provider needs before email counts as configured. */
 const REQUIRED_OPTIONS: Record<EmailProviderKind, readonly string[]> = { resend: ['apiKey'], smtp: ['host'], custom: [] };
@@ -38,10 +38,7 @@ let customProvider: Promise<EmailProvider> | null = null;
 
 /** Load the custom module once and coerce its default export (provider object or factory) to a provider. */
 const loadCustomProvider = async (settings: EmailSettings, options: Record<string, unknown>): Promise<EmailProvider> => {
-  const mod = await importServerModule(settings.module!);
-  const exported = mod?.default ?? mod;
-  const provider: unknown =
-    typeof exported === 'function' ? await (exported as EmailProviderFactory)({ options, env: process.env }) : exported;
+  const provider = await loadServerModule(settings.module!, { options });
   if (typeof (provider as Partial<EmailProvider> | null)?.send !== 'function') {
     throw new Error(`Custom email provider module "${settings.module}" must default-export a defineEmailProvider() provider.`);
   }
