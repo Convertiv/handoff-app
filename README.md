@@ -734,8 +734,42 @@ for each blob. `maxInlineBytes` changes this limit.
 #### Custom adapter
 
 A [custom server module](#custom-server-modules) can store blobs in a
-different service. This example uses an S3-compatible service, such as Amazon
-S3, Cloudflare R2, MinIO, or SeaweedFS:
+different service. The module default-exports a `defineAssetStorage()` adapter
+with these methods:
+
+- `put` stores a blob and returns the `storageRef` that the registry records.
+- `get` returns a blob by its `storageRef`, as `{ kind: 'stream', stream }`,
+  `{ kind: 'bytes', bytes }`, or `{ kind: 'redirect', url }`.
+- `delete` removes a blob by its `storageRef`.
+- `createUpload` is optional. It enables [direct uploads](#direct-uploads).
+
+Literals in `options` are baked into the build. The deployed registry reads
+each `fromEnv()` value at request time and gives the resolved `options` to the
+module. Thus secrets must use `fromEnv()`.
+
+The S3 and Vercel Blob examples that follow are complete adapters with direct
+uploads.
+
+##### Direct uploads
+
+By default, `publish` sends each blob to the registry, and the registry sends
+it to storage. A serverless host limits the size of one request. Vercel permits
+about 4.5 MB, so a larger blob fails.
+
+With `createUpload`, the registry gives the CLI a signed URL, and the CLI sends
+the blob directly to storage. The signed URL must make storage reject bytes
+that do not match `hash`. The registry records the blob only after `get` finds
+the stored object. The registry does not delete an uploaded object that it
+never records.
+
+The `database` provider always uploads through the registry, with its
+`maxInlineBytes` limit.
+
+##### S3-compatible storage
+
+This adapter works with Amazon S3, Cloudflare R2, MinIO, SeaweedFS, and other
+services with an S3 API. It uses `@aws-sdk/client-s3` and
+`@aws-sdk/s3-request-presigner`.
 
 ```ts
 runtime: {
@@ -757,6 +791,7 @@ runtime: {
 ```js
 // server/storage/s3.mjs
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { defineAssetStorage } from 'handoff-app/define';
 
 export default defineAssetStorage(({ options }) => {
@@ -779,46 +814,102 @@ export default defineAssetStorage(({ options }) => {
     async delete(storageRef) {
       await client.send(new DeleteObjectCommand({ Bucket, Key: storageRef }));
     },
+    async createUpload({ hash, contentType }) {
+      const checksum = Buffer.from(hash, 'hex').toString('base64');
+      const command = new PutObjectCommand({ Bucket, Key: hash, ContentType: contentType, ChecksumSHA256: checksum });
+      const url = await getSignedUrl(client, command, {
+        expiresIn: 900,
+        unhoistableHeaders: new Set(['x-amz-checksum-sha256']),
+      });
+      return { url, headers: { 'Content-Type': contentType, 'x-amz-checksum-sha256': checksum }, storageRef: hash };
+    },
   };
 });
 ```
 
-Literals in `options` are baked into the build. The deployed registry reads
-each `fromEnv()` value and gives the resolved `options` to the module. Thus
-secrets must use `fromEnv()`. `get` can also return `{ kind: 'bytes', bytes }`
-or `{ kind: 'redirect', url }`.
+`createUpload` signs a SHA-256 checksum header. Thus storage rejects bytes
+that do not match `hash`.
 
-#### Direct uploads
+##### Vercel Blob
 
-By default, `publish` sends each blob to the registry, and the registry sends
-it to storage. A serverless host limits the size of one request (Vercel allows
-about 4.5 MB), so a larger blob fails. To prevent this, add `createUpload` to
-the adapter. The registry then gives the CLI a signed URL, and the CLI sends the
-blob directly to storage. The registry records the blob only after `get`
-finds the stored object.
+This adapter stores blobs in a private Vercel Blob store. It uses
+`@vercel/blob` 2.x. When the store is connected to the Vercel project, the SDK
+reads the store credentials from the deployment environment. Thus the adapter
+needs no `options`.
 
-The signed URL must make storage reject bytes that do not match `hash`. This
-example adds a signed SHA-256 checksum header to the adapter above. It uses
-`@aws-sdk/s3-request-presigner`:
-
-```js
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-
-// In the object that the adapter returns:
-async createUpload({ hash, contentType }) {
-  const checksum = Buffer.from(hash, 'hex').toString('base64');
-  const command = new PutObjectCommand({ Bucket, Key: hash, ContentType: contentType, ChecksumSHA256: checksum });
-  const url = await getSignedUrl(client, command, {
-    expiresIn: 900,
-    unhoistableHeaders: new Set(['x-amz-checksum-sha256']),
-  });
-  return { url, headers: { 'Content-Type': contentType, 'x-amz-checksum-sha256': checksum }, storageRef: hash };
+```ts
+runtime: {
+  registry: {
+    assetStorage: {
+      adapter: 'custom',
+      module: './server/storage/vercel-blob.mjs',
+    },
+  },
 },
 ```
 
-An adapter without `createUpload` still uploads through the registry. The
-`database` provider always uses that path, with its `maxInlineBytes` limit.
-The registry does not delete an uploaded object that it never records.
+```js
+// server/storage/vercel-blob.mjs
+import { Readable } from 'node:stream';
+import { del, get, issueSignedToken, parseStoreIdFromDelegationToken, presignUrl, put } from '@vercel/blob';
+import { defineAssetStorage } from 'handoff-app/define';
+
+const access = 'private';
+const pathnameFor = (hash) => `assets/${hash}`;
+
+export default defineAssetStorage({
+  async put({ hash, bytes, contentType }) {
+    const blob = await put(pathnameFor(hash), bytes, { access, contentType, addRandomSuffix: false, allowOverwrite: true });
+    return { storageRef: blob.pathname };
+  },
+  async get(storageRef) {
+    const result = await get(storageRef, { access });
+    if (!result?.stream) {
+      throw new Error(`Blob "${storageRef}" does not exist.`);
+    }
+    return { kind: 'stream', stream: Readable.fromWeb(result.stream), contentType: result.blob.contentType };
+  },
+  async delete(storageRef) {
+    await del(storageRef);
+  },
+  async createUpload({ hash, size, contentType }) {
+    const pathname = pathnameFor(hash);
+    const token = await issueSignedToken({
+      pathname,
+      operations: ['put'],
+      validUntil: Date.now() + 15 * 60 * 1000,
+      allowedContentTypes: [contentType],
+      maximumSizeInBytes: size,
+    });
+    const { presignedUrl } = await presignUrl(token, { operation: 'put', pathname, access, allowOverwrite: true });
+    return {
+      url: presignedUrl,
+      headers: {
+        'x-api-version': '12',
+        'x-vercel-blob-store-id': parseStoreIdFromDelegationToken(token.delegationToken),
+        'x-vercel-blob-access': access,
+        'x-content-type': contentType,
+      },
+      storageRef: pathname,
+    };
+  },
+});
+```
+
+This adapter is different from the S3 example in these ways:
+
+- `get` converts the stream. The SDK returns a web stream, but the registry
+  needs a Node stream.
+- A private blob has no public URL. Thus the registry sends each blob to the
+  reader itself.
+- **Vercel Blob cannot reject bytes that do not match `hash`.** The signed URL
+  limits only the path, the size, and the content type. Thus the registry does
+  not verify a blob that the CLI uploads directly.
+- Without `createUpload`, each blob goes through the registry, which verifies
+  its hash. The Vercel limit of about 4.5 MB then applies to each blob.
+- The CLI sends a plain `PUT` request. Thus `createUpload` returns the headers
+  that the SDK sends for a presigned upload. These headers are not a documented
+  API, so a new version of `@vercel/blob` can change them.
 
 #### Changing the provider
 
