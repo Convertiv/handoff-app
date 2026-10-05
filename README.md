@@ -512,10 +512,14 @@ runtime: {
 A Neon PostgreSQL connection string is supplied through `DATABASE_URL`. The
 same explicit database migration step is required before deployment.
 
-#### Optional Vercel Blob storage
+### Asset storage
 
-Registry assets are stored in PostgreSQL by default. Vercel Blob can be selected
-when external asset storage is required:
+The registry stores asset blobs in PostgreSQL by default, with a limit of 4 MB
+for each blob. `maxInlineBytes` changes this limit.
+
+#### Vercel Blob
+
+The built-in adapter stores blobs in Vercel Blob:
 
 ```ts
 runtime: {
@@ -527,10 +531,75 @@ runtime: {
 },
 ```
 
-The associated `BLOB_READ_WRITE_TOKEN` is supplied through the deployment
-environment.
+The adapter reads its token from `BLOB_READ_WRITE_TOKEN`. To use a different
+variable, set `token: fromEnv('VARIABLE_NAME')`.
 
-#### Optional email delivery
+#### Custom adapter
+
+A [custom server module](#custom-server-modules) can store blobs in a
+different service. This example uses an S3-compatible service, such as Amazon
+S3, Cloudflare R2, MinIO, or SeaweedFS:
+
+```ts
+runtime: {
+  registry: {
+    assetStorage: {
+      adapter: 'custom',
+      module: './server/storage/s3.mjs',
+      options: {
+        providerId: 's3',
+        endpoint: 'http://127.0.0.1:8333',
+        bucket: 'handoff-assets',
+        accessKeyEnv: 'S3_ACCESS_KEY',
+        secretKeyEnv: 'S3_SECRET_KEY',
+      },
+    },
+  },
+},
+```
+
+```js
+// server/storage/s3.mjs
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { defineAssetStorage } from 'handoff-app/define';
+
+export default defineAssetStorage(({ options, env }) => {
+  const client = new S3Client({
+    endpoint: options.endpoint,
+    region: 'us-east-1',
+    forcePathStyle: true,
+    credentials: { accessKeyId: env[options.accessKeyEnv], secretAccessKey: env[options.secretKeyEnv] },
+  });
+  const Bucket = options.bucket;
+  return {
+    async put({ hash, bytes, contentType }) {
+      await client.send(new PutObjectCommand({ Bucket, Key: hash, Body: bytes, ContentType: contentType }));
+      return { storageRef: hash };
+    },
+    async get(storageRef) {
+      const result = await client.send(new GetObjectCommand({ Bucket, Key: storageRef }));
+      return { kind: 'stream', stream: result.Body, contentType: result.ContentType };
+    },
+    async delete(storageRef) {
+      await client.send(new DeleteObjectCommand({ Bucket, Key: storageRef }));
+    },
+  };
+});
+```
+
+`options` cannot contain `fromEnv()`. As a result, the example gives the names
+of the credential variables and reads their values from `env`. `get` can also
+return `{ kind: 'bytes', bytes }` or `{ kind: 'redirect', url }`.
+
+#### Changing the provider
+
+The registry records the provider on each blob. For a custom adapter, the
+provider is `options.providerId`, or `custom` when it is not set. After a
+change of `providerId` or of the adapter, the registry cannot read the blobs of
+the previous provider, and a publish does not move them. Blobs in PostgreSQL
+stay readable.
+
+### Email delivery
 
 The registry sends invitation and password-reset emails when `email.from` is
 set. Without it, an administrator sees each invitation link once and delivers
@@ -563,10 +632,11 @@ email: {
 ```
 
 For a different service, set `provider: 'custom'` and set `module` to a
-server-only file. The factory gets `options` with `fromEnv()` values resolved:
+[custom server module](#custom-server-modules). The factory gets `options`
+with `fromEnv()` values resolved:
 
 ```ts
-import { defineEmailProvider } from 'handoff-app';
+import { defineEmailProvider } from 'handoff-app/define';
 
 export default defineEmailProvider(({ options }) => ({
   async send({ from, to, subject, html, text }) {
@@ -579,6 +649,17 @@ Literals in `options` are baked into the build. `fromEnv()` values are read at
 request time, so they can change without a rebuild. `apiKey` and `password`
 must use `fromEnv()`. A profile can set a different sender or provider. When a
 profile changes the provider, it replaces `options`.
+
+### Custom server modules
+
+Asset storage, email, and AI connections can name a custom server module. Each
+module obeys these rules:
+
+- The path is relative to the working directory.
+- The file is `.js` or `.mjs`.
+- The default export is the object, or a factory that returns it.
+- The module imports its define helper from `handoff-app/define`. The registry build stops when a module imports `handoff-app`.
+- The packages that the module imports are installed in the project. The registry build copies them into the bundle.
 
 ### 3. Installation
 
@@ -805,8 +886,8 @@ Every connection speaks the OpenAI-compatible `/chat/completions` API. This does
 not limit which models a reader can use. Ollama serves an OpenAI-compatible API
 at `/v1`, and LiteLLM, OpenRouter, vLLM, LM Studio and Azure OpenAI each front
 Anthropic, Google and xAI models. A provider that fits nothing else names a
-server-only module that default-exports `defineAiProvider()`, the way
-`runtime.registry.assetStorage.module` does.
+[custom server module](#custom-server-modules) that default-exports
+`defineAiProvider()`, in place of `baseUrl`.
 
 ### Reader keys
 
@@ -830,6 +911,9 @@ instead of holding its value:
 [{ "id": "gateway", "label": "Acme LiteLLM", "baseUrl": "https://llm.acme.internal/v1",
    "apiKeyEnv": "LITELLM_API_KEY", "models": ["gpt-4o"] }]
 ```
+
+A connection in this list can use a `module` only if a connection in the config
+names the same module. The build copies only those modules into the registry.
 
 Spend control belongs to the gateway. LiteLLM and OpenRouter both enforce
 budgets and rate limits per key. The assistant caps only how many steps one
@@ -867,9 +951,9 @@ Useful environment variables:
 | `HANDOFF_APP_PORT` | Workspace documentation server port |
 | `HANDOFF_WEBSOCKET_PORT` | Workspace live-reload server port |
 
-Registry assets are stored in PostgreSQL by default with a 4 MB per-blob limit.
-Vercel Blob or a custom adapter can be selected through
-`runtime.registry.assetStorage`. The `pg` or `neon` connection driver can be
+Registry assets are stored in PostgreSQL by default. Vercel Blob or a custom
+adapter can be selected through `runtime.registry.assetStorage`, as described
+under [Asset storage](#asset-storage). The `pg` or `neon` connection driver can be
 selected through `runtime.registry.database.driver`; PostgreSQL is used by
 both.
 

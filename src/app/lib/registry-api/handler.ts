@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
 import type { RegistryPrincipal } from '@handoff/registry/auth';
+import { AssetStorageError } from '../asset-storage';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 import { getRegistryConnection, RegistryConnectionError } from '../registry-connection';
 import { authorizeRegistryRequest, requiredScopeForMethod } from './auth';
@@ -15,7 +16,8 @@ import { buildMeta, type RegistryMeta } from './meta';
  * (`405 method_not_allowed`); database resolution (`503 database_unavailable`); and scoped credential
  * authorization on every request: reads require `registry:read`, mutations require `registry:write`
  * (`400 bad_request` / `401 unauthorized` / `403 forbidden`). The route body then runs against a live
- * connection, with any thrown failure mapped to `unexpected_error`.
+ * connection. A thrown asset storage configuration problem maps to `503 storage_unavailable` with
+ * its message, and any other thrown failure maps to `unexpected_error`.
  *
  * The database is resolved before authorization because that is the only guard needing a connection,
  * so a request that would fail auth against a registry with a down database reports
@@ -94,6 +96,10 @@ export const handleRegistryRoute = async (
     await body({ req, res, db, method, principal });
   } catch (error) {
     console.error('Registry API request failed.', error);
+    if (error instanceof AssetStorageError) {
+      sendRegistryError(res, 'storage_unavailable', error.message);
+      return;
+    }
     sendRegistryError(res, 'unexpected_error', 'Unexpected registry API error.');
   }
 };

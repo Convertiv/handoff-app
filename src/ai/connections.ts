@@ -103,17 +103,34 @@ const toConnectionList = (input: readonly unknown[] | undefined): AiConnectionSe
   return [...byId.values()];
 };
 
+const ignoredOverrides = new Set<string>();
+
 /**
  * Merge a deployment-supplied list over the baked one by `id`: a matching id replaces the baked
  * connection outright, and a new id is appended. Replacement rather than a field-wise merge, so a
  * deployment that repoints a gateway cannot leave a stale model list or key name behind.
+ *
+ * A deployment-supplied connection can use only a `module` that the build includes.
  */
 export const mergeAiConnections = (
   baked: readonly AiConnectionSettings[],
   overrides: readonly AiConnectionSettings[]
 ): AiConnectionSettings[] => {
   const byId = new Map(baked.map((connection) => [connection.id, connection]));
-  for (const connection of overrides) byId.set(connection.id, connection);
+  const bakedModules = new Set(baked.map((connection) => connection.module).filter(Boolean));
+  for (const connection of overrides) {
+    if (connection.module && !bakedModules.has(connection.module)) {
+      if (!ignoredOverrides.has(connection.id)) {
+        ignoredOverrides.add(connection.id);
+        console.warn(
+          `HANDOFF_AI_CONNECTIONS: connection "${connection.id}" is ignored, because the build does not include its module ` +
+            `"${connection.module}". Declare the connection in runtime.ai.connections.`
+        );
+      }
+      continue;
+    }
+    byId.set(connection.id, connection);
+  }
   return [...byId.values()];
 };
 

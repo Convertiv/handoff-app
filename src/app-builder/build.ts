@@ -1,4 +1,5 @@
 import * as p from '@clack/prompts';
+import { nodeFileTrace } from '@vercel/nft';
 import spawn from 'cross-spawn';
 import fs from 'fs-extra';
 import path from 'path';
@@ -317,9 +318,6 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const escapedAiEnabled = escapeForSingleQuotedJsString(String(ai.enabled));
   const escapedAiConnections = escapeForSingleQuotedJsString(JSON.stringify(ai.connections));
   const escapedAiDefaultModel = escapeForSingleQuotedJsString(ai.defaultModel ?? '');
-  const escapedAiProviderModules = escapeForSingleQuotedJsString(
-    JSON.stringify(ai.connections.map((connection) => connection.module).filter((module): module is string => Boolean(module)))
-  );
   const placeholderValues: Record<string, string> = {
     '%HANDOFF_PROJECT_ID%': escapedProjectId,
     '%HANDOFF_APP_BASE_PATH%': escapedAppBasePath,
@@ -344,7 +342,6 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_AI_ENABLED%': escapedAiEnabled,
     '%HANDOFF_AI_BAKED_CONNECTIONS%': escapedAiConnections,
     '%HANDOFF_AI_DEFAULT_MODEL%': escapedAiDefaultModel,
-    '%HANDOFF_AI_PROVIDER_MODULES%': escapedAiProviderModules,
   };
   let nextConfigContent = await fs.readFile(nextConfigPath, 'utf-8');
   for (const [placeholder, value] of Object.entries(placeholderValues)) {
@@ -600,18 +597,8 @@ const getRequiredRegistryRuntimeModules = (handoff: Handoff): string[] => {
   }
   const driver = resolveRegistryDriver(handoff.config);
   const driverModules = driver === 'neon' ? ['@neondatabase/serverless', 'ws'] : ['pg'];
-  // Asset-storage SDKs the deployed registry must be able to load at request time. The pre-packaged
-  // Vercel Blob adapter needs `@vercel/blob`; a custom adapter may declare its installed SDK
-  // package(s) via `assetStorage.options.sdkModules` so the trace/assertion covers them.
-  const assetStorage = resolveAssetStorageFromConfig(handoff.config);
-  const storage: string[] = [];
-  if (assetStorage.adapterKind === 'vercel-blob') {
-    storage.push('@vercel/blob');
-  }
-  const sdkModules = assetStorage.options?.sdkModules;
-  if (Array.isArray(sdkModules)) {
-    storage.push(...sdkModules.filter((mod): mod is string => typeof mod === 'string'));
-  }
+  // Custom adapter packages are copied by `copyCustomServerModules`.
+  const storage = resolveAssetStorageFromConfig(handoff.config).adapterKind === 'vercel-blob' ? ['@vercel/blob'] : [];
   const email = resolveEmailFromConfig(handoff.config).provider === 'smtp' ? ['nodemailer'] : [];
   return [...base, ...driverModules, ...storage, ...email];
 };
@@ -642,6 +629,64 @@ const assertRegistryRuntimeDepsTraced = (handoff: Handoff, entryDir: string): vo
       `must be the nearest ancestor of *both* the staged app and the resolved node_modules. Ensure ` +
       `${missing.join(', ')} are installed and resolvable from "${handoff.workingPath}".`
   );
+};
+
+const getCustomServerModules = (handoff: Handoff): string[] => {
+  const assetStorage = resolveAssetStorageFromConfig(handoff.config);
+  const email = resolveEmailFromConfig(handoff.config);
+  const modules = [
+    assetStorage.adapterKind === 'custom' ? assetStorage.module : undefined,
+    email.provider === 'custom' ? email.module : undefined,
+    ...resolveAiFromConfig(handoff.config).connections.map((connection) => connection.module),
+  ];
+  return [...new Set(modules.filter((module): module is string => Boolean(module)))];
+};
+
+/**
+ * Copy the custom server modules and every file they import into the bundle. The Next trace cannot
+ * follow their variable dynamic import.
+ */
+const copyCustomServerModules = async (handoff: Handoff, tracingRoot: string, entryDir: string): Promise<void> => {
+  const modules = getCustomServerModules(handoff);
+  if (modules.length === 0) return;
+
+  const missing = modules.filter((module) => !fs.existsSync(path.resolve(handoff.workingPath, module)));
+  if (missing.length > 0) {
+    throw new HandoffBuildError(`A custom server module does not exist: ${missing.map((module) => `"${module}"`).join(', ')}.`);
+  }
+
+  const files = new Set<string>();
+  for (const module of modules) {
+    const { fileList } = await nodeFileTrace([path.resolve(handoff.workingPath, module)], { base: tracingRoot });
+    const outside = [...fileList].filter((file) => file.startsWith('..'));
+    if (outside.length > 0) {
+      throw new HandoffBuildError(
+        `The custom server module "${module}" imports files outside the build's tracing root "${tracingRoot}": ${outside.join(', ')}. ` +
+          `Install the packages it imports so that they resolve from "${handoff.workingPath}".`
+      );
+    }
+    if ([...fileList].some((file) => file.split(path.sep).join('/').endsWith('node_modules/handoff-app/dist/index.js'))) {
+      throw new HandoffBuildError(
+        `The custom server module "${module}" imports "handoff-app", which loads the whole CLI. Import the define helpers from "handoff-app/define".`
+      );
+    }
+    fileList.forEach((file) => files.add(file));
+  }
+
+  for (const file of files) {
+    const source = path.join(tracingRoot, file);
+    const target = path.join(entryDir, file);
+    if (await fs.lstat(target).then(() => true, () => false)) continue;
+    const stat = await fs.lstat(source);
+    await fs.ensureDir(path.dirname(target));
+    if (stat.isSymbolicLink()) {
+      // Point the link at the bundle copy of its target, not at the build machine.
+      const linked = path.join(entryDir, path.relative(tracingRoot, await fs.realpath(source)));
+      await fs.symlink(path.relative(path.dirname(target), linked), target);
+    } else if (stat.isFile()) {
+      await fs.copy(source, target);
+    }
+  }
 };
 
 /**
@@ -719,6 +764,8 @@ const assembleRegistryStandalone = async (handoff: Handoff, appPath: string, sta
   delete inheritedManifest.scripts;
   delete inheritedManifest.devDependencies;
   await fs.writeJson(manifestPath, { ...inheritedManifest, type: 'commonjs' }, { spaces: 2 });
+
+  await copyCustomServerModules(handoff, tracingRoot, entryDir);
 
   // Fail loudly at build time if the trace did not capture the runtime deps, rather than shipping a
   // broken artifact that only crashes on an isolated deploy. Covers both deliverables (this is the

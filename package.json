@@ -40,6 +40,10 @@
       "types": "./dist/pattern.d.ts",
       "default": "./dist/pattern.js"
     },
+    "./define": {
+      "types": "./dist/define.d.ts",
+      "default": "./dist/define.js"
+    },
     "./package.json": "./package.json",
     "./*": "./*"
   },
@@ -53,6 +57,9 @@
       ],
       "pattern": [
         "./dist/pattern.d.ts"
+      ],
+      "define": [
+        "./dist/define.d.ts"
       ]
     }
   },
@@ -117,6 +124,7 @@
     "@types/refractor": "^3.0.2",
     "@types/ws": "^8.18.1",
     "@vercel/blob": "^1.1.1",
+    "@vercel/nft": "^1.11.0",
     "@vitejs/plugin-react": "^4.5.2",
     "ai": "^7.0.107",
     "archiver": "^5.3.1",

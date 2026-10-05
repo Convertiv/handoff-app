@@ -16,6 +16,7 @@ export type RegistryErrorCode =
   | 'method_not_allowed'
   | 'runtime_mode_conflict'
   | 'database_unavailable'
+  | 'storage_unavailable'
   | 'unexpected_error';
 
 const STATUS_BY_CODE: Record<RegistryErrorCode, number> = {
@@ -26,6 +27,7 @@ const STATUS_BY_CODE: Record<RegistryErrorCode, number> = {
   method_not_allowed: 405,
   runtime_mode_conflict: 409,
   database_unavailable: 503,
+  storage_unavailable: 503,
   unexpected_error: 500,
 };
 

@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import fs from 'fs-extra';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 const resolveBasePath = (rawBasePath) => {
   if (!rawBasePath || rawBasePath.startsWith('%HANDOFF_')) {
@@ -20,45 +19,6 @@ const resolveBasePath = (rawBasePath) => {
 const handoffBuildTarget = process.env.HANDOFF_BUILD_TARGET;
 const handoffWorkingPath = path.resolve('%HANDOFF_WORKING_PATH%');
 const handoffTracingRoot = path.resolve('%HANDOFF_TRACING_ROOT%');
-
-// A configured custom asset-storage adapter module (relative to the consumer project). It is loaded
-// by a variable dynamic import at runtime, which nft cannot statically trace, so force it (and its
-// resolvable deps) into the registry bundle. Empty/unset for the built-in database/Vercel adapters.
-const handoffAssetStorageModule = '%HANDOFF_ASSET_STORAGE_MODULE%';
-
-// A custom email provider module, for the same reason.
-const handoffEmailModule = '%HANDOFF_EMAIL_MODULE%';
-
-// Custom AI provider modules, for the same reason: a connection with `module` instead of a base URL
-// is loaded by a variable dynamic import. A JSON array, since the config can declare several.
-const handoffAiProviderModules = '%HANDOFF_AI_PROVIDER_MODULES%';
-
-// Next resolves `outputFileTracingIncludes` globs against the app directory, so an absolute path would
-// be joined onto it and match nothing.
-const handoffAppDir = path.dirname(fileURLToPath(import.meta.url));
-const toAppRelativePath = (target) => path.relative(handoffAppDir, path.resolve(handoffWorkingPath, target)).split(path.sep).join('/');
-
-const resolveServerModuleIncludes = () => {
-  if (handoffBuildTarget !== 'registry') {
-    return undefined;
-  }
-  const modules = [];
-  if (handoffAssetStorageModule && !handoffAssetStorageModule.startsWith('%HANDOFF_')) {
-    modules.push(handoffAssetStorageModule);
-  }
-  if (handoffEmailModule && !handoffEmailModule.startsWith('%HANDOFF_')) {
-    modules.push(handoffEmailModule);
-  }
-  if (handoffAiProviderModules && !handoffAiProviderModules.startsWith('%HANDOFF_')) {
-    try {
-      const parsed = JSON.parse(handoffAiProviderModules);
-      if (Array.isArray(parsed)) modules.push(...parsed.filter((entry) => typeof entry === 'string' && entry));
-    } catch {
-      // A malformed list must not sink the build; the assertion after assembly reports what is missing.
-    }
-  }
-  return modules.length ? { '/api/**': modules.map(toAppRelativePath) } : undefined;
-};
 
 const resolveOutputMode = (target) => {
   if (target === 'static') {
@@ -89,10 +49,6 @@ const nextConfig = {
   // Registry-only; static export, which legitimately produces these files, is untouched.
   outputFileTracingExcludes:
     handoffBuildTarget === 'registry' ? { '**': ['**/export-detail.json', '**/.next/export/**'] } : undefined,
-  // Force configured server-only modules (custom asset storage, email and AI providers) into the
-  // registry trace — a dynamic import is opaque to nft. Their SDK deps are additionally asserted via
-  // `getRequiredRegistryRuntimeModules`.
-  outputFileTracingIncludes: resolveServerModuleIncludes(),
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   trailingSlash: true,

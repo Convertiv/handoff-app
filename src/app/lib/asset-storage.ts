@@ -26,17 +26,25 @@ export const getActiveAssetStorage = (): ResolvedAssetStorage => {
   return activeCache;
 };
 
+/** A storage configuration error whose message is safe to show to a client. */
+export class AssetStorageError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AssetStorageError';
+  }
+}
+
 /** Load a custom adapter module and coerce its default export (adapter object or factory) to an adapter. */
 const loadCustomAdapter = async (active: ResolvedAssetStorage): Promise<AssetStorage> => {
   if (!active.module) {
-    throw new Error('A custom asset storage adapter is selected but no module path is configured.');
+    throw new AssetStorageError('A custom asset storage adapter is selected but no module path is configured.');
   }
   const mod = await importServerModule(active.module);
   const exported = mod?.default ?? mod;
   const adapter: unknown = typeof exported === 'function' ? await (exported as AssetStorageFactory)({ options: active.options, env: process.env }) : exported;
   const candidate = adapter as Partial<AssetStorage> | null;
   if (!candidate || typeof candidate.put !== 'function' || typeof candidate.get !== 'function' || typeof candidate.delete !== 'function') {
-    throw new Error(`Custom asset storage module "${active.module}" must default-export a defineAssetStorage adapter.`);
+    throw new AssetStorageError(`Custom asset storage module "${active.module}" must default-export a defineAssetStorage adapter.`);
   }
   return candidate as AssetStorage;
 };
@@ -61,7 +69,7 @@ export const getAssetStorageAdapter = async (provider: AssetStorageProvider): Pr
   } else if (active.adapterKind === 'custom' && active.provider === provider) {
     adapter = await loadCustomAdapter(active);
   } else {
-    throw new Error(
+    throw new AssetStorageError(
       `No asset storage adapter is configured for provider "${provider}". A blob was stored by that ` +
         'provider but it is no longer selected. Restore its configuration (or migrate its objects) to read it.'
     );
