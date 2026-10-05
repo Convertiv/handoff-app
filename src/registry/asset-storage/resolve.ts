@@ -7,6 +7,7 @@
  * and is resolved at request time, before the custom adapter factory runs.
  */
 
+import { HandoffConfigError } from '../../config/errors';
 import type { ResolvedConfig } from '../../types/config';
 import type { AssetStorageProvider } from '../db/schema';
 
@@ -20,6 +21,8 @@ export interface AssetStorageSettings {
   maxInlineBytes?: number;
   options?: Record<string, unknown>;
 }
+
+const ADAPTERS: readonly AssetStorageAdapterKind[] = ['database', 'custom'];
 
 /** Default adapter when none is configured. */
 export const DEFAULT_ASSET_STORAGE_ADAPTER: AssetStorageAdapterKind = 'database';
@@ -49,6 +52,29 @@ export const resolveAssetStorageSettings = (settings: AssetStorageSettings | nul
   return { adapterKind, module: settings?.module?.trim() || undefined, maxInlineBytes, options };
 };
 
-/** Resolve the active asset storage settings from a loaded config (CLI/build side). */
-export const resolveAssetStorageFromConfig = (config: ResolvedConfig | null | undefined): ResolvedAssetStorage =>
-  resolveAssetStorageSettings(config?.runtime?.registry?.assetStorage);
+/** Resolve and validate the asset storage block from a loaded config (CLI/build side). An unusable block fails the build. */
+export const resolveAssetStorageFromConfig = (config: ResolvedConfig | null | undefined): ResolvedAssetStorage => {
+  const settings = config?.runtime?.registry?.assetStorage as Record<string, unknown> | undefined;
+  const fail = (problem: string): never => {
+    throw new HandoffConfigError(`Config "runtime.registry.assetStorage": ${problem}`);
+  };
+
+  const adapter = settings?.adapter ?? DEFAULT_ASSET_STORAGE_ADAPTER;
+  if (!ADAPTERS.includes(adapter as AssetStorageAdapterKind)) {
+    fail(`unknown adapter ${JSON.stringify(adapter)}. Use "database" or "custom".`);
+  }
+  const options = settings?.options;
+  if (options !== undefined && (options === null || typeof options !== 'object' || Array.isArray(options))) {
+    fail('"options" must be an object.');
+  }
+  const module = settings?.module;
+  if (adapter === 'custom' && (typeof module !== 'string' || !module.trim())) {
+    fail('adapter "custom" needs a "module" that default-exports a defineAssetStorage() result.');
+  }
+  const maxInlineBytes = settings?.maxInlineBytes;
+  if (maxInlineBytes !== undefined && (typeof maxInlineBytes !== 'number' || !Number.isInteger(maxInlineBytes) || maxInlineBytes <= 0)) {
+    fail('"maxInlineBytes" must be a positive whole number.');
+  }
+
+  return resolveAssetStorageSettings(settings as AssetStorageSettings | undefined);
+};
