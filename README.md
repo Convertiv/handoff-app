@@ -53,6 +53,11 @@ npm run db:migrate  # registry database migrations
 npm run validate
 ```
 
+## Upgrade from version 1.x.x to version 2.x.x
+
+See the [version 1.x.x to version 2.x.x migration guide](UPGRADE.md#version-1xx-to-version-2xx)
+for breaking changes, migration steps, and upgrade verification.
+
 ## Project layout
 
 Every command runs against a working directory: the directory holding
@@ -75,7 +80,7 @@ Every command runs against a working directory: the directory holding
 In a repository of its own, which is what `init` scaffolds, the working
 directory is the repository root.
 
-### Adding Handoff to an existing application
+## Adding Handoff to an existing application
 
 Declarations sit beside the components they document, so the catalog points
 into the application source:
@@ -313,8 +318,6 @@ both.
 
 If two declarations claim one id, Handoff keeps the first and skips the second. The warning names
 both files. `publish` refuses to run until each id is unique.
-
-
 ### Registration
 
 Catalog directories are registered in one place. A path is either an item directory or a collection
@@ -336,10 +339,7 @@ export default defineConfig({
 });
 ```
 
-### Upgrade from version 1.x.x to version 2.x.x
-
-See the [version 1.x.x to version 2.x.x migration guide](UPGRADE.md#version-1xx-to-version-2xx)
-for breaking changes, migration steps, and upgrade verification.
+### Pages
 
 Custom documentation pages are Markdown files under `pages/`. Their relative
 paths become their routes and registry IDs.
@@ -446,6 +446,83 @@ command. The database-backed Next.js bundle is written to `out/registry`, and
 workspace source is not compiled or served. A Vercel Build Output bundle can be
 produced for either target by adding `--package vercel`.
 
+## Configuration
+
+Configuration is read from `handoff.config.ts`, `.js`, `.cjs`, or `.json`, in
+that order. `defineConfig` provides typed authoring. Values merge onto the
+defaults: plain objects merge recursively, and arrays, scalars, `null`, and
+functions replace.
+
+Useful environment variables:
+
+| Variable | Purpose |
+| --- | --- |
+| `HANDOFF_PROFILE` | Config profile merged onto the base config |
+| `HANDOFF_FIGMA_PROJECT_ID` | Figma file ID used by `fetch` |
+| `HANDOFF_DEV_ACCESS_TOKEN` | Figma personal access token used by `fetch` |
+| `HANDOFF_REGISTRY_URL` | Connected workspace registry URL |
+| `HANDOFF_REGISTRY_ACCESS_TOKEN` | Registry access token used by a connected workspace |
+| `HANDOFF_SYNC_SECRET` | Optional deployment-wide registry credential |
+| `DATABASE_URL` | Registry PostgreSQL connection string |
+| `AUTH_SECRET` | Registry session-signing secret, at least 32 characters |
+| `AUTH_URL` | Canonical public registry URL |
+| `PORT` | Standalone registry server port |
+| `HOSTNAME` | Standalone registry bind hostname |
+| `HANDOFF_AI_KEY_SECRET` | Encrypts reader-supplied AI provider keys, at least 32 characters |
+| `HANDOFF_AI_CONNECTIONS` | JSON array of AI connections, merged over the baked list by `id` |
+| `HANDOFF_OUTPUT_DIR` | Override the fetched output directory |
+| `HANDOFF_CREATE_ASSETS_ZIP_FILES` | Set to `false` to skip the icon and logo zip files in `fetch` |
+| `HANDOFF_SITES_DIR` | Override the build output directory |
+| `HANDOFF_WORKING_PATH` | Directory holding `handoff.config.ts`; defaults to the current directory |
+| `HANDOFF_APP_PORT` | Workspace documentation server port |
+| `HANDOFF_WEBSOCKET_PORT` | Workspace live-reload server port |
+
+## Profiles
+
+A profile is a sidecar config file that merges onto the base config. It holds
+only what changes between environments, so a project keeps one shared config
+instead of a second complete copy of it.
+
+- The base config is `handoff.config.ts`, `.js`, `.cjs`, or `.json`. It is the
+  only config file loaded when no profile is selected.
+- A profile file is `handoff.config.<profile>.*`, with the same four
+  extensions.
+- Select a profile with `--profile <name>` or with `HANDOFF_PROFILE`.
+  `--profile` takes precedence over `HANDOFF_PROFILE`.
+- Profile names are not predefined. A name can contain lowercase letters,
+  numbers, and hyphens.
+- A selected profile must exist. If no `handoff.config.<name>.*` file is found,
+  the command stops with an error.
+- `login`, `logout`, `publish`, and `checkout` also accept a profile that has
+  only a saved registry login, because there the profile selects the registry.
+  Every other command still needs the config file.
+- Layers resolve as defaults, base config, profile, then programmatic config,
+  with the merge rules described under [Configuration](#configuration).
+- A selected profile also reads `.env.<profile>` on top of `.env`, when that
+  file exists. Both are read from the directory the command runs in, and a
+  variable already set in the environment beats both files.
+
+```bash
+npx handoff-app build --target registry --profile registry
+```
+
+`build --target registry` always packages a registry-mode application, so a
+profile does not need to set `runtime.mode`. This makes a profile a good place
+for the registry build settings: the database driver, the database
+environment-variable name, the asset storage, and whether MCP is enabled. A
+hosting provider or a CI job selects the profile through `HANDOFF_PROFILE`.
+
+`defineConfig` types a profile as well as a base config. The generated
+`.gitignore` lists `handoff.config.local.*`, which makes `local` the usual name
+for a profile that stays on one machine.
+
+Arrays replace, so a profile that declares `catalog.include` also decides what
+`make` and `checkout` register.
+
+`.env.<profile>` is read once at startup rather than watched.
+`HANDOFF_WORKING_PATH` cannot be set from it, because the working path is
+resolved before any profile is known.
+
 ## Registry setup
 
 ### 1. Database migrations
@@ -477,6 +554,143 @@ AUTH_URL="http://localhost:4000"
 server also reads `PORT` and `HOSTNAME`. The generated entrypoint is
 `out/registry/server.js`; how it is started and hosted depends on the deployment
 environment.
+
+The defaults work without more configuration: asset blobs are stored in
+PostgreSQL, and email is not sent. Other providers are baked into the build, so
+they must be selected under [Registry providers](#registry-providers) before
+the registry is built.
+
+### 3. Installation
+
+The installer is opened at http://localhost:4000/install, where the first
+administrator is created. The deployment is verified by the installer, but
+migrations are never run by it.
+
+An uninstalled registry can be claimed by the first visitor. A new deployment
+should not be left unattended before installation is complete.
+
+### 4. Workspace authorization
+
+A workspace reaches a registry with a registry URL and an access token. There
+are two ways to supply them. Both use the same kind of token, and both are
+listed and revoked under Account → Access tokens in the registry.
+
+#### Device login
+
+CLI authorization is started from the source workspace with:
+
+```bash
+npm run login -- --url http://localhost:4000
+```
+
+Registry sign-in, entry of the displayed device code, and CLI approval are
+completed in the browser. The issued credential is saved in
+`.handoff/cli-auth.json` for that exact registry URL.
+
+One credential is saved per profile, so a workspace can stay signed in to
+several registries at the same time:
+
+```bash
+npm run login -- --profile staging --url https://staging.example.com
+npm run publish -- all --profile staging
+```
+
+A login profile name is free. It needs no `handoff.config.<name>.*` file, and
+`login` is the only command that accepts a new name. A profile without its own
+login falls back to the default login, so one `npm run login` is still enough
+for a workspace with one registry.
+
+`npm run logout` revokes and removes the login of the selected profile. The
+`--all` option removes every saved login.
+
+#### Environment variables
+
+A token is created in the registry under Account → Access tokens. Read and
+write access is required to publish; read access is enough to check out. The
+token and the registry URL are then set in `.env`:
+
+```dotenv
+HANDOFF_REGISTRY_URL=http://localhost:4000
+HANDOFF_REGISTRY_ACCESS_TOKEN=hnd_...
+```
+
+No configuration file entry is needed, because these two variables are the
+defaults for `runtime.registryConnection`. A selected profile reads
+`.env.<profile>` on top of `.env`, so one workspace can address a different
+registry per profile. In CI, the job environment supplies the same two
+variables instead of a file.
+
+Environment values win over a saved device login, so a CI job stays
+deterministic on a machine where a developer is signed in. A token is only used
+for the registry URL it was issued for. If the environment names a different
+registry than the login of the selected profile, publish and checkout report
+which login was skipped and why.
+
+### 5. Content publishing
+
+Every kind in the workspace is published in dependency order with:
+
+```bash
+npm run publish -- all
+```
+
+A single kind is published on its own:
+
+```bash
+npm run publish -- catalog
+npm run publish -- pages
+npm run publish -- tokens
+npm run publish -- assets
+```
+
+`catalog` covers every catalog item. An item is stored as a component or as a
+pattern, and its declaration decides which. The command names items and never a
+kind.
+
+Publishing tokens or assets runs the Figma data pipeline before upload, so the
+documented Figma credentials must be available.
+
+One or more IDs can be appended to narrow a publish to those entities:
+
+```bash
+npm run publish -- catalog item-id another-id
+```
+
+`--dry-run` reports what would be uploaded and contacts no registry at all, so
+it needs neither a registry URL nor a token. It still runs the build, which
+refreshes generated output on disk; `--no-build` skips the build and publishes
+the existing output, and the two combine to leave the workspace untouched:
+
+```bash
+npm run publish -- all --dry-run
+npm run publish -- catalog --no-build
+```
+
+`checkout` takes the same `all`, multi-ID, and `--dry-run` forms. A dry-run
+checkout reads from the registry, lists the files it would create or overwrite,
+and writes nothing.
+
+After the registry is reloaded, the published catalog items and foundations are
+visible. Published database records are read by registry pages; the local
+workspace is never read directly.
+
+For CI, supply `HANDOFF_REGISTRY_URL` and `HANDOFF_REGISTRY_ACCESS_TOKEN`
+through the job environment, as described under
+[Workspace authorization](#4-workspace-authorization). A connection block in
+`handoff.config.ts` is needed only to pin the URL in the repository, or to read
+the values from differently named variables (`fromEnv` is imported from
+`handoff-app`):
+
+```ts
+runtime: {
+  registryConnection: {
+    url: 'https://registry.example.com',
+    accessToken: fromEnv('HANDOFF_REGISTRY_ACCESS_TOKEN'),
+  },
+},
+```
+
+## Registry providers
 
 ### Vercel and Neon
 
@@ -676,136 +890,6 @@ module obeys these rules:
 - The module imports its define helper from `handoff-app/define`. The registry build stops when a module imports `handoff-app`.
 - The packages that the module imports are installed in the project. The registry build copies them into the bundle.
 
-### 3. Installation
-
-The installer is opened at http://localhost:4000/install, where the first
-administrator is created. The deployment is verified by the installer, but
-migrations are never run by it.
-
-An uninstalled registry can be claimed by the first visitor. A new deployment
-should not be left unattended before installation is complete.
-
-### 4. Workspace authorization
-
-A workspace reaches a registry with a registry URL and an access token. There
-are two ways to supply them. Both use the same kind of token, and both are
-listed and revoked under Account → Access tokens in the registry.
-
-#### Device login
-
-CLI authorization is started from the source workspace with:
-
-```bash
-npm run login -- --url http://localhost:4000
-```
-
-Registry sign-in, entry of the displayed device code, and CLI approval are
-completed in the browser. The issued credential is saved in
-`.handoff/cli-auth.json` for that exact registry URL.
-
-One credential is saved per profile, so a workspace can stay signed in to
-several registries at the same time:
-
-```bash
-npm run login -- --profile staging --url https://staging.example.com
-npm run publish -- all --profile staging
-```
-
-A login profile name is free. It needs no `handoff.config.<name>.*` file, and
-`login` is the only command that accepts a new name. A profile without its own
-login falls back to the default login, so one `npm run login` is still enough
-for a workspace with one registry.
-
-`npm run logout` revokes and removes the login of the selected profile. The
-`--all` option removes every saved login.
-
-#### Environment variables
-
-A token is created in the registry under Account → Access tokens. Read and
-write access is required to publish; read access is enough to check out. The
-token and the registry URL are then set in `.env`:
-
-```dotenv
-HANDOFF_REGISTRY_URL=http://localhost:4000
-HANDOFF_REGISTRY_ACCESS_TOKEN=hnd_...
-```
-
-No configuration file entry is needed, because these two variables are the
-defaults for `runtime.registryConnection`. A selected profile reads
-`.env.<profile>` on top of `.env`, so one workspace can address a different
-registry per profile. In CI, the job environment supplies the same two
-variables instead of a file.
-
-Environment values win over a saved device login, so a CI job stays
-deterministic on a machine where a developer is signed in. A token is only used
-for the registry URL it was issued for. If the environment names a different
-registry than the login of the selected profile, publish and checkout report
-which login was skipped and why.
-
-### 5. Content publishing
-
-Every kind in the workspace is published in dependency order with:
-
-```bash
-npm run publish -- all
-```
-
-A single kind is published on its own:
-
-```bash
-npm run publish -- catalog
-npm run publish -- pages
-npm run publish -- tokens
-npm run publish -- assets
-```
-
-`catalog` covers every catalog item. An item is stored as a component or as a
-pattern, and its declaration decides which. The command names items and never a
-kind.
-
-Publishing tokens or assets runs the Figma data pipeline before upload, so the
-documented Figma credentials must be available.
-
-One or more IDs can be appended to narrow a publish to those entities:
-
-```bash
-npm run publish -- catalog item-id another-id
-```
-
-`--dry-run` reports what would be uploaded and contacts no registry at all, so
-it needs neither a registry URL nor a token. It still runs the build, which
-refreshes generated output on disk; `--no-build` skips the build and publishes
-the existing output, and the two combine to leave the workspace untouched:
-
-```bash
-npm run publish -- all --dry-run
-npm run publish -- catalog --no-build
-```
-
-`checkout` takes the same `all`, multi-ID, and `--dry-run` forms. A dry-run
-checkout reads from the registry, lists the files it would create or overwrite,
-and writes nothing.
-
-After the registry is reloaded, the published catalog items and foundations are
-visible. Published database records are read by registry pages; the local
-workspace is never read directly.
-
-For CI, supply `HANDOFF_REGISTRY_URL` and `HANDOFF_REGISTRY_ACCESS_TOKEN`
-through the job environment, as described under
-[Workspace authorization](#4-workspace-authorization). A connection block in
-`handoff.config.ts` is needed only to pin the URL in the repository, or to read
-the values from differently named variables (`fromEnv` is imported from
-`handoff-app`):
-
-```ts
-runtime: {
-  registryConnection: {
-    url: 'https://registry.example.com',
-    accessToken: fromEnv('HANDOFF_REGISTRY_ACCESS_TOKEN'),
-  },
-},
-```
-
 ## MCP
 
 The documentation app serves a Model Context Protocol endpoint at `/api/mcp/`, so
@@ -933,89 +1017,6 @@ names the same module. The build copies only those modules into the registry.
 Spend control belongs to the gateway. LiteLLM and OpenRouter both enforce
 budgets and rate limits per key. The assistant caps only how many steps one
 question can take.
-
-## Configuration
-
-Configuration is read from `handoff.config.ts`, `.js`, `.cjs`, or `.json`, in
-that order. `defineConfig` provides typed authoring. Values merge onto the
-defaults: plain objects merge recursively, and arrays, scalars, `null`, and
-functions replace.
-
-Useful environment variables:
-
-| Variable | Purpose |
-| --- | --- |
-| `HANDOFF_PROFILE` | Config profile merged onto the base config |
-| `HANDOFF_FIGMA_PROJECT_ID` | Figma file ID used by `fetch` |
-| `HANDOFF_DEV_ACCESS_TOKEN` | Figma personal access token used by `fetch` |
-| `HANDOFF_REGISTRY_URL` | Connected workspace registry URL |
-| `HANDOFF_REGISTRY_ACCESS_TOKEN` | Registry access token used by a connected workspace |
-| `HANDOFF_SYNC_SECRET` | Optional deployment-wide registry credential |
-| `DATABASE_URL` | Registry PostgreSQL connection string |
-| `AUTH_SECRET` | Registry session-signing secret, at least 32 characters |
-| `AUTH_URL` | Canonical public registry URL |
-| `PORT` | Standalone registry server port |
-| `HOSTNAME` | Standalone registry bind hostname |
-| `HANDOFF_AI_KEY_SECRET` | Encrypts reader-supplied AI provider keys, at least 32 characters |
-| `HANDOFF_AI_CONNECTIONS` | JSON array of AI connections, merged over the baked list by `id` |
-| `HANDOFF_OUTPUT_DIR` | Override the fetched output directory |
-| `HANDOFF_CREATE_ASSETS_ZIP_FILES` | Set to `false` to skip the icon and logo zip files in `fetch` |
-| `HANDOFF_SITES_DIR` | Override the build output directory |
-| `HANDOFF_WORKING_PATH` | Directory holding `handoff.config.ts`; defaults to the current directory |
-| `HANDOFF_APP_PORT` | Workspace documentation server port |
-| `HANDOFF_WEBSOCKET_PORT` | Workspace live-reload server port |
-
-Registry assets are stored in PostgreSQL by default. A custom adapter can be
-selected through `runtime.registry.assetStorage`, as described under
-[Asset storage](#asset-storage). The `pg` or `neon` connection driver can be
-selected through `runtime.registry.database.driver`; PostgreSQL is used by
-both.
-
-## Profiles
-
-A profile is a sidecar config file that merges onto the base config. It holds
-only what changes between environments, so a project keeps one shared config
-instead of a second complete copy of it.
-
-- The base config is `handoff.config.ts`, `.js`, `.cjs`, or `.json`. It is the
-  only config file loaded when no profile is selected.
-- A profile file is `handoff.config.<profile>.*`, with the same four
-  extensions.
-- Select a profile with `--profile <name>` or with `HANDOFF_PROFILE`.
-  `--profile` takes precedence over `HANDOFF_PROFILE`.
-- Profile names are not predefined. A name can contain lowercase letters,
-  numbers, and hyphens.
-- A selected profile must exist. If no `handoff.config.<name>.*` file is found,
-  the command stops with an error.
-- `login`, `logout`, `publish`, and `checkout` also accept a profile that has
-  only a saved registry login, because there the profile selects the registry.
-  Every other command still needs the config file.
-- Layers resolve as defaults, base config, profile, then programmatic config,
-  with the merge rules described under [Configuration](#configuration).
-- A selected profile also reads `.env.<profile>` on top of `.env`, when that
-  file exists. Both are read from the directory the command runs in, and a
-  variable already set in the environment beats both files.
-
-```bash
-npx handoff-app build --target registry --profile registry
-```
-
-`build --target registry` always packages a registry-mode application, so a
-profile does not need to set `runtime.mode`. This makes a profile a good place
-for the registry build settings: the database driver, the database
-environment-variable name, the asset storage, and whether MCP is enabled. A
-hosting provider or a CI job selects the profile through `HANDOFF_PROFILE`.
-
-`defineConfig` types a profile as well as a base config. The generated
-`.gitignore` lists `handoff.config.local.*`, which makes `local` the usual name
-for a profile that stays on one machine.
-
-Arrays replace, so a profile that declares `catalog.include` also decides what
-`make` and `checkout` register.
-
-`.env.<profile>` is read once at startup rather than watched.
-`HANDOFF_WORKING_PATH` cannot be set from it, because the working path is
-resolved before any profile is known.
 
 ## CLI reference
 
