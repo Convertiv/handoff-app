@@ -987,7 +987,9 @@ not limit which models a reader can use. Ollama serves an OpenAI-compatible API
 at `/v1`, and LiteLLM, OpenRouter, vLLM, LM Studio and Azure OpenAI each front
 Anthropic, Google and xAI models. A provider that fits nothing else names a
 [custom server module](#custom-server-modules) that default-exports
-`defineAiProvider()`, in place of `baseUrl`.
+`defineAiProvider()`, in place of `baseUrl`. The factory gets `options` with
+`fromEnv()` values resolved. Literals in `options` are baked into the build, so
+secrets must use `fromEnv()`.
 
 ### Reader keys
 

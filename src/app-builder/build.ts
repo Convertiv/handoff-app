@@ -458,6 +458,7 @@ const writeRegistryDeploymentReadme = async (
   assetStorage: ResolvedAssetStorage
 ): Promise<void> => {
   const serviceKeyEnvs = [...new Set(ai.connections.map((connection) => connection.apiKeyEnv).filter(Boolean))];
+  const aiOptionEnvs = [...new Set(ai.connections.flatMap((connection) => envReferenceNames(connection.options ?? {})))];
   const needsKeySecret = ai.connections.some((connection) => connection.credential === 'user');
   const aiSection = !ai.enabled
     ? ''
@@ -467,7 +468,7 @@ const writeRegistryDeploymentReadme = async (
 This build serves the docs assistant at \`/api/ai/*\`.
 
 ${serviceKeyEnvs.map((name) => `- \`${name}\` — API key for a declared AI connection, read at request time.`).join('\n') || '- No service-key connection is declared, so no provider key is required here.'}
-${needsKeySecret ? '- `HANDOFF_AI_KEY_SECRET` — a long, random secret that encrypts the API keys readers save for themselves. Readers cannot save a key without it.\n' : ''}
+${aiOptionEnvs.map((name) => `- \`${name}\` — read by a custom AI provider at request time.\n`).join('')}${needsKeySecret ? '- `HANDOFF_AI_KEY_SECRET` — a long, random secret that encrypts the API keys readers save for themselves. Readers cannot save a key without it.\n' : ''}
 \`HANDOFF_AI_CONNECTIONS\` optionally carries a JSON array of connections, read at request time and
 merged over the list this build baked in, keyed by \`id\`. Use it to add or repoint a provider
 without rebuilding.

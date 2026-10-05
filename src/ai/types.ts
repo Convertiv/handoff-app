@@ -9,11 +9,10 @@
 
 import type { LanguageModel } from 'ai';
 
-/** Context passed to a custom provider factory: its non-secret options, the process env, and the resolved key. */
+/** Context passed to a custom provider factory. */
 export interface AiProviderContext {
-  /** Non-secret options from the connection's `options`. Put env-var *names* here, never values. */
+  /** The connection's `options`, with each `fromEnv()` reference replaced by its value. */
   options: Record<string, unknown>;
-  /** The process environment. Read secret *values* here by the env-var *names* carried in options. */
   env: NodeJS.ProcessEnv;
   /**
    * The resolved key for this request: the deployment's own key for a service connection, or the

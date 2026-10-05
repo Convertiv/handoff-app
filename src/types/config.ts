@@ -206,7 +206,10 @@ export interface HandoffAiConnection {
   credential?: 'user';
   /** The models this connection offers. A reader cannot use a model that is not listed. */
   models?: string[];
-  /** Non-secret options passed to a `module` provider. JSON-baked, so environment references are rejected. */
+  /**
+   * Options passed to a `module` provider factory. Literals are baked. Environment references are
+   * resolved at request time, so secrets must be environment references.
+   */
   options?: Record<string, unknown>;
 }
 

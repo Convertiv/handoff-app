@@ -68,7 +68,7 @@ property path, variable name, and active profile. Invalid names and rejected lit
 `EnvValue<T>` accepts a literal or reference. `EnvSecret<T>` accepts only a reference and resolves
 at config load. Secret defaults can only be empty or null, for optional credentials.
 `RuntimeEnvReference<T>` accepts only a reference with no default. Its name survives config loading and
-is read in the deployed process. Database URLs, asset-storage tokens, and email secrets are deferred.
+is read in the deployed process. Database URLs, asset-storage tokens, email secrets, and AI keys are deferred.
 
 The loader resolves references once after all layers merge, before other config guards.
 References replace whole values, including earlier references and their defaults. A profile can
@@ -81,17 +81,13 @@ numeric and boolean properties also retain their default's conversion when a ref
 fallback. Booleans are true only for `true`. Numbers must be finite. A lower-layer fallback never
 becomes the fallback for a replacement reference.
 
-`runtime.ai.connections.*.options` is for non-secret values only. Its resolved contents are
-JSON-encoded into the bundle, so the loader rejects an environment reference anywhere inside it
-(`BAKED_PATHS`). For custom provider secrets, put a variable name in options and read it through the
-provider factory's `env` argument at runtime. A per-environment literal belongs in a profile.
-
-`runtime.registry.email.options` and `runtime.registry.assetStorage.options` are deferred prefixes
-(`DEFERRED_PREFIXES`). A reference anywhere inside them keeps its name, and the deployed app resolves
-it with `resolveEnvReferences()` before it calls the module factory. Literals are baked. `options.apiKey`
-and `options.password` are also `DEFERRED_PATHS`, so a literal secret is rejected for every
-provider. Before the merge, a layer that changes `email.provider` drops `options` and `module` from
-the lower layers, so the settings of two providers never mix.
+`runtime.registry.email.options`, `runtime.registry.assetStorage.options`, and
+`runtime.ai.connections.*.options` are deferred prefixes (`DEFERRED_PREFIXES`). A reference anywhere
+inside them keeps its name, and the deployed app resolves it with `resolveEnvReferences()` before it
+calls the module factory. Literals are baked. `email.options.apiKey` and `email.options.password` are
+also `DEFERRED_PATHS`, so a literal secret is rejected for every email provider. Before the merge, a
+layer that changes `email.provider` drops `options` and `module` from the lower layers, so the
+settings of two providers never mix.
 
 `ResolvedConfig` narrows eager properties by hand. Adding an eager property requires its `Config`
 member and resolved narrowing. A secret also needs a `SECRET_PATHS` entry for untyped configs.

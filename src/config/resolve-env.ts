@@ -26,13 +26,10 @@ export const DEFERRED_PATHS = [
  * Path prefixes whose nested references the deployed app reads at request time. Literals below them
  * are baked. `DEFERRED_PATHS` entries below them still reject literals.
  */
-const DEFERRED_PREFIXES = ['runtime.registry.email.options', 'runtime.registry.assetStorage.options'];
+const DEFERRED_PREFIXES = ['runtime.registry.email.options', 'runtime.registry.assetStorage.options', 'runtime.ai.connections.*.options'];
 const SECRET_PATHS = new Set(['integrations.figma.accessToken', 'runtime.registryConnection.accessToken']);
-/** Path prefixes whose resolved contents are JSON-baked into the bundle, so a reference would bake its value. */
-const BAKED_PATHS = ['runtime.ai.connections.*.options'];
 const isDeferred = (path: string): boolean => DEFERRED_PATHS.some((deferred) => pathMatches(deferred, path));
-const isUnderDeferredPrefix = (path: string): boolean => DEFERRED_PREFIXES.some((prefix) => path.startsWith(`${prefix}.`));
-const isBaked = (path: string): boolean => BAKED_PATHS.some((baked) => pathMatches(baked, path, true));
+const isUnderDeferredPrefix = (path: string): boolean => DEFERRED_PREFIXES.some((prefix) => pathMatches(`${prefix}.*`, path, true));
 const ENV_NAME = /^[A-Za-z_][A-Za-z0-9_]*$/;
 const ALIASES: Record<string, string> = {
   HANDOFF_REGISTRY_URL: 'HANDOFF_CLOUD_URL',
@@ -70,14 +67,6 @@ export const resolveConfigEnv = (config: Config, profile?: string, defaults?: Co
       fail(path, 'Expected an environment reference, such as { $env: "VARIABLE_NAME" }. Literal values are not allowed.');
     }
     if (isEnvReference(value)) {
-      // Checked before the name, so the message names the supported pattern instead of the reference shape.
-      if (isBaked(path)) {
-        fail(
-          path,
-          'Environment references are not allowed here because the resolved value is baked into the build. ' +
-            "Put the variable name in options and read it through the adapter factory's `env` argument."
-        );
-      }
       if (typeof value.$env !== 'string' || !ENV_NAME.test(value.$env)) {
         fail(path, 'Invalid environment variable name. Use letters, digits, and underscores, starting with a letter or underscore.');
       }

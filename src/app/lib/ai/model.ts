@@ -1,5 +1,6 @@
 import { createOpenAICompatible } from '@ai-sdk/openai-compatible';
 import { aiCredentialKind, type AiConnectionSettings } from '@handoff/ai/connections';
+import { resolveEnvReferences } from '@handoff/config/from-env';
 
 import type { AiProvider, AiProviderFactory } from '@handoff/ai/types';
 import type { LanguageModel } from 'ai';
@@ -62,7 +63,7 @@ const loadProviderModule = async (connection: AiConnectionSettings, apiKey: stri
   const exported = mod?.default ?? mod;
   const provider: unknown =
     typeof exported === 'function'
-      ? await (exported as AiProviderFactory)({ options: connection.options ?? {}, env: process.env, apiKey })
+      ? await (exported as AiProviderFactory)({ options: resolveEnvReferences(connection.options ?? {}, process.env), env: process.env, apiKey })
       : exported;
   const candidate = provider as Partial<AiProvider> | null;
   if (!candidate || typeof candidate.languageModel !== 'function') {
