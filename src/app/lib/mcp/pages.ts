@@ -1,16 +1,15 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
 import type { PageDetail } from '../docs-api/records';
 import { createSearchRequest, DEFAULT_RESULT_LIMIT, MAX_QUERY_LENGTH, MAX_RESULT_LIMIT, MAX_TERMS } from '../docs-api/search';
 import { pageIdFromUrl } from './page-url';
 import { fail, ok, read } from './result';
+import { defineTool, type McpTool } from './tool';
 
 /** The documentation page tools: search and read. */
 
-export const registerPageTools = (server: McpServer): void => {
-  server.registerTool(
-    'handoff_search_pages',
+export const pageTools: McpTool[] = [
+  defineTool<{ query: string; group?: string; limit?: number }>(
     {
+      name: 'handoff_search_pages',
       title: 'Search pages',
       description:
         'Search documentation pages by title, description and Markdown body. Returns ranked `results` ' +
@@ -18,14 +17,18 @@ export const registerPageTools = (server: McpServer): void => {
         'Read a page with handoff_get_page.',
       annotations: { readOnlyHint: true, openWorldHint: false },
       inputSchema: {
-        query: z
-          .string()
-          .describe(
-            `Search text, at most ${MAX_QUERY_LENGTH} characters and ${MAX_TERMS} terms. Case-insensitive. ` +
-              'Terms shorter than two characters are ignored.'
-          ),
-        group: z.string().optional().describe('Page group name. Exact match, case-insensitive.'),
-        limit: z.number().int().min(1).max(MAX_RESULT_LIMIT).optional().describe(`Max results (default ${DEFAULT_RESULT_LIMIT}).`),
+        type: 'object',
+        properties: {
+          query: {
+            type: 'string',
+            description:
+              `Search text, at most ${MAX_QUERY_LENGTH} characters and ${MAX_TERMS} terms. Case-insensitive. ` +
+              'Terms shorter than two characters are ignored.',
+          },
+          group: { type: 'string', description: 'Page group name. Exact match, case-insensitive.' },
+          limit: { type: 'integer', minimum: 1, maximum: MAX_RESULT_LIMIT, description: `Max results (default ${DEFAULT_RESULT_LIMIT}).` },
+        },
+        required: ['query'],
       },
     },
     async ({ query, group, limit }) => {
@@ -35,11 +38,11 @@ export const registerPageTools = (server: McpServer): void => {
       }
       return read('pages', async (backend) => ok(await backend.searchPages({ ...parsed.request, group: group?.trim() || undefined })));
     }
-  );
+  ),
 
-  server.registerTool(
-    'handoff_get_page',
+  defineTool<{ url: string }>(
     {
+      name: 'handoff_get_page',
       title: 'Get page',
       description:
         'One documentation page by its URL from handoff_search_pages, for example /guides/setup, or / ' +
@@ -47,7 +50,11 @@ export const registerPageTools = (server: McpServer): void => {
         'external-link page, the external site is not fetched.',
       annotations: { readOnlyHint: true, openWorldHint: false },
       inputSchema: {
-        url: z.string().describe('Internal route, without a base path, query string or fragment.'),
+        type: 'object',
+        properties: {
+          url: { type: 'string', description: 'Internal route, without a base path, query string or fragment.' },
+        },
+        required: ['url'],
       },
     },
     async ({ url }) => {
@@ -63,8 +70,8 @@ export const registerPageTools = (server: McpServer): void => {
         return ok(toPageResult(page));
       });
     }
-  );
-};
+  ),
+];
 
 export const toPageResult = (page: PageDetail) => ({
   id: page.id,

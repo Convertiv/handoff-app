@@ -1,15 +1,16 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
 import type { TokenArtifactResource } from '@handoff/store';
 import type { DocsBackend, TokenSetDetail } from '../docs-api/backend';
 import { fail, ok, read } from './result';
+import { defineTool, type McpTool } from './tool';
 
 /** The token tool, and the reshaping that turns stored token sets into variables an agent can emit. */
 
-export const registerTokenTools = (server: McpServer): void => {
-  server.registerTool(
-    'handoff_get_tokens',
+type TokenFormat = 'css' | 'scss' | 'styleDictionary' | 'types';
+
+export const tokenTools: McpTool[] = [
+  defineTool<{ set?: string; kind?: 'foundation' | 'component'; format?: TokenFormat }>(
     {
+      name: 'handoff_get_tokens',
       title: 'Get design tokens',
       description:
         'Design tokens. With no arguments: the list of token sets, plus all foundation tokens (colors, ' +
@@ -20,15 +21,20 @@ export const registerTokenTools = (server: McpServer): void => {
         'stylesheet is available.',
       annotations: { readOnlyHint: true, openWorldHint: false },
       inputSchema: {
-        set: z.string().optional().describe('Token set id from the list, for example "foundation/colors".'),
-        kind: z
-          .enum(['foundation', 'component'])
-          .optional()
-          .describe('Without `set`: list only sets of this kind. `component` leaves out the foundation tokens.'),
-        format: z
-          .enum(['css', 'scss', 'styleDictionary', 'types'])
-          .optional()
-          .describe('With `set`: return the generated file in this format.'),
+        type: 'object',
+        properties: {
+          set: { type: 'string', description: 'Token set id from the list, for example "foundation/colors".' },
+          kind: {
+            type: 'string',
+            enum: ['foundation', 'component'],
+            description: 'Without `set`: list only sets of this kind. `component` leaves out the foundation tokens.',
+          },
+          format: {
+            type: 'string',
+            enum: ['css', 'scss', 'styleDictionary', 'types'] satisfies TokenFormat[],
+            description: 'With `set`: return the generated file in this format.',
+          },
+        },
       },
     },
     async ({ set, kind, format }) =>
@@ -57,8 +63,8 @@ export const registerTokenTools = (server: McpServer): void => {
         }
         return ok({ id: detail.id, kind: detail.kind, format, path: artifact.path, content: artifact.content });
       })
-  );
-};
+  ),
+];
 
 /**
  * A token set's payload, under a key naming which of the four forms it is, so the agent never has to

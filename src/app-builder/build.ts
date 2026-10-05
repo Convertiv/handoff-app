@@ -582,7 +582,7 @@ containers, custom Node servers, and other non-Vercel hosts.
  * Resolve the set of npm packages the packaged registry app must be able to `require`/`import` at
  * runtime, given the configured database driver. `next`/`react`/`react-dom` run the server and React
  * runtime; `drizzle-orm` backs both the request-time DB client and the migration runner; the MCP SDK
- * (and its `zod` peer) is only needed when `/api/mcp/` is enabled; the driver package is
+ * is only needed when `/api/mcp/` is enabled; the driver package is
  * driver-specific (the Neon serverless driver also needs `ws` for its Node WebSocket transport); the
  * SMTP email provider needs `nodemailer`.
  */
@@ -592,7 +592,7 @@ const getRequiredRegistryRuntimeModules = (handoff: Handoff): string[] => {
   // The assistant runs the MCP tools in-process, so it needs the MCP SDK whether or not the HTTP
   // endpoint is served.
   if (isMcpEnabled(handoff.config) || ai.enabled) {
-    base.push('@modelcontextprotocol/sdk', 'zod');
+    base.push('@modelcontextprotocol/sdk');
   }
   if (ai.enabled) {
     base.push('ai', '@ai-sdk/openai-compatible');

@@ -1,10 +1,9 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { z } from 'zod';
 import { buildArtifactUrl } from '@handoff/artifacts/url';
 import type { SlotMetadata } from '@handoff/transformers/preview/component';
 import type { ComponentListObject, OptionalPreviewRender, TransformComponentTokensResult } from '@handoff/transformers/preview/types';
 import type { DocsBackend } from '../docs-api/backend';
 import { basePath, fail, ok, read } from './result';
+import { defineTool, type McpTool } from './tool';
 
 /** The component tools: search, read, one preview, and the source. */
 
@@ -16,10 +15,12 @@ const MAX_SEARCH_LIMIT = 100;
 const SOURCE_FIELDS = ['code', 'css', 'sass', 'js'] as const;
 type SourceField = (typeof SOURCE_FIELDS)[number];
 
-export const registerComponentTools = (server: McpServer): void => {
-  server.registerTool(
-    'handoff_search_components',
+const componentId = { type: 'string', description: 'Component id, as returned by handoff_search_components.' };
+
+export const componentTools: McpTool[] = [
+  defineTool<{ query?: string; group?: string; category?: string; tag?: string; limit?: number }>(
     {
+      name: 'handoff_search_components',
       title: 'Search components',
       description:
         'Find components. `query` matches id, title, group, categories and tags. With no arguments, ' +
@@ -27,11 +28,14 @@ export const registerComponentTools = (server: McpServer): void => {
         'tags. Read one component with handoff_get_component.',
       annotations: { readOnlyHint: true, openWorldHint: false },
       inputSchema: {
-        query: z.string().optional().describe('Text to find. Case-insensitive substring match.'),
-        group: z.string().optional().describe('Group name, for example "Form Elements". Exact match, case-insensitive.'),
-        category: z.string().optional().describe('Category name. Exact match, case-insensitive.'),
-        tag: z.string().optional().describe('Tag name. Exact match, case-insensitive.'),
-        limit: z.number().int().min(1).max(MAX_SEARCH_LIMIT).optional().describe(`Max results (default ${DEFAULT_SEARCH_LIMIT}).`),
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'Text to find. Case-insensitive substring match.' },
+          group: { type: 'string', description: 'Group name, for example "Form Elements". Exact match, case-insensitive.' },
+          category: { type: 'string', description: 'Category name. Exact match, case-insensitive.' },
+          tag: { type: 'string', description: 'Tag name. Exact match, case-insensitive.' },
+          limit: { type: 'integer', minimum: 1, maximum: MAX_SEARCH_LIMIT, description: `Max results (default ${DEFAULT_SEARCH_LIMIT}).` },
+        },
       },
     },
     async ({ query, group, category, tag, limit }) =>
@@ -42,11 +46,11 @@ export const registerComponentTools = (server: McpServer): void => {
         const components = matched.slice(0, limit ?? DEFAULT_SEARCH_LIMIT).map(toComponentSummary);
         return ok({ total: matched.length, returned: components.length, components });
       })
-  );
+  ),
 
-  server.registerTool(
-    'handoff_get_component',
+  defineTool<{ id: string }>(
     {
+      name: 'handoff_get_component',
       title: 'Get component',
       description:
         'One component: properties, variants, usage and guidelines. `usage` is the snippet of the first ' +
@@ -56,9 +60,7 @@ export const registerComponentTools = (server: McpServer): void => {
         'handoff_get_component_preview. `tokens.set`, when present, is the id to pass to ' +
         'handoff_get_tokens. Do not derive a token set id from the component id.',
       annotations: { readOnlyHint: true, openWorldHint: false },
-      inputSchema: {
-        id: z.string().describe('Component id, as returned by handoff_search_components.'),
-      },
+      inputSchema: { type: 'object', properties: { id: componentId }, required: ['id'] },
     },
     async ({ id }) =>
       read(`component "${id}"`, async (backend) => {
@@ -76,19 +78,23 @@ export const registerComponentTools = (server: McpServer): void => {
           )
         );
       })
-  );
+  ),
 
-  server.registerTool(
-    'handoff_get_component_preview',
+  defineTool<{ id: string; preview: string }>(
     {
+      name: 'handoff_get_component_preview',
       title: 'Get component preview',
       description:
         'One state of a component: `values` (the args), `usage` (the snippet) and `html` (the rendered ' +
         'markup). `html` is absent when the component is not built.',
       annotations: { readOnlyHint: true, openWorldHint: false },
       inputSchema: {
-        id: z.string().describe('Component id, as returned by handoff_search_components.'),
-        preview: z.string().describe('Preview id, as listed in `previews[].id` by handoff_get_component.'),
+        type: 'object',
+        properties: {
+          id: componentId,
+          preview: { type: 'string', description: 'Preview id, as listed in `previews[].id` by handoff_get_component.' },
+        },
+        required: ['id', 'preview'],
       },
     },
     async ({ id, preview }) =>
@@ -108,20 +114,18 @@ export const registerComponentTools = (server: McpServer): void => {
         }
         return ok(toPreviewResult(record, preview, found, basePath(), await readPreviewDocument(backend, id, preview)));
       })
-  );
+  ),
 
-  server.registerTool(
-    'handoff_get_component_source',
+  defineTool<{ id: string }>(
     {
+      name: 'handoff_get_component_source',
       title: 'Get component source',
       description:
         'The implementation of a component: `code` (the component or template) and, when present, ' +
         '`css`, `sass` and `js`. Use it only when handoff_get_component is not enough. The source ' +
         'fields are absent when the component is not built.',
       annotations: { readOnlyHint: true, openWorldHint: false },
-      inputSchema: {
-        id: z.string().describe('Component id, as returned by handoff_search_components.'),
-      },
+      inputSchema: { type: 'object', properties: { id: componentId }, required: ['id'] },
     },
     async ({ id }) =>
       read(`source of component "${id}"`, async (backend) => {
@@ -131,8 +135,8 @@ export const registerComponentTools = (server: McpServer): void => {
         }
         return ok(toComponentSource(record, await readComponentArtifact(backend, id)));
       })
-  );
-};
+  ),
+];
 
 const componentNotFound = (id: string) =>
   fail(`Component "${id}" was not found. Use handoff_search_components to list the components that exist.`);

@@ -1,7 +1,10 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { registerComponentTools } from './components';
-import { registerPageTools } from './pages';
-import { registerTokenTools } from './tokens';
+import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { AjvJsonSchemaValidator } from '@modelcontextprotocol/sdk/validation/ajv';
+import { componentTools } from './components';
+import { pageTools } from './pages';
+import { fail } from './result';
+import { tokenTools } from './tokens';
 
 /**
  * The Handoff MCP server: read-only access to the design system's components, tokens and pages.
@@ -21,10 +24,19 @@ import { registerTokenTools } from './tokens';
 /** Version of the MCP surface itself, reported in `initialize`. Bump when a tool contract changes. */
 const MCP_SERVER_VERSION = '2.0.0';
 
-export const createMcpServer = (): McpServer => {
-  const server = new McpServer(
+const tools = [...componentTools, ...tokenTools, ...pageTools];
+
+/** Compiled once per process, not per request. */
+const validator = new AjvJsonSchemaValidator();
+const toolsByName = new Map(
+  tools.map((tool) => [tool.definition.name, { ...tool, validate: validator.getValidator(tool.definition.inputSchema) }])
+);
+
+export const createMcpServer = (): Server => {
+  const server = new Server(
     { name: 'handoff', version: MCP_SERVER_VERSION },
     {
+      capabilities: { tools: {} },
       instructions:
         'Design-system knowledge for this project. Before writing UI code, find an existing component ' +
         'with handoff_search_components and read it with handoff_get_component. Take colors, typography ' +
@@ -33,8 +45,20 @@ export const createMcpServer = (): McpServer => {
     }
   );
 
-  registerComponentTools(server);
-  registerTokenTools(server);
-  registerPageTools(server);
+  server.setRequestHandler(ListToolsRequestSchema, () => ({ tools: tools.map((tool) => tool.definition) }));
+
+  // Unknown tools and invalid arguments are tool errors, so the agent can read them and retry.
+  server.setRequestHandler(CallToolRequestSchema, async ({ params }) => {
+    const tool = toolsByName.get(params.name);
+    if (!tool) {
+      return fail(`Tool "${params.name}" was not found.`);
+    }
+    const args = tool.validate(params.arguments ?? {});
+    if (!args.valid) {
+      return fail(`Invalid arguments for tool "${params.name}": ${args.errorMessage}.`);
+    }
+    return tool.run(args.data);
+  });
+
   return server;
 };
