@@ -24,10 +24,32 @@ export type AssetStorageReadResult =
   | { kind: 'stream'; stream: NodeJS.ReadableStream; contentType?: string }
   | { kind: 'redirect'; url: string };
 
+/** Input for a direct upload of one blob from the CLI to storage. */
+export interface AssetUploadInput {
+  /** SHA-256 of the bytes (hex). */
+  hash: string;
+  size: number;
+  contentType: string;
+}
+
+/** A signed URL the CLI sends the blob to with `PUT` and the given headers. */
+export interface AssetUpload {
+  url: string;
+  headers?: Record<string, string>;
+  /** The reference to persist on the blob's `asset_blobs` row after the upload. */
+  storageRef: string;
+}
+
 /** The pluggable storage adapter contract for object-backed asset providers. */
 export interface AssetStorage {
   /** Store one blob and return the reference to persist on its `asset_blobs` row. */
   put(input: AssetStorageInput): Promise<{ storageRef: string }>;
+  /**
+   * Return a signed URL so the CLI uploads the blob directly to storage instead of through the
+   * registry, which avoids serverless request size limits. The URL must make storage reject bytes
+   * that do not match `hash`, for example with a signed SHA-256 checksum header.
+   */
+  createUpload?(input: AssetUploadInput): Promise<AssetUpload>;
   /** Resolve stored content by its `storageRef`. */
   get(storageRef: string): Promise<AssetStorageReadResult>;
   /** Delete stored content by its `storageRef`. Should be retryable/idempotent. */

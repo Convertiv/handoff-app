@@ -11,6 +11,8 @@ export type {
   AssetStorageFactory,
   AssetStorageInput,
   AssetStorageReadResult,
+  AssetUpload,
+  AssetUploadInput,
 } from './registry/asset-storage/types';
 export { defineEmailProvider } from './registry/email/define';
 export type { EmailMessage, EmailProvider, EmailProviderContext, EmailProviderFactory } from './registry/email/types';

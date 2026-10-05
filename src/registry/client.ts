@@ -11,6 +11,7 @@
 import type { CheckoutPayload, EntitySummary, TransferEntityKind, TransferPackage } from './transfer';
 import type { TokenSetCheckoutPayload, TokenSetSummary, TokenSetTransferPackage } from './tokens/transfer';
 import type { AssetCollectionCheckoutPayload, AssetCollectionSummary, AssetCollectionTransferPackage } from './assets/transfer';
+import type { AssetUpload } from './asset-storage/types';
 
 /** Encode a token set id for the catch-all transfer route, preserving `/` between segments. */
 const encodeSetIdPath = (id: string): string =>
@@ -139,6 +140,30 @@ export const createRegistryClient = ({ baseUrl, accessToken }: RegistryClientOpt
     return envelope;
   };
 
+  const uploadAssetBlobThroughRegistry = async (blobPath: string, contentType: string, bytes: Buffer): Promise<void> => {
+    const url = `${root}${blobPath}`;
+    // Send a Blob, not a Buffer/Uint8Array: under Next `trailingSlash: true` this PUT is
+    // 308-redirected and undici must re-send the body; a typed-array body's ArrayBuffer is detached
+    // after the first send ("slice on a detached ArrayBuffer"), but a Blob is re-readable.
+    const body = new Blob([new Uint8Array(bytes)] as unknown as BlobPart[]);
+    const response = await fetchRegistry(url, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': contentType || 'application/octet-stream',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body,
+    });
+    if (!response.ok) {
+      let code: string | undefined;
+      let message = `Blob upload failed (${response.status} ${response.statusText}).`;
+      const envelope = await readErrorEnvelope(response);
+      code = envelope?.error?.code;
+      message = envelope?.error?.message || message;
+      throw new RegistryClientError(message, { status: response.status, code });
+    }
+  };
+
   return {
     /** Publish (`PUT`) an entity's package to the registry transfer endpoint. */
     publish(kind: TransferEntityKind, id: string, pkg: TransferPackage): Promise<RegistryEnvelope> {
@@ -187,29 +212,44 @@ export const createRegistryClient = ({ baseUrl, accessToken }: RegistryClientOpt
       const envelope = await request<{ missing: string[] }>('POST', '/api/registry/transfer/assets/blobs/have', { hashes });
       return envelope.data?.missing ?? [];
     },
-    /** Upload one content-addressed blob (binary-safe body). Idempotent: re-uploading an existing hash no-ops. */
+    /**
+     * Upload one content-addressed blob. Sends it directly to storage when the registry returns a
+     * signed URL, otherwise through the registry. Idempotent: re-uploading an existing hash no-ops.
+     */
     async uploadAssetBlob(hash: string, contentType: string, bytes: Buffer): Promise<void> {
-      const url = `${root}/api/registry/transfer/assets/blobs/${encodeURIComponent(hash)}`;
-      // Send a Blob, not a Buffer/Uint8Array: under Next `trailingSlash: true` this PUT is
-      // 308-redirected and undici must re-send the body; a typed-array body's ArrayBuffer is detached
-      // after the first send ("slice on a detached ArrayBuffer"), but a Blob is re-readable.
-      const body = new Blob([new Uint8Array(bytes)] as unknown as BlobPart[]);
-      const response = await fetchRegistry(url, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': contentType || 'application/octet-stream',
-          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        },
-        body,
-      });
-      if (!response.ok) {
-        let code: string | undefined;
-        let message = `Blob upload failed (${response.status} ${response.statusText}).`;
-        const envelope = await readErrorEnvelope(response);
-        code = envelope?.error?.code;
-        message = envelope?.error?.message || message;
-        throw new RegistryClientError(message, { status: response.status, code });
+      const blobPath = `/api/registry/transfer/assets/blobs/${encodeURIComponent(hash)}`;
+      const size = bytes.length;
+      const envelope = await request<{ upload: AssetUpload | null; stored?: boolean }>('POST', `${blobPath}/upload`, { size, contentType });
+      if (envelope.data?.stored) {
+        return;
       }
+      const upload = envelope.data?.upload;
+      if (!upload) {
+        await uploadAssetBlobThroughRegistry(blobPath, contentType, bytes);
+        return;
+      }
+
+      // Name only the origin in errors: the signed query string must not reach logs.
+      const storage = new URL(upload.url).origin;
+      let response: Response;
+      try {
+        response = await fetch(upload.url, {
+          method: 'PUT',
+          headers: upload.headers,
+          body: new Blob([new Uint8Array(bytes)] as unknown as BlobPart[]),
+        });
+      } catch (error) {
+        const cause = (error as { cause?: { code?: string; message?: string } } | undefined)?.cause;
+        throw new RegistryClientError(`Could not reach asset storage at ${storage}: ${cause?.code || cause?.message || 'network error'}.`);
+      }
+      if (!response.ok) {
+        const detail = (await response.text().catch(() => '')).slice(0, 300);
+        throw new RegistryClientError(
+          `Asset storage at ${storage} rejected the upload of blob "${hash}" (${response.status} ${response.statusText})${detail ? `: ${detail}` : ''}.`,
+          { status: response.status }
+        );
+      }
+      await request('POST', `${blobPath}/complete`, { storageRef: upload.storageRef, size, contentType });
     },
     /** Download one blob's raw bytes by hash (follows any provider redirect). */
     async downloadAssetBlob(hash: string): Promise<Buffer> {

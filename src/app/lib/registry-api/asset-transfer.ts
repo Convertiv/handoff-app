@@ -1,10 +1,12 @@
 import crypto from 'crypto';
+import type { Readable } from 'stream';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { eq, inArray } from 'drizzle-orm';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
 import { assetBlobs, assetCollections, assets } from '@handoff/registry/db/schema';
 import { isAssetCollection, type AssetCollection } from '@handoff/registry/assets/sets';
 import type { AssetCollectionTransferPackage, AssetManifestEntry } from '@handoff/registry/assets/transfer';
+import type { AssetStorage } from '@handoff/registry/asset-storage/types';
 import { singleQueryValue } from '../api/query';
 import { getActiveAssetStorage, getActiveAssetStorageAdapter, getAssetStorageAdapter } from '../asset-storage';
 import { sendRegistryError } from './errors';
@@ -36,6 +38,10 @@ import {
  * - `PUT  /api/registry/transfer/assets/blobs/:hash` stores one content-addressed blob (binary body)
  *   through the active storage provider (inline `bytea` by default). Idempotent by hash.
  * - `GET  /api/registry/transfer/assets/blobs/:hash` returns/redirects to one blob's bytes.
+ * - `POST /api/registry/transfer/assets/blobs/:hash/upload` returns a signed URL for a direct upload
+ *   to storage, or `null` when the active provider cannot take one (the client then uses `PUT`).
+ * - `POST /api/registry/transfer/assets/blobs/:hash/complete` records a directly uploaded blob after
+ *   it confirms the stored object exists.
  *
  * Runs behind {@link handleRegistryRoute}: runtime-mode, method, bearer-token (on mutations), and
  * database guards apply before any of this executes.
@@ -387,4 +393,107 @@ export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse):
       return;
     }
     result.stream.pipe(res);
+  });
+
+/** The active adapter when it supports direct uploads, otherwise `null` (the client then uses `PUT`). */
+const getDirectUploadAdapter = async (): Promise<AssetStorage | null> => {
+  if (getActiveAssetStorage().provider === 'database') {
+    return null;
+  }
+  const adapter = await getActiveAssetStorageAdapter();
+  return adapter?.createUpload ? adapter : null;
+};
+
+const readDirectUploadRequest = (req: NextApiRequest, res: NextApiResponse): { hash: string; size: number; contentType: string } | null => {
+  const hash = (singleQueryValue(req.query.hash) ?? '').toLowerCase();
+  if (!isSha256Hash(hash)) {
+    sendRegistryError(res, 'bad_request', 'Blob hash must be a SHA-256 hex string.');
+    return null;
+  }
+  const body = isPlainObject(req.body) ? req.body : {};
+  const size = body.size;
+  if (typeof size !== 'number' || !Number.isInteger(size) || size < 0) {
+    sendRegistryError(res, 'bad_request', '`size` must be a non-negative integer.', { rejectedFields: ['size'] });
+    return null;
+  }
+  return { hash, size, contentType: asString(body.contentType) || 'application/octet-stream' };
+};
+
+/**
+ * Throw unless `storageRef` resolves to a stored object. A redirect is checked with a one-byte
+ * ranged `GET`, because a signed read URL usually rejects `HEAD`.
+ */
+const assertStored = async (adapter: AssetStorage, storageRef: string, size: number): Promise<void> => {
+  const result = await adapter.get(storageRef);
+  if (result.kind === 'bytes') {
+    if (result.bytes.length !== size) {
+      throw new Error(`stored size ${result.bytes.length} does not match ${size}`);
+    }
+    return;
+  }
+  if (result.kind === 'stream') {
+    (result.stream as Readable).destroy?.();
+    return;
+  }
+  const response = await fetch(result.url, { headers: { Range: 'bytes=0-0' } });
+  await response.body?.cancel();
+  if (!response.ok) {
+    throw new Error(`storage answered ${response.status}`);
+  }
+};
+
+/** `POST /api/registry/transfer/assets/blobs/:hash/upload`: a signed URL for a direct upload to storage. */
+export const handleAssetBlobUploadRoute = (req: NextApiRequest, res: NextApiResponse): Promise<void> =>
+  handleRegistryRoute(req, res, ['POST'], async ({ db }) => {
+    const input = readDirectUploadRequest(req, res);
+    if (!input) return;
+
+    const existing = await db.select({ hash: assetBlobs.hash }).from(assetBlobs).where(eq(assetBlobs.hash, input.hash)).limit(1);
+    if (existing.length > 0) {
+      sendRegistryData(res, 200, { upload: null, stored: true }, buildMeta());
+      return;
+    }
+    const adapter = await getDirectUploadAdapter();
+    const upload = adapter?.createUpload ? await adapter.createUpload(input) : null;
+    sendRegistryData(res, 200, { upload }, buildMeta());
+  });
+
+/** `POST /api/registry/transfer/assets/blobs/:hash/complete`: record a directly uploaded blob once it is stored. */
+export const handleAssetBlobCompleteRoute = (req: NextApiRequest, res: NextApiResponse): Promise<void> =>
+  handleRegistryRoute(req, res, ['POST'], async ({ db }) => {
+    const input = readDirectUploadRequest(req, res);
+    if (!input) return;
+    const storageRef = asString(isPlainObject(req.body) ? req.body.storageRef : undefined)?.trim();
+    if (!storageRef) {
+      sendRegistryError(res, 'bad_request', '`storageRef` is required.', { rejectedFields: ['storageRef'] });
+      return;
+    }
+
+    const adapter = await getDirectUploadAdapter();
+    if (!adapter) {
+      sendRegistryError(res, 'bad_request', 'The active asset storage provider does not accept direct uploads.');
+      return;
+    }
+    try {
+      await assertStored(adapter, storageRef, input.size);
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      sendRegistryError(res, 'bad_request', `Blob "${input.hash}" was not found in storage (${reason}).`, {
+        rejectedFields: ['storageRef'],
+      });
+      return;
+    }
+
+    await db
+      .insert(assetBlobs)
+      .values({
+        hash: input.hash,
+        storageProvider: getActiveAssetStorage().provider,
+        content: null,
+        storageRef,
+        contentType: input.contentType,
+        size: input.size,
+      } as any)
+      .onConflictDoNothing({ target: assetBlobs.hash });
+    sendRegistryData(res, 200, { hash: input.hash, stored: true }, buildMeta());
   });

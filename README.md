@@ -574,6 +574,38 @@ export default defineAssetStorage(({ options, env }) => {
 of the credential variables and reads their values from `env`. `get` can also
 return `{ kind: 'bytes', bytes }` or `{ kind: 'redirect', url }`.
 
+#### Direct uploads
+
+By default, `publish` sends each blob to the registry, and the registry sends
+it to storage. A serverless host limits the size of one request (Vercel allows
+about 4.5 MB), so a larger blob fails. To prevent this, add `createUpload` to
+the adapter. The registry then gives the CLI a signed URL, and the CLI sends the
+blob directly to storage. The registry records the blob only after `get`
+finds the stored object.
+
+The signed URL must make storage reject bytes that do not match `hash`. This
+example adds a signed SHA-256 checksum header to the adapter above. It uses
+`@aws-sdk/s3-request-presigner`:
+
+```js
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+
+// In the object that the adapter returns:
+async createUpload({ hash, contentType }) {
+  const checksum = Buffer.from(hash, 'hex').toString('base64');
+  const command = new PutObjectCommand({ Bucket, Key: hash, ContentType: contentType, ChecksumSHA256: checksum });
+  const url = await getSignedUrl(client, command, {
+    expiresIn: 900,
+    unhoistableHeaders: new Set(['x-amz-checksum-sha256']),
+  });
+  return { url, headers: { 'Content-Type': contentType, 'x-amz-checksum-sha256': checksum }, storageRef: hash };
+},
+```
+
+An adapter without `createUpload` still uploads through the registry. The
+`database` provider always uses that path, with its `maxInlineBytes` limit.
+The registry does not delete an uploaded object that it never records.
+
 #### Changing the provider
 
 The registry records the provider on each blob. For a custom adapter, the
