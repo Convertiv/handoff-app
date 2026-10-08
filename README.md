@@ -7,61 +7,112 @@
   <img alt="" src="https://img.shields.io/npm/l/handoff-app?style=for-the-badge&labelColor=000000">
 </a>
 
-Design tokens, components, and patterns are turned by Handoff into working
-documentation and distributable artifacts. A local workspace, a static site,
-or a shared PostgreSQL-backed registry can be used.
+Handoff turns design tokens, components, and patterns into working
+documentation and distributable artifacts. You can serve the documentation
+from a local workspace, a static site, or a shared registry with a PostgreSQL
+database.
 
-## Runtime modes
+> **Recipes:** [RECIPES.md](RECIPES.md) has complete examples for project
+> layouts, catalog items, profiles, registry hosting, asset storage, email, and
+> the AI assistant.
 
-- **Workspace** is the default. Local files are the source of truth and no
-  database is required.
-- **Registry** is a deployed catalog backed by PostgreSQL.
-- A **connected workspace** remains in workspace mode but can publish to and
-  check out from a registry.
+> **Upgrade from version 1.x.x:** read the
+> [migration guide](UPGRADE.md#version-1xx-to-version-2xx) for the breaking
+> changes and the migration steps.
 
-Workspace mode is used by local projects for authoring. A separate
-registry-mode application is created automatically by a registry build.
+## Contents
+
+- [How Handoff works](#how-handoff-works)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Authoring](#authoring)
+- [Running the workspace](#running-the-workspace)
+- [Building](#building)
+- [Registry](#registry)
+- [Connecting a workspace to a registry](#connecting-a-workspace-to-a-registry)
+- [MCP](#mcp)
+- [AI assistant](#ai-assistant)
+- [CLI reference](#cli-reference)
+
+## How Handoff works
+
+### Runtime modes
+
+- **Workspace** is the default mode. Local files are the source of truth, and
+  no database is necessary. You use it to author content.
+- **Registry** is a deployed catalog with a PostgreSQL database. It stores and
+  serves only the content that a workspace publishes to it.
+- A **connected workspace** is a workspace that can publish to a registry and
+  check out from it. It is not a third mode.
+
+The `runtime.mode` value in the config sets the mode. A registry build sets
+registry mode automatically, so the base config stays in workspace mode.
+
+### Workflow
+
+```text
+Figma            ── fetch ──▶  exported/      tokens, CSS, Sass, assets
+catalog, pages   ── start ──▶  local documentation at http://localhost:3000
+                 ── build ──▶  out/static (static site) or out/registry (registry server)
+workspace        ── publish ─▶ registry ── checkout ─▶ workspace
+```
+
+The workspace is the only place that builds content. A registry never builds
+and never reads workspace source.
+
+### Terms
+
+- **Working directory:** the directory that holds `handoff.config.ts`. Every
+  command runs against it.
+- **Catalog item:** one documented UI entry. It has a declaration file, a
+  stable id, and previews.
+- **Component:** a catalog item with an implementation (React, Handlebars, or
+  CSF).
+- **Pattern:** a catalog item that is a composition of other catalog items.
+- **Foundations:** the tokens and assets that `fetch` gets from Figma.
+- **Page:** a Markdown documentation page under `pages/`.
+- **Profile:** a config file that merges onto the base config for one
+  environment.
 
 ## Requirements
 
-- Node.js 22 or newer; Node.js 24 LTS is recommended
-- npm 10 or newer
-- A paid Figma account when fetching a Figma library
-- PostgreSQL when running a registry
+- Node.js 22 or newer. We recommend Node.js 24 LTS.
+- npm 10 or newer.
+- A paid Figma account, to fetch a Figma library.
+- PostgreSQL, to run a registry.
 
-## Quick start
+## Installation
 
-A project is created with the interactive wizard:
+### New project
+
+Create a project with the interactive wizard:
 
 ```bash
 npx handoff-app init
 cd my-handoff-project
 ```
 
-The project name, sample content, JavaScript or TypeScript, optional Vercel
-setup, and optional Figma credentials are requested by the wizard. Starter
-files are created and `handoff-app` is installed locally. Generated npm scripts
-are used for project operations so the pinned project version is shared by
-local development and CI:
+The wizard asks for the project name, sample content, JavaScript or
+TypeScript, an optional Vercel setup, and optional Figma credentials. It
+creates the starter files and installs `handoff-app` in the project.
+
+Use the generated npm scripts. They run the project version of `handoff-app`,
+so local development and CI use the same version:
 
 ```bash
 npm run fetch       # optional: fetch Figma foundations
 npm run start       # local server with Handoff file watchers
 npm run dev         # local development server without Handoff file watchers
 npm run build       # static build by default
+npm run publish     # publish to a registry
+npm run checkout    # check out from a registry
+npm run login       # sign in to a registry
+npm run logout      # sign out of a registry
 npm run db:migrate  # registry database migrations
-npm run validate
 ```
 
-## Upgrade from version 1.x.x to version 2.x.x
-
-See the [version 1.x.x to version 2.x.x migration guide](UPGRADE.md#version-1xx-to-version-2xx)
-for breaking changes, migration steps, and upgrade verification.
-
-## Project layout
-
-Every command runs against a working directory: the directory holding
-`handoff.config.ts`. Generated output is written there.
+### Project layout
 
 ```text
 <working directory>/
@@ -77,104 +128,312 @@ Every command runs against a working directory: the directory holding
 └─ .handoff/       # local Handoff state; gitignored
 ```
 
-In a repository of its own, which is what `init` scaffolds, the working
-directory is the repository root.
+In a project that `init` creates, the working directory is the repository
+root. `HANDOFF_WORKING_PATH` sets a different working directory.
 
-## Adding Handoff to an existing application
+### Adding Handoff to an existing application
 
-Declarations sit beside the components they document, so the catalog points
-into the application source:
+Declarations sit next to the components that they document. Thus the catalog
+points into the application source:
 
 ```ts
 catalog: { include: ['src/components', 'src/blocks'] },
 ```
 
-**`handoff-app` must be a dependency of the package holding those
-`*.handoff.ts` files.** They import `handoff-app/react`, which resolves from the
-directory of the declaration, not from the directory of the config. Under npm a
-missing dependency is usually hidden by hoisting. Under pnpm it is not: the
-affected items are skipped with `Could not resolve "handoff-app/react"` and the
-build still exits 0.
+Two rules apply to every layout.
 
-Two `tsconfig.json` files do different jobs:
+**`handoff-app` must be a dependency of the package that holds the
+`*.handoff.ts` files.** A declaration imports `handoff-app/react`. Handoff
+resolves that import from the directory of the declaration, not from the
+directory of the config. With npm, hoisting usually hides a missing dependency.
+With pnpm, Handoff skips the affected items with
+`Could not resolve "handoff-app/react"`, and the build still exits with code 0.
+In a workspace-package layout, the application package and the `handoff/`
+package must both declare `handoff-app`.
 
-- The config nearest the declarations type checks them. For files in `src/`
-  that is the one at the project root. An editor reads the nearest config only,
-  so a config in another directory that includes `src/` does not count, and
-  neither the editor nor the application build reports errors in a declaration.
-- The config at the working directory generates the property tables. Without
-  it, Handoff warns `TypeScript config not found` and every table is empty.
+**Two `tsconfig.json` files do different jobs:**
 
-Both files are needed when the working directory is not the project root.
+- The config nearest to the declarations type checks them. An editor reads
+  only the nearest config. A config in a different directory that includes
+  `src/` does not count.
+- The config in the working directory makes the property tables. Without it,
+  Handoff shows `TypeScript config not found`, and every table is empty.
 
-Three placements work, all keeping one dependency tree so the catalog renders
-the real components against the same React instance. A separate install with its
-own `node_modules` outside that tree is not supported.
+If the working directory is not the project root, you need both files.
 
-**Handoff in a subdirectory — recommended.** Nothing in the application changes.
-`handoff-app` is a dependency of the application package, and
-`HANDOFF_WORKING_PATH` keeps the generated directories in `handoff/`:
+Three layouts work. Each keeps one dependency tree, so the catalog renders the
+real components with the same React instance. Handoff does not support a
+separate install with its own `node_modules` outside that tree.
 
-```json
-{ "scripts": { "handoff:dev": "HANDOFF_WORKING_PATH=handoff handoff-app start" } }
-```
+| Layout | Working directory | Use when |
+| --- | --- | --- |
+| Subdirectory (recommended) | `handoff/`, set by `HANDOFF_WORKING_PATH` | The application must not change |
+| Project root | The project root | The bundler can move its `public/` directory (not Next.js) |
+| Workspace package | `handoff/`, with its own `package.json` | The repository is already a workspace |
 
-An inline variable does not work in an npm script on Windows, where `cross-env`
-is used instead.
+In the project-root layout, Handoff writes the generated documentation API to
+`public/api`. Thus a bundler that serves `public/` copies it into the
+production build of the application. Move the bundler to a different
+directory. A Next.js application cannot move its `public` directory, so it
+cannot use this layout.
 
-**Handoff in the project root.** The working directory is the project root, so
-one `tsconfig.json` does both jobs. Handoff writes to `public/api`, so a bundler
-already serving static files from `public/` must be pointed elsewhere:
+With pnpm, `build --target registry` cannot follow the pnpm symlinks. Set
+`nodeLinker: hoisted` in `pnpm-workspace.yaml`. The other builds work with the
+default pnpm layout.
+
+To add Handoff in the recommended subdirectory layout:
+
+1. Install `handoff-app` in the application package:
+
+   ```bash
+   npm install handoff-app
+   ```
+
+2. Create `handoff/handoff.config.ts`. Point the catalog at the application
+   source, and load the global stylesheet of the application into the
+   previews:
+
+   ```ts
+   import { defineConfig } from 'handoff-app';
+
+   export default defineConfig({
+     app: { title: 'Acme Design System' },
+     catalog: { include: ['../src/components'] },
+     entries: { scss: '../src/styles/main.scss' },
+   });
+   ```
+
+   Paths are relative to the working directory. `npx handoff-app eject:config`
+   writes the full default config instead.
+
+3. Create `handoff/tsconfig.json`, so that Handoff can make the property
+   tables:
+
+   ```json
+   { "extends": "../tsconfig.json", "include": ["../src", "handoff.config.ts"] }
+   ```
+
+4. Add the scripts to the `package.json` of the application:
+
+   ```json
+   {
+     "scripts": {
+       "handoff:dev": "HANDOFF_WORKING_PATH=handoff handoff-app start",
+       "handoff:build": "HANDOFF_WORKING_PATH=handoff handoff-app build"
+     }
+   }
+   ```
+
+5. Write a declaration next to a component, for example
+   `src/components/button/button.handoff.ts`. The
+   [Catalog items](#catalog-items) section shows the format.
+
+6. Start the documentation:
+
+   ```bash
+   npm run handoff:dev
+   ```
+
+7. Add `handoff/public/api`, `handoff/out`, `handoff/.handoff`, and
+   `handoff/.vercel` to `.gitignore`. Commit `handoff/exported` if you fetch
+   from Figma.
+
+> **Recipes:** [Subdirectory](RECIPES.md#handoff-in-a-subdirectory) ·
+> [Project root](RECIPES.md#handoff-in-the-project-root) ·
+> [Workspace package](RECIPES.md#handoff-as-a-workspace-package) ·
+> [pnpm](RECIPES.md#pnpm) · [npm scripts on Windows](RECIPES.md#npm-scripts-on-windows)
+
+## Configuration
+
+### Config file
+
+Handoff reads `handoff.config.ts`, `.js`, `.cjs`, or `.json`, in that order.
+`-c, --config <file>` loads one specific file instead. `defineConfig` gives
+typed authoring:
 
 ```ts
-// vite.config.ts
+// handoff.config.ts
+import { defineConfig, fromEnv } from 'handoff-app';
+
 export default defineConfig({
-  publicDir: 'static',
+  app: { title: 'Acme Design System' },
+  catalog: { include: ['components', 'patterns'] },
+  runtime: {
+    mode: 'workspace',
+    workspace: { declarationFormat: 'ts' },
+    registry: {
+      database: { url: fromEnv('DATABASE_URL'), driver: 'pg' },
+    },
+  },
 });
 ```
 
-Without that change the generated documentation API is copied into the
-production build of the application. A Next.js application cannot use this
-placement: `sitesOutputDirectory` moves `out/` away from its export directory,
-but its `public` directory is a fixed convention with no setting to move it.
+Values merge onto the defaults. Plain objects merge recursively. Arrays,
+scalars, `null`, and functions replace the default.
 
-**Handoff as a workspace package.** For a repository that is already a
-workspace. `handoff/` gets its own `package.json` and scripts, generated output
-lands in `handoff/`, and the root forwards to it:
+### Main settings
 
-```json
-{
-  "workspaces": ["handoff"],
-  "scripts": { "handoff:dev": "npm run dev --workspace handoff" }
-}
+| Setting | Purpose |
+| --- | --- |
+| `app.title`, `app.client` | Name of the documentation site and of the client |
+| `app.theme` | Theme of the documentation app. `npx handoff-app eject:theme` copies it so that you can change it. |
+| `app.basePath` | URL path of the site when you serve it under a sub-path, for example `/design-system` |
+| `app.breakpoints` | Preview widths. A declared block merges onto the defaults. |
+| `app.ports` | Workspace server ports, `{ app, websocket }`. The defaults are 3000 and 3001. |
+| `catalog.include` | Catalog directories. See [Registration](#registration). |
+| `entries.scss`, `entries.js` | Global stylesheet and script that Handoff builds and loads into every preview |
+| `integrations.figma` | Figma file and token. See [Figma foundations](#figma-foundations). |
+| `exportsOutputDirectory` | Directory for fetched foundations. The default is `exported`. |
+| `sitesOutputDirectory` | Directory for build output. The default is `out`. |
+| `runtime.mode` | `workspace` (default) or `registry` |
+| `runtime.workspace.declarationFormat` | Format of the declarations that `checkout` writes: `ts`, `js`, or `cjs` |
+| `runtime.registryConnection` | Registry URL and token of a connected workspace |
+| `runtime.registry` | Registry database, asset storage, and email. See [Registry](#registry). |
+| `runtime.mcp` | MCP endpoint on or off. See [MCP](#mcp). |
+| `runtime.ai` | AI assistant. See [AI assistant](#ai-assistant). |
+| `hooks` | Build hooks, documented in [docs/api.md](docs/api.md) |
+
+The `Config` type documents every setting. Several settings read an environment
+variable by default. [Environment variables](#environment-variables) lists them.
+
+### Build-time and runtime values
+
+`fromEnv('NAME')` refers to an environment variable. It does not copy the
+value into the config.
+
+- A literal value is baked into the build.
+- For a `fromEnv()` value, the build keeps only the variable name. A deployed
+  registry reads the value at request time. Thus you can change it without a
+  rebuild.
+- Secrets must use `fromEnv()`.
+
+Some settings change the shape of the build. These settings are baked, so a
+change to a deployed registry needs a rebuild:
+
+- `runtime.mode`
+- `runtime.mcp`
+- `runtime.ai.enabled`
+- The database driver
+- The asset storage adapter and the email provider
+- Every custom server module
+
+### Profiles
+
+A profile is a config file that merges onto the base config. It holds only what
+changes between environments. Thus a project keeps one shared config, not a
+second full copy.
+
+- The base config is `handoff.config.ts`, `.js`, `.cjs`, or `.json`. When no
+  profile is selected, Handoff loads only this file.
+- A profile file is `handoff.config.<profile>.*`, with the same four
+  extensions.
+- Select a profile with `--profile <name>` or with `HANDOFF_PROFILE`.
+  `--profile` has priority over `HANDOFF_PROFILE`.
+- Profile names are not predefined. A name can contain lowercase letters,
+  numbers, and hyphens.
+- A selected profile must exist. If no `handoff.config.<name>.*` file exists,
+  the command stops with an error.
+- `login`, `logout`, `publish`, and `checkout` also accept a profile that has
+  only a saved registry login. For these commands, the profile selects the
+  registry. Every other command needs the config file.
+- Layers apply in this order: defaults, base config, profile, then
+  programmatic config. The [merge rules](#config-file) apply to each layer.
+- A selected profile also reads `.env.<profile>` on top of `.env`, if that file
+  exists. Handoff reads both files from the directory where the command runs. A
+  variable that is already in the environment has priority over both files.
+
+```bash
+npx handoff-app build --target registry --profile registry
 ```
 
-The dependency rule is easiest to get wrong here: the declarations in `src/`
-belong to the application package, not to the workspace, so both packages
-declare `handoff-app`.
+A profile is a good place for the registry build settings: the database
+driver, the database variable name, the asset storage, the email provider, and
+MCP. `build --target registry` always builds a registry-mode application, so
+the profile does not set `runtime.mode`. A hosting provider or a CI job selects
+the profile with `HANDOFF_PROFILE`.
 
-### pnpm
+`defineConfig` types a profile and a base config the same way. The generated
+`.gitignore` lists `handoff.config.local.*`. Thus `local` is the usual name for
+a profile that stays on one machine.
 
-`build` and `build --package vercel` work with the default pnpm layout.
-`build --target registry` cannot follow pnpm symlinks when it traces its runtime
-dependencies into a standalone bundle, so it needs a flat layout:
+Arrays replace. Thus a profile that declares `catalog.include` also controls
+what `make:component` and `checkout` register.
 
-```yaml
-# pnpm-workspace.yaml
-nodeLinker: hoisted
-```
+Handoff reads `.env.<profile>` once at startup and does not watch it. It cannot
+set `HANDOFF_WORKING_PATH`, because Handoff finds the working path before it
+knows the profile.
 
-## Catalog items
+> **Recipes:** [Local profile](RECIPES.md#local-profile) ·
+> [Registry build profile](RECIPES.md#registry-build-profile) ·
+> [One workspace, several registries](RECIPES.md#one-workspace-several-registries)
 
-Every documented UI entry is a catalog item. Each item declares either an implementation or a composition of other items.
-An implementation names its renderer. `defineCatalogItem` comes from the module for that renderer.
-The declaration supplies stable identity, documentation metadata, source entries, and previews.
+### Environment variables
 
-### React
+Handoff reads two kinds of variables:
 
-Handoff finds the implementation file from its import, so you do not need to repeat the path, and
-builds the item's CSS from the stylesheets that import chain pulls in, descendants included.
-Previews are named exports. `Preview<typeof item>` gives them the implementation's argument type.
+- **Fixed variables.** Handoff always reads these names.
+- **Setting defaults.** Each one is the default `fromEnv()` name of a setting.
+  To use a different name, set the setting to `fromEnv('YOUR_NAME')`.
+
+This section does not list the variables that you name in the config. Examples
+are the keys of a custom asset storage adapter or of an AI connection. A
+standalone registry build writes `out/registry/README.md`, which lists every
+variable that the build needs, with the names from your config.
+
+**Fixed variables**
+
+| Variable | Purpose |
+| --- | --- |
+| `HANDOFF_PROFILE` | Config profile merged onto the base config |
+| `HANDOFF_WORKING_PATH` | Directory that holds `handoff.config.ts`. The default is the current directory. |
+| `HANDOFF_LOG_LEVEL` | `debug`, `info`, `warn`, `error`, or `silent`. The default is `info`. |
+| `HANDOFF_LOG_SCOPES` | Comma-separated log sources: `handoff`, `vite`, `next`. The default is all three. |
+| `HANDOFF_LOGIN_NO_BROWSER` | Set to `true` to stop `login` from opening a browser, the same as `--no-browser` |
+| `HANDOFF_CREATE_ASSETS_ZIP_FILES` | Set to `false` to skip the icon and logo zip files in `fetch` |
+| `HANDOFF_SYNC_SECRET` | Optional deployment-wide credential with read and write access. The registry accepts it. A workspace uses it only when it has no token and no login. |
+| `AUTH_SECRET` | Registry session-signing secret, at least 32 characters. Required by a registry. |
+| `AUTH_URL` | Canonical public registry URL, with the base path. Required by a registry. |
+| `PORT` | Standalone registry server port |
+| `HOSTNAME` | Standalone registry server bind hostname |
+| `HANDOFF_AI_KEY_SECRET` | Encrypts the AI provider keys of readers, at least 32 characters |
+| `HANDOFF_AI_CONNECTIONS` | JSON array of AI connections, merged over the built-in list by `id` |
+
+**Setting defaults**
+
+| Variable | Setting | Purpose |
+| --- | --- | --- |
+| `HANDOFF_FIGMA_PROJECT_ID` | `integrations.figma.projectId` | Figma file ID that `fetch` uses |
+| `HANDOFF_DEV_ACCESS_TOKEN` | `integrations.figma.accessToken` | Figma personal access token that `fetch` uses |
+| `HANDOFF_REGISTRY_URL` | `runtime.registryConnection.url` | Registry URL of a connected workspace |
+| `HANDOFF_REGISTRY_ACCESS_TOKEN` | `runtime.registryConnection.accessToken` | Registry access token of a connected workspace |
+| `DATABASE_URL` | `runtime.registry.database.url` | PostgreSQL connection string. Required by a registry. |
+| `RESEND_API_KEY` | `runtime.registry.email.options.apiKey` | Resend key, when email uses the default provider |
+| `HANDOFF_APP_PORT` | `app.ports.app` | Workspace documentation server port. The default is 3000. |
+| `HANDOFF_WEBSOCKET_PORT` | `app.ports.websocket` | Workspace live-reload server port. The default is 3001. |
+| `HANDOFF_OUTPUT_DIR` | `exportsOutputDirectory` | Fetched output directory. The default is `exported`. |
+| `HANDOFF_SITES_DIR` | `sitesOutputDirectory` | Build output directory. The default is `out`. |
+
+Keep the name `HANDOFF_OUTPUT_DIR`. The documentation app also reads this
+variable directly.
+
+## Authoring
+
+### Catalog items
+
+Every documented UI entry is a catalog item. An item declares one of these:
+
+- An `implementation`, which names a renderer: React, Handlebars, or CSF.
+  The registry stores the item as a component.
+- A `composition` of other items. The registry stores the item as a pattern.
+
+An item never declares both. `defineCatalogItem` comes from the module of the
+renderer. The declaration gives the stable id, the documentation metadata, the
+source entries, and the previews.
+
+**React.** Handoff finds the implementation file from its import, so you do not
+repeat the path. Handoff builds the CSS of the item from the stylesheets that
+the import chain loads, descendants included. Previews are named exports.
+`Preview<typeof item>` gives them the argument type of the implementation.
 
 ```tsx
 // components/example/Component.tsx
@@ -210,88 +469,23 @@ export const Default = {
 } satisfies ComponentPreview;
 ```
 
-The export name is the preview name. Use `name` to set a different display title.
+The export name is the preview name. `name` sets a different display title.
+Handoff serializes the arguments. Thus a preview that needs an icon, a
+callback, JSX children, or its own state declares a `render` function. A
+declaration that holds JSX must use the `.handoff.tsx` extension.
 
-Arguments are serialized, so a preview that needs an icon, a callback, JSX children, or its own
-state declares `render` instead. It renders as a component, so a capitalized name lets it use hooks, and the item keeps
-documenting the implementation rather than a wrapper. Name a declaration that holds JSX
-`example.handoff.tsx`.
+**Handlebars.** The implementation is the path to the template:
+`implementation: './Badge.hbs'`, from `handoff-app/handlebars`.
 
-```tsx
-export const Interactive = {
-  render: function Interactive() {
-    const [label, setLabel] = useState('Example');
-    return <Component label={label} onSelect={() => setLabel('Selected')} />;
-  },
-} satisfies ComponentPreview;
-```
+**CSF.** A React item uses an existing story file with
+`implementation: fromCSF('./Card.stories.tsx')`. The story file does not
+change, and its named exports are the previews. The server renders a CSF
+preview, and the browser does not hydrate it. The browser hydrates a direct
+React implementation.
 
-### Handlebars
-
-The implementation is the path to the template. Arguments are `Record<string, unknown>` by default;
-an explicit argument type is supplied through `defineCatalogItem<BadgeArgs>`.
-
-```ts
-// components/badge/badge.handoff.ts
-import { defineCatalogItem, type Preview } from 'handoff-app/handlebars';
-
-const item = defineCatalogItem({
-  id: 'badge',
-  name: 'Badge',
-  implementation: './Badge.hbs',
-});
-
-export default item;
-
-type BadgePreview = Preview<typeof item>;
-
-export const Primary = {
-  args: { variant: 'primary', children: 'New' },
-} satisfies BadgePreview;
-```
-
-### CSF
-
-CSF is a source format. A story file uses the renderer from the module that declares it. A React item references an existing CSF file with `fromCSF`.
-The CSF file stays unchanged and defines its previews through named exports. Each story's `args` merge with and override `meta.args`.
-Handoff preserves story names, `argTypes`, and `render` functions.
-It finds the React component through `meta.component`, then documents and publishes it with the story file.
-
-```ts
-// components/card/card.handoff.ts
-import { defineCatalogItem, fromCSF } from 'handoff-app/react';
-
-export default defineCatalogItem({
-  id: 'card',
-  name: 'Card',
-  implementation: fromCSF('./Card.stories.tsx'),
-});
-```
-
-`Meta` and `StoryObj` are exported from `handoff-app/react`, so a story file type-checks without a
-Storybook dependency. A project that already has Storybook keeps using its own types.
-
-```tsx
-// components/card/Card.stories.tsx
-import { type Meta, type StoryObj } from 'handoff-app/react';
-import Card from './Card';
-
-const meta = { component: Card } satisfies Meta<typeof Card>;
-export default meta;
-
-export const Primary: StoryObj<typeof meta> = {
-  args: { title: 'Example' },
-};
-```
-
-A CSF preview is rendered on the server and is not hydrated. A direct React implementation is
-hydrated in the browser.
-
-### Compositions
-
-A composition references other items by stable id. A named preview can be selected and its arguments
-can be overridden by each reference. A composition needs no renderer, so it is declared with
-`defineCatalogItem` from `handoff-app/pattern`.
+**Compositions.** A composition references other items by stable id. Each
+reference can select a named preview and override its arguments. A composition
+needs no renderer, so it uses `defineCatalogItem` from `handoff-app/pattern`:
 
 ```ts
 // patterns/example/example.handoff.ts
@@ -309,408 +503,206 @@ export default defineCatalogItem({
 });
 ```
 
-An item declares `implementation` or `composition`, never both. Terms such as atom, element, and
-block stay optional classification metadata on `type` and `categories`.
+**Ids.** The `id` addresses the item everywhere: its artifacts, its
+documentation URL, and the `publish` and `checkout` commands. Components and
+patterns share one namespace, so each id must be unique across both. If two
+declarations use one id, Handoff keeps the first, skips the second, and names
+both files in a warning. `publish` does not run until each id is unique.
 
-The `id` addresses the item everywhere: its artifacts, its documentation URL, and its publish and
-checkout commands. Components and patterns share one namespace, so each id must be unique across
-both.
+Terms such as atom, element, and block are optional classification metadata on
+`type` and `categories`.
 
-If two declarations claim one id, Handoff keeps the first and skips the second. The warning names
-both files. `publish` refuses to run until each id is unique.
+> **Recipes:** [React preview with a render function](RECIPES.md#react-preview-with-a-render-function) ·
+> [Handlebars item](RECIPES.md#handlebars-item) · [CSF stories](RECIPES.md#csf-stories) ·
+> [Composition with preview overrides](RECIPES.md#composition-with-preview-overrides)
+
 ### Registration
 
-Catalog directories are registered in one place. A path is either an item directory or a collection
-directory whose subdirectories are each treated as an item.
+`catalog.include` in the config registers the catalog directories. Each path is
+one of these:
+
+- An item directory.
+- A collection directory. Each subdirectory is an item.
 
 ```ts
-// handoff.config.ts
-import { defineConfig } from 'handoff-app';
-
-export default defineConfig({
-  catalog: {
-    include: ['components', 'patterns'],
-  },
-  runtime: {
-    workspace: {
-      declarationFormat: 'ts',
-    },
-  },
-});
+catalog: {
+  include: ['components', 'patterns'],
+},
 ```
+
+`npx handoff-app make:component <name>` creates a Handlebars item and adds its
+directory to `catalog.include` when necessary.
 
 ### Pages
 
-Custom documentation pages are Markdown files under `pages/`. Their relative
-paths become their routes and registry IDs.
+Custom documentation pages are Markdown files under `pages/`. The relative
+path of a page is its route and its registry id.
+`npx handoff-app make:page <name> [parent]` creates a page.
+`npx handoff-app eject:pages` copies the default pages so that you can change
+them.
 
-## Figma foundations
+### Figma foundations
 
-Figma integration is optional. When Figma credentials are entered during
-`init`, they are written to `.env` by the wizard and the fetch command can be
-run directly.
+The Figma integration is optional. If you enter Figma credentials during
+`init`, the wizard writes them to `.env`, and `fetch` is ready to run.
 
-When that step is skipped or the Figma source must be changed, these values can
-be added or updated in `.env`:
+To add or change the Figma source, set these values in `.env`:
 
-```bash
+```dotenv
 HANDOFF_FIGMA_PROJECT_ID=figma-file-id
 HANDOFF_DEV_ACCESS_TOKEN=figma-personal-access-token
 ```
 
-These are the defaults of `integrations.figma` in `handoff.config`. Set the block
-only to use other variable names, to commit the file ID, or to change the file
-for a profile. The access token accepts only an environment reference:
-
-```ts
-integrations: {
-  figma: {
-    projectId: fromEnv("HANDOFF_FIGMA_PROJECT_ID", { default: null }),
-    accessToken: fromEnv("HANDOFF_DEV_ACCESS_TOKEN", { default: null }),
-  },
-},
-```
-
-If a value is empty, `fetch` asks for it in a terminal and can save it to `.env`,
-or to `.env.<profile>` when a profile is selected. Without a terminal, such as
-in CI, `fetch` stops with an error that names the missing variable.
-
-The `file_content:read` and `library_content:read` scopes must be granted to the
-personal access token. The configured library is fetched with:
+The personal access token must have the `file_content:read` and
+`library_content:read` scopes. Fetch the library:
 
 ```bash
 npm run fetch
 ```
 
-After design changes, the Figma library should be republished and the command
-should be run again so the latest foundations are pulled.
+`fetch` writes tokens, CSS, Sass, and the available assets to `exported/`.
+Commit `exported/` so that local builds and CI builds use the same inputs. To
+make sure that the fetch worked, look for `exported/tokens.json`. An empty
+foundation page does not prove that the fetch worked.
 
-Generated tokens, CSS, Sass, and available assets are written below
-`exported/`. The `exported/` directory should be committed so the
-same inputs are used by local and CI builds. A successful fetch can be verified
-by checking for generated token data such as `exported/tokens.json`;
-an empty foundation route does not prove that the fetch succeeded.
+If a value is empty, `fetch` asks for it in the terminal. It can save the value
+to `.env`, or to `.env.<profile>` when a profile is selected. Without a
+terminal, for example in CI, `fetch` stops with an error that names the
+missing variable.
 
-## Workspace
+After a design change, publish the Figma library again. Then run `fetch` again
+to get the latest foundations.
 
-Components, patterns, pages, styles, and configuration are authored as local
-workspace files. For day-to-day authoring, the documentation server and file
-watchers are started with:
+These variable names are the defaults of `integrations.figma`. Set the block
+only to use different variable names, to commit the file ID, or to change the
+file for a profile. The access token accepts only an environment reference:
+
+```ts
+integrations: {
+  figma: {
+    projectId: fromEnv('HANDOFF_FIGMA_PROJECT_ID', { default: null }),
+    accessToken: fromEnv('HANDOFF_DEV_ACCESS_TOKEN', { default: null }),
+  },
+},
+```
+
+## Running the workspace
+
+Start the documentation server and the Handoff file watchers:
 
 ```bash
 npm run start
 ```
 
-Changes are rebuilt and reflected in the documentation while the command is
-running. When Handoff file watchers are not required, the development server
-can be started with `npm run dev` instead.
+While the command runs, Handoff rebuilds changed files and updates the
+documentation. If you do not need the file watchers, run `npm run dev`
+instead.
 
-The following should be visible at http://localhost:3000:
+Open http://localhost:3000 and make sure that:
 
-- the app reports `Workspace` as the active runtime mode;
-- components appear in the component list;
-- component detail pages render every configured preview;
-- patterns render their referenced components; and
-- foundation pages contain the fetched values.
+- The app shows `Workspace` as the active runtime mode.
+- The component list shows your components.
+- Each component page renders all of its previews.
+- Each pattern renders the components that it references.
+- The foundation pages show the fetched values.
 
-## Build outputs
+## Building
 
-A static documentation site is built with:
+**Static site.** Build the documentation as a static site:
 
 ```bash
 npm run build
 ```
 
-Static output is written below `out/static` and can be served by any
-static file server or CDN.
+The output goes to `out/static`. A static file server or a CDN can serve it. A
+static site has no API routes. Thus it has no MCP endpoint and no AI
+assistant.
 
-Components whose files have not changed since the last build are not built
-again. The build cache in `.handoff/.cache/` records the files of each
-component and every file that its last build read, Sass partials included.
-Files under `node_modules` are covered by the lockfile instead. Assets that a
-stylesheet loads through `url()` are not tracked. Every component is built
-again with:
+**Build cache.** Handoff does not build a component again if its files did not
+change since the last build. The cache in `.handoff/.cache/` records the files
+of each component and every file that its last build read, Sass partials
+included. The lockfile covers files under `node_modules`. The cache does not
+track assets that a stylesheet loads through `url()`. Build every component
+again:
 
 ```bash
 npm run build -- --force
 ```
 
-A standalone registry application is built with:
+**Registry server.** Build a standalone registry application:
 
 ```bash
 npm run build -- --target registry
 ```
 
-The generated application is automatically configured for registry mode by the
-command. The database-backed Next.js bundle is written to `out/registry`, and
-workspace source is not compiled or served. A Vercel Build Output bundle can be
-produced for either target by adding `--package vercel`.
+The command sets registry mode in the generated application. It writes the
+Next.js server bundle to `out/registry`. It does not compile or serve the
+workspace source. The [Registry](#registry) section explains how to deploy it.
 
-## Configuration
-
-Configuration is read from `handoff.config.ts`, `.js`, `.cjs`, or `.json`, in
-that order. `defineConfig` provides typed authoring. Values merge onto the
-defaults: plain objects merge recursively, and arrays, scalars, `null`, and
-functions replace.
-
-Useful environment variables:
-
-| Variable | Purpose |
-| --- | --- |
-| `HANDOFF_PROFILE` | Config profile merged onto the base config |
-| `HANDOFF_FIGMA_PROJECT_ID` | Figma file ID used by `fetch` |
-| `HANDOFF_DEV_ACCESS_TOKEN` | Figma personal access token used by `fetch` |
-| `HANDOFF_REGISTRY_URL` | Connected workspace registry URL |
-| `HANDOFF_REGISTRY_ACCESS_TOKEN` | Registry access token used by a connected workspace |
-| `HANDOFF_SYNC_SECRET` | Optional deployment-wide registry credential |
-| `DATABASE_URL` | Registry PostgreSQL connection string |
-| `AUTH_SECRET` | Registry session-signing secret, at least 32 characters |
-| `AUTH_URL` | Canonical public registry URL |
-| `PORT` | Standalone registry server port |
-| `HOSTNAME` | Standalone registry bind hostname |
-| `HANDOFF_AI_KEY_SECRET` | Encrypts reader-supplied AI provider keys, at least 32 characters |
-| `HANDOFF_AI_CONNECTIONS` | JSON array of AI connections, merged over the baked list by `id` |
-| `HANDOFF_OUTPUT_DIR` | Override the fetched output directory |
-| `HANDOFF_CREATE_ASSETS_ZIP_FILES` | Set to `false` to skip the icon and logo zip files in `fetch` |
-| `HANDOFF_SITES_DIR` | Override the build output directory |
-| `HANDOFF_WORKING_PATH` | Directory holding `handoff.config.ts`; defaults to the current directory |
-| `HANDOFF_APP_PORT` | Workspace documentation server port |
-| `HANDOFF_WEBSOCKET_PORT` | Workspace live-reload server port |
-
-## Profiles
-
-A profile is a sidecar config file that merges onto the base config. It holds
-only what changes between environments, so a project keeps one shared config
-instead of a second complete copy of it.
-
-- The base config is `handoff.config.ts`, `.js`, `.cjs`, or `.json`. It is the
-  only config file loaded when no profile is selected.
-- A profile file is `handoff.config.<profile>.*`, with the same four
-  extensions.
-- Select a profile with `--profile <name>` or with `HANDOFF_PROFILE`.
-  `--profile` takes precedence over `HANDOFF_PROFILE`.
-- Profile names are not predefined. A name can contain lowercase letters,
-  numbers, and hyphens.
-- A selected profile must exist. If no `handoff.config.<name>.*` file is found,
-  the command stops with an error.
-- `login`, `logout`, `publish`, and `checkout` also accept a profile that has
-  only a saved registry login, because there the profile selects the registry.
-  Every other command still needs the config file.
-- Layers resolve as defaults, base config, profile, then programmatic config,
-  with the merge rules described under [Configuration](#configuration).
-- A selected profile also reads `.env.<profile>` on top of `.env`, when that
-  file exists. Both are read from the directory the command runs in, and a
-  variable already set in the environment beats both files.
-
-```bash
-npx handoff-app build --target registry --profile registry
-```
-
-`build --target registry` always packages a registry-mode application, so a
-profile does not need to set `runtime.mode`. This makes a profile a good place
-for the registry build settings: the database driver, the database
-environment-variable name, the asset storage, and whether MCP is enabled. A
-hosting provider or a CI job selects the profile through `HANDOFF_PROFILE`.
-
-`defineConfig` types a profile as well as a base config. The generated
-`.gitignore` lists `handoff.config.local.*`, which makes `local` the usual name
-for a profile that stays on one machine.
-
-Arrays replace, so a profile that declares `catalog.include` also decides what
-`make` and `checkout` register.
-
-`.env.<profile>` is read once at startup rather than watched.
-`HANDOFF_WORKING_PATH` cannot be set from it, because the working path is
-resolved before any profile is known.
-
-## Registry setup
-
-### 1. Database migrations
-
-Migrations are run from the source workspace or CI checkout, where the project
-dependency and configuration are available:
-
-```bash
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/handoff?schema=public" \
-npm run db:migrate
-```
-
-Migrations are a controlled release step and are separate from the build,
-server startup, and browser installer.
-
-### 2. Registry runtime
-
-The generated registry bundle uses these environment variables:
-
-```dotenv
-PORT=4000
-HOSTNAME=0.0.0.0
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/handoff?schema=public"
-AUTH_SECRET="replace-with-at-least-32-random-characters"
-AUTH_URL="http://localhost:4000"
-```
-
-`DATABASE_URL`, `AUTH_SECRET`, and `AUTH_URL` are required. The standalone
-server also reads `PORT` and `HOSTNAME`. The generated entrypoint is
-`out/registry/server.js`; how it is started and hosted depends on the deployment
-environment.
-
-The defaults work without more configuration: asset blobs are stored in
-PostgreSQL, and email is not sent. Other providers are baked into the build, so
-they must be selected under [Registry providers](#registry-providers) before
-the registry is built.
-
-### 3. Installation
-
-The installer is opened at http://localhost:4000/install, where the first
-administrator is created. The deployment is verified by the installer, but
-migrations are never run by it.
-
-An uninstalled registry can be claimed by the first visitor. A new deployment
-should not be left unattended before installation is complete.
-
-### 4. Workspace authorization
-
-A workspace reaches a registry with a registry URL and an access token. There
-are two ways to supply them. Both use the same kind of token, and both are
-listed and revoked under Account → Access tokens in the registry.
-
-#### Device login
-
-CLI authorization is started from the source workspace with:
-
-```bash
-npm run login -- --url http://localhost:4000
-```
-
-Registry sign-in, entry of the displayed device code, and CLI approval are
-completed in the browser. The issued credential is saved in
-`.handoff/cli-auth.json` for that exact registry URL.
-
-One credential is saved per profile, so a workspace can stay signed in to
-several registries at the same time:
-
-```bash
-npm run login -- --profile staging --url https://staging.example.com
-npm run publish -- all --profile staging
-```
-
-A login profile name is free. It needs no `handoff.config.<name>.*` file, and
-`login` is the only command that accepts a new name. A profile without its own
-login falls back to the default login, so one `npm run login` is still enough
-for a workspace with one registry.
-
-`npm run logout` revokes and removes the login of the selected profile. The
-`--all` option removes every saved login.
-
-#### Environment variables
-
-A token is created in the registry under Account → Access tokens. Read and
-write access is required to publish; read access is enough to check out. The
-token and the registry URL are then set in `.env`:
-
-```dotenv
-HANDOFF_REGISTRY_URL=http://localhost:4000
-HANDOFF_REGISTRY_ACCESS_TOKEN=hnd_...
-```
-
-No configuration file entry is needed, because these two variables are the
-defaults for `runtime.registryConnection`. A selected profile reads
-`.env.<profile>` on top of `.env`, so one workspace can address a different
-registry per profile. In CI, the job environment supplies the same two
-variables instead of a file.
-
-Environment values win over a saved device login, so a CI job stays
-deterministic on a machine where a developer is signed in. A token is only used
-for the registry URL it was issued for. If the environment names a different
-registry than the login of the selected profile, publish and checkout report
-which login was skipped and why.
-
-### 5. Content publishing
-
-Every kind in the workspace is published in dependency order with:
-
-```bash
-npm run publish -- all
-```
-
-A single kind is published on its own:
-
-```bash
-npm run publish -- catalog
-npm run publish -- pages
-npm run publish -- tokens
-npm run publish -- assets
-```
-
-`catalog` covers every catalog item. An item is stored as a component or as a
-pattern, and its declaration decides which. The command names items and never a
-kind.
-
-Publishing tokens or assets runs the Figma data pipeline before upload, so the
-documented Figma credentials must be available.
-
-One or more IDs can be appended to narrow a publish to those entities:
-
-```bash
-npm run publish -- catalog item-id another-id
-```
-
-`--dry-run` reports what would be uploaded and contacts no registry at all, so
-it needs neither a registry URL nor a token. It still runs the build, which
-refreshes generated output on disk; `--no-build` skips the build and publishes
-the existing output, and the two combine to leave the workspace untouched:
-
-```bash
-npm run publish -- all --dry-run
-npm run publish -- catalog --no-build
-```
-
-`checkout` takes the same `all`, multi-ID, and `--dry-run` forms. A dry-run
-checkout reads from the registry, lists the files it would create or overwrite,
-and writes nothing.
-
-After the registry is reloaded, the published catalog items and foundations are
-visible. Published database records are read by registry pages; the local
-workspace is never read directly.
-
-For CI, supply `HANDOFF_REGISTRY_URL` and `HANDOFF_REGISTRY_ACCESS_TOKEN`
-through the job environment, as described under
-[Workspace authorization](#4-workspace-authorization). A connection block in
-`handoff.config.ts` is needed only to pin the URL in the repository, or to read
-the values from differently named variables (`fromEnv` is imported from
-`handoff-app`):
-
-```ts
-runtime: {
-  registryConnection: {
-    url: 'https://registry.example.com',
-    accessToken: fromEnv('HANDOFF_REGISTRY_ACCESS_TOKEN'),
-  },
-},
-```
-
-## Registry providers
-
-### Vercel and Neon
-
-Vercel packaging and the Neon PostgreSQL driver are supported independently.
-Either integration can be used without the other.
-
-#### Vercel packaging
-
-A registry bundle that follows the Vercel Build Output API is produced with:
+**Vercel.** Add `--package vercel` to either target to make a Vercel Build
+Output bundle in `.vercel/output`:
 
 ```bash
 npm run build -- --target registry --package vercel
 ```
 
-The generated deployment output is written to `.vercel/output`. The registry
-runtime variables listed above are supplied through the deployment environment.
+## Registry
 
-#### Neon PostgreSQL
+A registry is a deployed catalog with a PostgreSQL database. It serves only
+the records that a workspace publishes. It never reads the workspace
+directly.
 
-Import `fromEnv` from `handoff-app`. Select the Neon connection driver in `handoff.config.ts`:
+### Deploy a registry
+
+1. Apply the database migrations from the workspace or a CI checkout, where the
+   project config is available:
+
+   ```bash
+   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/handoff?schema=public" \
+   npm run db:migrate
+   ```
+
+   Migrations are a controlled release step. The build, the server start, and
+   the installer never run them. Run `db:migrate` again each time you upgrade
+   `handoff-app`, before you deploy the new registry build.
+
+2. Select the [database driver](#database), the [asset storage](#asset-storage),
+   and the [email provider](#email). The build bakes these choices, so set them
+   before you build. The defaults work without more configuration.
+
+3. Build the registry:
+
+   ```bash
+   npm run build -- --target registry
+   ```
+
+4. Start `out/registry/server.js` with these environment variables:
+
+   ```dotenv
+   PORT=4000
+   HOSTNAME=0.0.0.0
+   DATABASE_URL="postgresql://postgres:postgres@localhost:5432/handoff?schema=public"
+   AUTH_SECRET="replace-with-at-least-32-random-characters"
+   AUTH_URL="http://localhost:4000"
+   ```
+
+   `DATABASE_URL`, `AUTH_SECRET`, and `AUTH_URL` are required. The standalone
+   server also reads `PORT` and `HOSTNAME`. For Vercel, build with
+   `--package vercel` and set these variables in the deployment environment.
+
+5. Open http://localhost:4000/install and create the first administrator. The
+   installer examines the deployment, but it never runs migrations.
+
+CAUTION: Complete the installation immediately after the deployment. The first
+visitor can claim a registry that is not installed.
+
+> **Recipes:** [Local registry](RECIPES.md#local-registry) ·
+> [Vercel and Neon](RECIPES.md#vercel-and-neon)
+
+### Database
+
+PostgreSQL is the supported database. `driver` selects how the registry
+connects. The default is `pg`. Use `neon` for Neon PostgreSQL:
 
 ```ts
 runtime: {
@@ -723,53 +715,15 @@ runtime: {
 },
 ```
 
-A Neon PostgreSQL connection string is supplied through `DATABASE_URL`. The
-same explicit database migration step is required before deployment.
+Both drivers use the same schema and the same `db:migrate` step.
 
 ### Asset storage
 
-The registry stores asset blobs in PostgreSQL by default, with a limit of 4 MB
-for each blob. `maxInlineBytes` changes this limit.
-
-#### Custom adapter
+By default, the registry stores asset blobs in PostgreSQL. Each blob can be at
+most 4 MB. `assetStorage.maxInlineBytes` changes this limit.
 
 A [custom server module](#custom-server-modules) can store blobs in a
-different service. The module default-exports a `defineAssetStorage()` adapter
-with these methods:
-
-- `put` stores a blob and returns the `storageRef` that the registry records.
-- `get` returns a blob by its `storageRef`, as `{ kind: 'stream', stream }`,
-  `{ kind: 'bytes', bytes }`, or `{ kind: 'redirect', url }`.
-- `delete` removes a blob by its `storageRef`.
-- `createUpload` is optional. It enables [direct uploads](#direct-uploads).
-
-Literals in `options` are baked into the build. The deployed registry reads
-each `fromEnv()` value at request time and gives the resolved `options` to the
-module. Thus secrets must use `fromEnv()`.
-
-The S3 and Vercel Blob examples that follow are complete adapters with direct
-uploads.
-
-##### Direct uploads
-
-By default, `publish` sends each blob to the registry, and the registry sends
-it to storage. A serverless host limits the size of one request. Vercel permits
-about 4.5 MB, so a larger blob fails.
-
-With `createUpload`, the registry gives the CLI a signed URL, and the CLI sends
-the blob directly to storage. The signed URL must make storage reject bytes
-that do not match `hash`. The registry records the blob only after `get` finds
-the stored object. The registry does not delete an uploaded object that it
-never records.
-
-The `database` provider always uploads through the registry, with its
-`maxInlineBytes` limit.
-
-##### S3-compatible storage
-
-This adapter works with Amazon S3, Cloudflare R2, MinIO, SeaweedFS, and other
-services with an S3 API. It uses `@aws-sdk/client-s3` and
-`@aws-sdk/s3-request-presigner`.
+different service:
 
 ```ts
 runtime: {
@@ -777,157 +731,48 @@ runtime: {
     assetStorage: {
       adapter: 'custom',
       module: './server/storage/s3.mjs',
-      options: {
-        endpoint: 'http://127.0.0.1:8333',
-        bucket: 'handoff-assets',
-        accessKey: fromEnv('S3_ACCESS_KEY'),
-        secretKey: fromEnv('S3_SECRET_KEY'),
-      },
+      options: { bucket: 'handoff-assets', secretKey: fromEnv('S3_SECRET_KEY') },
     },
   },
 },
 ```
 
-```js
-// server/storage/s3.mjs
-import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { defineAssetStorage } from 'handoff-app/define';
+The module default-exports a `defineAssetStorage()` adapter with these
+methods:
 
-export default defineAssetStorage(({ options }) => {
-  const client = new S3Client({
-    endpoint: options.endpoint,
-    region: 'us-east-1',
-    forcePathStyle: true,
-    credentials: { accessKeyId: options.accessKey, secretAccessKey: options.secretKey },
-  });
-  const Bucket = options.bucket;
-  return {
-    async put({ hash, bytes, contentType }) {
-      await client.send(new PutObjectCommand({ Bucket, Key: hash, Body: bytes, ContentType: contentType }));
-      return { storageRef: hash };
-    },
-    async get(storageRef) {
-      const result = await client.send(new GetObjectCommand({ Bucket, Key: storageRef }));
-      return { kind: 'stream', stream: result.Body, contentType: result.ContentType };
-    },
-    async delete(storageRef) {
-      await client.send(new DeleteObjectCommand({ Bucket, Key: storageRef }));
-    },
-    async createUpload({ hash, contentType }) {
-      const checksum = Buffer.from(hash, 'hex').toString('base64');
-      const command = new PutObjectCommand({ Bucket, Key: hash, ContentType: contentType, ChecksumSHA256: checksum });
-      const url = await getSignedUrl(client, command, {
-        expiresIn: 900,
-        unhoistableHeaders: new Set(['x-amz-checksum-sha256']),
-      });
-      return { url, headers: { 'Content-Type': contentType, 'x-amz-checksum-sha256': checksum }, storageRef: hash };
-    },
-  };
-});
-```
+- `put` stores a blob and returns the `storageRef` that the registry records.
+- `get` returns a blob by its `storageRef`, as `{ kind: 'stream', stream }`,
+  `{ kind: 'bytes', bytes }`, or `{ kind: 'redirect', url }`.
+- `delete` removes a blob by its `storageRef`.
+- `createUpload` is optional. It enables direct uploads.
 
-`createUpload` signs a SHA-256 checksum header. Thus storage rejects bytes
-that do not match `hash`.
+**Direct uploads.** By default, `publish` sends each blob to the registry, and
+the registry sends it to storage. A serverless host limits the size of one
+request. Vercel permits about 4.5 MB, so a larger blob fails. With
+`createUpload`, the registry gives the CLI a signed URL, and the CLI sends the
+blob directly to storage.
 
-##### Vercel Blob
+- The signed URL must make storage reject bytes that do not match `hash`.
+- The registry records the blob only after `get` finds the stored object.
+- The registry does not delete an uploaded object that it never records.
+- The `database` adapter always uploads through the registry, with its
+  `maxInlineBytes` limit.
 
-This adapter stores blobs in a private Vercel Blob store. It uses
-`@vercel/blob` 2.x. When the store is connected to the Vercel project, the SDK
-reads the store credentials from the deployment environment. Thus the adapter
-needs no `options`.
-
-```ts
-runtime: {
-  registry: {
-    assetStorage: {
-      adapter: 'custom',
-      module: './server/storage/vercel-blob.mjs',
-    },
-  },
-},
-```
-
-```js
-// server/storage/vercel-blob.mjs
-import { Readable } from 'node:stream';
-import { del, get, issueSignedToken, parseStoreIdFromDelegationToken, presignUrl, put } from '@vercel/blob';
-import { defineAssetStorage } from 'handoff-app/define';
-
-const access = 'private';
-const pathnameFor = (hash) => `assets/${hash}`;
-
-export default defineAssetStorage({
-  async put({ hash, bytes, contentType }) {
-    const blob = await put(pathnameFor(hash), bytes, { access, contentType, addRandomSuffix: false, allowOverwrite: true });
-    return { storageRef: blob.pathname };
-  },
-  async get(storageRef) {
-    const result = await get(storageRef, { access });
-    if (!result?.stream) {
-      throw new Error(`Blob "${storageRef}" does not exist.`);
-    }
-    return { kind: 'stream', stream: Readable.fromWeb(result.stream), contentType: result.blob.contentType };
-  },
-  async delete(storageRef) {
-    await del(storageRef);
-  },
-  async createUpload({ hash, size, contentType }) {
-    const pathname = pathnameFor(hash);
-    const token = await issueSignedToken({
-      pathname,
-      operations: ['put'],
-      validUntil: Date.now() + 15 * 60 * 1000,
-      allowedContentTypes: [contentType],
-      maximumSizeInBytes: size,
-    });
-    const { presignedUrl } = await presignUrl(token, { operation: 'put', pathname, access, allowOverwrite: true });
-    return {
-      url: presignedUrl,
-      headers: {
-        'x-api-version': '12',
-        'x-vercel-blob-store-id': parseStoreIdFromDelegationToken(token.delegationToken),
-        'x-vercel-blob-access': access,
-        'x-content-type': contentType,
-      },
-      storageRef: pathname,
-    };
-  },
-});
-```
-
-This adapter is different from the S3 example in these ways:
-
-- `get` converts the stream. The SDK returns a web stream, but the registry
-  needs a Node stream.
-- A private blob has no public URL. Thus the registry sends each blob to the
-  reader itself.
-- **Vercel Blob cannot reject bytes that do not match `hash`.** The signed URL
-  limits only the path, the size, and the content type. Thus the registry does
-  not verify a blob that the CLI uploads directly.
-- Without `createUpload`, each blob goes through the registry, which verifies
-  its hash. The Vercel limit of about 4.5 MB then applies to each blob.
-- The CLI sends a plain `PUT` request. Thus `createUpload` returns the headers
-  that the SDK sends for a presigned upload. These headers are not a documented
-  API, so a new version of `@vercel/blob` can change them.
-
-#### Changing the provider
-
-The registry records on each blob whether PostgreSQL or the custom adapter
-stores it. Blobs in PostgreSQL stay readable after you select a custom adapter.
-A publish does not move blobs. Thus, if you change the custom adapter or its
-storage, copy the stored objects first. The new adapter must find each object
-by the `storageRef` that the previous adapter returned. After a change back to
+**Changing the adapter.** The registry records which adapter stores each blob.
+Blobs in PostgreSQL stay readable after you select a custom adapter. A publish
+does not move blobs. If you change the custom adapter or its storage, copy the
+stored objects first. The new adapter must find each object by the
+`storageRef` that the previous adapter returned. After a change back to
 `database`, the registry cannot read the blobs of the custom adapter.
 
-### Email delivery
+> **Recipes:** [S3-compatible storage](RECIPES.md#s3-compatible-storage) ·
+> [Vercel Blob](RECIPES.md#vercel-blob)
+
+### Email
 
 The registry sends invitation and password-reset emails when `email.from` is
-set. Without it, an administrator sees each invitation link once and delivers
+set. Without it, an administrator sees each invitation link one time and sends
 it manually, and password reset is not available.
-
-Resend is the default provider. It reads its key from `RESEND_API_KEY`, unless
-`options.apiKey` names a different variable:
 
 ```ts
 runtime: {
@@ -937,126 +782,217 @@ runtime: {
 },
 ```
 
-For an SMTP server, for example Amazon SES, SendGrid, or Microsoft 365:
+`provider` selects the delivery service:
 
-```ts
-email: {
-  from: 'Handoff <no-reply@example.com>',
-  provider: 'smtp',
-  options: {
-    host: fromEnv('SMTP_HOST'),
-    port: 465, // default, uses TLS. 587 uses STARTTLS.
-    user: fromEnv('SMTP_USER'),
-    password: fromEnv('SMTP_PASSWORD'),
-  },
-},
-```
+- `resend` is the default. It reads its key from `RESEND_API_KEY`, unless
+  `options.apiKey` names a different variable.
+- `smtp` sends through an SMTP server, for example Amazon SES, SendGrid, or
+  Microsoft 365.
+- `custom` names a [custom server module](#custom-server-modules) that
+  default-exports `defineEmailProvider()`.
 
-For a different service, set `provider: 'custom'` and set `module` to a
-[custom server module](#custom-server-modules). The factory gets `options`
-with `fromEnv()` values resolved:
+`apiKey` and `password` must use `fromEnv()`. A profile can set a different
+sender or provider. When a profile changes the provider, it replaces
+`options`.
 
-```ts
-import { defineEmailProvider } from 'handoff-app/define';
-
-export default defineEmailProvider(({ options }) => ({
-  async send({ from, to, subject, html, text }) {
-    // Deliver the message. Throw an error if it is not accepted.
-  },
-}));
-```
-
-Literals in `options` are baked into the build. `fromEnv()` values are read at
-request time, so they can change without a rebuild. `apiKey` and `password`
-must use `fromEnv()`. A profile can set a different sender or provider. When a
-profile changes the provider, it replaces `options`.
+> **Recipes:** [Resend](RECIPES.md#resend) · [SMTP](RECIPES.md#smtp) ·
+> [Custom email provider](RECIPES.md#custom-email-provider)
 
 ### Custom server modules
 
 Asset storage, email, and AI connections can name a custom server module. Each
-module obeys these rules:
+module must obey these rules:
 
 - The path is relative to the working directory.
 - The file is `.js` or `.mjs`.
 - The default export is the object, or a factory that returns it.
-- The module imports its define helper from `handoff-app/define`. The registry build stops when a module imports `handoff-app`.
-- The packages that the module imports are installed in the project. The registry build copies them into the bundle.
+- The module imports its define helper from `handoff-app/define`. The registry
+  build stops when a module imports `handoff-app`.
+- The project installs the packages that the module imports. The registry
+  build copies them into the bundle.
 
-## MCP
+The factory gets `options` with each `fromEnv()` value resolved at request
+time.
 
-The documentation app serves a Model Context Protocol endpoint at `/api/mcp/`, so
-coding agents can look up the pages, components and tokens that already exist instead
-of inventing markup and values. It is stateless Streamable HTTP over `POST`;
-there is nothing to start and no extra port. Keep the trailing slash: the app
-sets `trailingSlash: true`, so `/api/mcp` answers with a 308 redirect.
+## Connecting a workspace to a registry
 
-| Target | Endpoint | Credential |
-| --- | --- | --- |
-| Workspace (`dev` / `start`) | `http://localhost:3000/api/mcp/` | none, as with `/api/docs/*` |
-| Registry (standalone or Vercel) | `<registry url>/api/mcp/` | an access token, read-only is enough |
-| Static export | not available, a static site has no API routes | n/a |
+A connected workspace publishes content to a registry and checks content out
+from it. It needs a registry URL and an access token. You can supply them with
+a [device login](#device-login) or with [environment variables](#access-token).
+Both use the same kind of token. You can see and revoke tokens under
+Account → Access tokens in the registry.
 
-Registry tokens come from `handoff-app login` or Account settings in the
-registry itself, and are the same credentials the rest of the registry API takes.
+### Device login
 
-The endpoint is served unless a project turns it off:
+Start the authorization from the workspace:
+
+```bash
+npm run login -- --url http://localhost:4000
+```
+
+In the browser, sign in to the registry, enter the device code, and approve the
+CLI. The CLI saves the credential in `.handoff/cli-auth.json` for that exact
+registry URL.
+
+The CLI saves one credential for each profile. Thus a workspace can stay signed
+in to several registries:
+
+```bash
+npm run login -- --profile staging --url https://staging.example.com
+npm run publish -- all --profile staging
+```
+
+A login profile name is free. It needs no `handoff.config.<name>.*` file, and
+`login` is the only command that accepts a new name. A profile without its own
+login uses the default login. Thus one `npm run login` is enough for a
+workspace with one registry.
+
+`npm run logout` revokes and removes the login of the selected profile.
+`--all` removes every saved login.
+
+### Access token
+
+Create a token in the registry under Account → Access tokens. To publish, the
+token needs read and write access. To check out, read access is enough. Set the
+token and the registry URL in `.env`:
+
+```dotenv
+HANDOFF_REGISTRY_URL=http://localhost:4000
+HANDOFF_REGISTRY_ACCESS_TOKEN=hnd_...
+```
+
+These two variables are the defaults of `runtime.registryConnection`, so no
+config entry is necessary. A selected profile reads `.env.<profile>` on top of
+`.env`. Thus each profile can address a different registry. In CI, the job
+environment supplies the same two variables.
+
+Environment values have priority over a saved device login. Thus a CI job gives
+the same result on a computer where a developer is signed in. A token works
+only for the registry URL that issued it. If the environment names a different
+registry than the login of the selected profile, `publish` and `checkout`
+report which login they skipped and why.
+
+A config block is necessary only to keep the URL in the repository, or to read
+the values from variables with different names:
 
 ```ts
 runtime: {
-  mcp: false,
+  registryConnection: {
+    url: 'https://registry.example.com',
+    accessToken: fromEnv('HANDOFF_REGISTRY_ACCESS_TOKEN'),
+  },
 },
 ```
 
-Like `runtime.mode`, this is config-only and baked at build time, so changing it
-in a deployed registry means a rebuild. A disabled build answers 404 on the route,
-drops the MCP SDK from the packaged bundle, and shows no connect affordance at all
-rather than one that fails.
+### Publishing
 
-The documentation app carries its own endpoint and a ready-made client config
-for Claude Code, Cursor and VS Code behind the plug icon in the header. By hand:
+Publish every kind of content in dependency order:
 
-```json
-{
-  "mcpServers": {
-    "handoff": {
-      "type": "http",
-      "url": "https://registry.example.com/api/mcp/",
-      "headers": { "Authorization": "Bearer hnd_..." }
-    }
-  }
-}
+```bash
+npm run publish -- all
 ```
+
+Publish one kind:
+
+```bash
+npm run publish -- catalog
+npm run publish -- pages
+npm run publish -- tokens
+npm run publish -- assets
+```
+
+`catalog` covers every catalog item. The declaration of each item decides if
+the registry stores it as a component or as a pattern. Thus the command names
+items, not component or pattern kinds.
+
+`tokens` and `assets` run the Figma pipeline before the upload. Thus the
+[Figma credentials](#figma-foundations) must be available.
+
+Add one or more ids to publish only those entities:
+
+```bash
+npm run publish -- catalog item-id another-id
+```
+
+`--dry-run` lists the content that a real publish uploads. It does not connect
+to a registry. Thus it needs no registry URL and no token. It still runs the build,
+which updates the generated output on disk. `--no-build` skips the build and
+publishes the existing output. Together, the two options do not change the
+workspace:
+
+```bash
+npm run publish -- all --dry-run
+npm run publish -- catalog --no-build
+```
+
+After a publish, reload the registry to see the published items and
+foundations.
+
+### Checkout
+
+`checkout` writes registry content into the workspace. It takes the same
+`all`, kind, id, and `--dry-run` forms as `publish`:
+
+```bash
+npm run checkout -- all
+npm run checkout -- catalog item-id
+npm run checkout -- all --dry-run
+```
+
+A dry-run checkout reads from the registry and lists the files that a real
+checkout creates or overwrites. It writes nothing. Checkout writes declarations in the
+format that `runtime.workspace.declarationFormat` sets.
+
+> **Recipes:** [One workspace, several registries](RECIPES.md#one-workspace-several-registries) ·
+> [Publish from GitHub Actions](RECIPES.md#publish-from-github-actions)
+
+## MCP
+
+The documentation app serves a Model Context Protocol endpoint at `/api/mcp/`.
+Coding agents use it to find the pages, components, and tokens that exist. Thus
+they do not invent markup and values. The endpoint uses stateless Streamable
+HTTP over `POST`. There is nothing to start and no extra port.
+
+| Target | Endpoint | Credential |
+| --- | --- | --- |
+| Workspace (`dev` / `start`) | `http://localhost:3000/api/mcp/` | None, as with `/api/docs/*` |
+| Registry (standalone or Vercel) | `<registry url>/api/mcp/` | An access token. Read access is enough. |
+| Static site | Not available | Not applicable |
+
+Keep the trailing slash. The app sets `trailingSlash: true`, so `/api/mcp`
+answers with a 308 redirect. Registry tokens come from `handoff-app login` or
+from Account → Access tokens in the registry.
+
+The documentation app shows its endpoint and a ready-made client config for
+Claude Code, Cursor, and VS Code behind the plug icon in the header.
+
+MCP is on by default. To turn it off, set `runtime.mcp: false`. The build bakes
+this value. A build with MCP off answers 404 on the route, leaves the MCP SDK
+out of the bundle, and shows no connect control.
+
+> **Recipes:** [Connect a client by hand](RECIPES.md#connect-a-client-by-hand) ·
+> [Turn off MCP](RECIPES.md#turn-off-mcp)
 
 ## AI assistant
 
 The documentation app can answer questions about the design system. The
-assistant reads through the same MCP tools, so every answer comes from the
-catalog and links to the pages and components it read. Open it from the search
-control in the header, or with `⌘K`.
+assistant reads through the same MCP tools. Thus each answer comes from the
+catalog and links to the pages and components that it read. Open the assistant
+from the search control in the header, or with `⌘K`.
 
-The deployment chooses the provider:
+The `ai` block turns on the assistant, and the deployment selects the
+provider:
 
 ```ts
 runtime: {
   ai: {
     connections: [
-      // Service key: the deployment pays for every reader.
       {
         id: 'gateway',
         label: 'Acme LiteLLM',
         baseUrl: 'https://llm.acme.internal/v1',
         apiKey: fromEnv('LITELLM_API_KEY'),
-        models: ['gpt-4o', 'claude-sonnet-4-5', 'grok-4'],
-      },
-      // No credential: the endpoint needs none.
-      { id: 'local', label: 'Ollama', baseUrl: 'http://127.0.0.1:11434/v1', models: ['llama3.1'] },
-      // User key: the config fixes the endpoint and models. Each reader adds their own key.
-      {
-        id: 'openai',
-        label: 'OpenAI',
-        baseUrl: 'https://api.openai.com/v1',
-        credential: 'user',
-        models: ['gpt-4o', 'o3'],
+        models: ['gpt-4o', 'claude-sonnet-4-5'],
       },
     ],
     defaultModel: 'gateway/claude-sonnet-4-5',
@@ -1064,77 +1000,87 @@ runtime: {
 },
 ```
 
-The `ai` block turns the assistant on, and `ai: { enabled: false }` turns it
-back off. Like `runtime.mcp`, that flag is baked at build time, so a build
-without it serves no chat route and shows no control.
+`ai: { enabled: false }` turns off the assistant. The build bakes this flag.
+A build without the assistant serves no chat route and shows no control.
 
-**The declared connections are the whole surface.** A reader can only add a key
-for a connection the config already declares, so the server never calls a URL a
-reader chose. Without a `credential: 'user'` connection, there is no
-reader-facing setting.
+Each connection uses one of these credentials:
 
-Every connection speaks the OpenAI-compatible `/chat/completions` API. This does
-not limit which models a reader can use. Ollama serves an OpenAI-compatible API
-at `/v1`, and LiteLLM, OpenRouter, vLLM, LM Studio and Azure OpenAI each front
-Anthropic, Google and xAI models. A provider that fits nothing else names a
+- **Service key:** `apiKey` names a deployment key. The deployment pays for
+  every reader.
+- **No credential:** the endpoint needs no key, for example a local Ollama.
+- **Reader key:** `credential: 'user'` asks each reader for their own key.
+
+**The declared connections are the full surface.** A reader can add a key only
+for a connection that the config declares. Thus the server never calls a URL
+that a reader selected. Without a `credential: 'user'` connection, readers have
+no AI setting.
+
+Each connection uses the OpenAI-compatible `/chat/completions` API. This does
+not limit the models. Ollama serves an OpenAI-compatible API at `/v1`. LiteLLM,
+OpenRouter, vLLM, LM Studio, and Azure OpenAI each give access to Anthropic,
+Google, and xAI models. For a provider without this API, name a
 [custom server module](#custom-server-modules) that default-exports
-`defineAiProvider()`, in place of `baseUrl`. The factory gets `options` with
-`fromEnv()` values resolved. Literals in `options` are baked into the build, so
-secrets must use `fromEnv()`.
+`defineAiProvider()`, instead of `baseUrl`.
+
+The gateway controls cost. LiteLLM and OpenRouter both apply budgets and rate
+limits for each key. The assistant limits only the number of steps for one
+question.
 
 ### Reader keys
 
-A connection marked `credential: 'user'` asks each reader for their own key,
-under Account → AI providers. Keys are encrypted with `HANDOFF_AI_KEY_SECRET`,
-not hashed, because the server must send them to the provider. Set that variable
-to a random value of at least 32 characters. A key is write-only across the API:
-after a save, a read reports only that a key is in place.
+A reader adds a key under Account → AI providers. The registry encrypts keys
+with `HANDOFF_AI_KEY_SECRET`. It does not hash them, because the server must
+send them to the provider. Set this variable to a random value of at least 32
+characters. A key is write-only through the API. After a save, a read reports
+only that a key exists.
 
-This applies to registry mode only. A workspace has one user, whose config file
-and `.env` are their user layer, so a workspace supplies a key through `apiKey`.
+Reader keys work only in registry mode. A workspace has one user, whose config
+file and `.env` hold their keys. Thus a workspace supplies a key through
+`apiKey`.
 
 ### Changing connections without a rebuild
 
-The connection list is deployment data, not build shape, so a registry can
-change it without a rebuild. `HANDOFF_AI_CONNECTIONS` holds a JSON array, read
-at request time and merged over the baked list by `id`. It names each key
-instead of holding its value:
-
-```json
-[{ "id": "gateway", "label": "Acme LiteLLM", "baseUrl": "https://llm.acme.internal/v1",
-   "apiKeyEnv": "LITELLM_API_KEY", "models": ["gpt-4o"] }]
-```
+The connection list is deployment data, not build shape. Thus a registry can
+change it without a rebuild. `HANDOFF_AI_CONNECTIONS` holds a JSON array. The
+registry reads it at request time and merges it over the built-in list by `id`.
+Each entry names its key variable with `apiKeyEnv`, not the key value.
 
 A connection in this list can use a `module` only if a connection in the config
 names the same module. The build copies only those modules into the registry.
 
-Spend control belongs to the gateway. LiteLLM and OpenRouter both enforce
-budgets and rate limits per key. The assistant caps only how many steps one
-question can take.
+> **Recipes:** [Service key through a gateway](RECIPES.md#service-key-through-a-gateway) ·
+> [Local Ollama](RECIPES.md#local-ollama) · [Reader keys](RECIPES.md#reader-keys) ·
+> [Custom AI provider](RECIPES.md#custom-ai-provider) ·
+> [Change connections without a rebuild](RECIPES.md#change-connections-without-a-rebuild)
 
 ## CLI reference
 
 | Command | Description |
 | --- | --- |
-| `npx handoff-app init` | A workspace is scaffolded with the interactive wizard |
-| `npm run fetch` | Design tokens and assets are fetched from Figma |
-| `npm run start` | The workspace server and Handoff file watchers are started |
-| `npm run dev` | The workspace development server is started |
-| `npm run build -- [--target static\|registry]` | The static site or standalone registry bundle is built |
-| `npm run db:migrate` | Registry database migrations are applied |
-| `npm run validate` | Configured components are validated |
-| `npm run publish -- <kind\|all> [id...]` | Catalog items, pages, tokens, or assets are published |
-| `npm run checkout -- <kind\|all> [id...]` | Published content is pulled into a workspace |
-| `npm run login -- [--profile <name>] --url <url>` | The CLI is authorized through the registry device flow |
-| `npm run logout -- [--profile <name>] [--all]` | Saved CLI credentials are revoked and removed |
+| `npx handoff-app init` | Create a project with the interactive wizard |
+| `npm run fetch` | Fetch design tokens and assets from Figma |
+| `npm run start` | Start the workspace server and the Handoff file watchers |
+| `npm run dev` | Start the workspace server without the file watchers |
+| `npm run build -- [--target static\|registry] [--package vercel]` | Build the static site or the registry server |
+| `npm run db:migrate` | Apply the registry database migrations |
+| `npm run publish -- <kind\|all> [id...]` | Publish catalog items, pages, tokens, or assets |
+| `npm run checkout -- <kind\|all> [id...]` | Write published content into the workspace |
+| `npm run login -- [--profile <name>] --url <url>` | Authorize the CLI through the registry device flow |
+| `npm run logout -- [--profile <name>] [--all]` | Revoke and remove saved CLI credentials |
+| `npx handoff-app validate:components` | Validate the catalog items |
+| `npx handoff-app make:component <name>` | Create a Handlebars catalog item |
+| `npx handoff-app make:page <name> [parent]` | Create a documentation page |
+| `npx handoff-app scaffold` | Create catalog item stubs for fetched Figma components |
+| `npx handoff-app eject:config` | Write the default config to the working directory |
 
 Every command except `init` accepts `-c, --config`, `--profile`, `-d, --debug`,
-and `-f, --force`. `publish` and `checkout` additionally accept `--dry-run`, and
+and `-f, --force`. `publish` and `checkout` also accept `--dry-run`, and
 `publish` accepts `--no-build`.
 
-Arguments after `--` are forwarded to the local CLI. Exact options can be shown
-by adding `--help` after the separator. Advanced configuration and hooks are
-documented in [docs/api.md](docs/api.md).
+npm forwards the arguments after `--` to the CLI. To see the options of a
+command, add `--help` after `--`. [docs/cli.md](docs/cli.md) lists every
+command and option. [docs/api.md](docs/api.md) documents the JavaScript API and
+the build hooks.
 
 ## Maintainers
 
