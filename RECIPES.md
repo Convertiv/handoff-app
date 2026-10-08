@@ -579,6 +579,9 @@ Notes:
 
 - `createUpload` signs a SHA-256 checksum header. Thus storage rejects bytes
   that do not match `hash`.
+- The signed URL contains `endpoint`. Thus the machine that runs `publish`
+  must also be able to connect to `endpoint`. With `127.0.0.1`, `publish` and
+  storage must run on the same computer.
 
 ### Vercel Blob
 

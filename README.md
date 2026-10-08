@@ -746,17 +746,28 @@ methods:
 - `delete` removes a blob by its `storageRef`.
 - `createUpload` is optional. It enables direct uploads.
 
-**Direct uploads.** By default, `publish` sends each blob to the registry, and
-the registry sends it to storage. A serverless host limits the size of one
-request. Vercel permits about 4.5 MB, so a larger blob fails. With
-`createUpload`, the registry gives the CLI a signed URL, and the CLI sends the
-blob directly to storage.
+**Upload paths.** `publish` uploads only the blobs that the registry does not
+have. The active adapter decides which of two paths each blob takes. No
+setting changes the path.
 
+| Path | When | Hash check | Size limit |
+| --- | --- | --- | --- |
+| Through the registry | The `database` adapter, or a custom adapter without `createUpload` | The registry | The request limit of the host, about 4.5 MB on Vercel. The `database` adapter also applies `maxInlineBytes`. |
+| Direct to storage | A custom adapter with `createUpload` | Storage, through the signed URL | The limit of the storage |
+
+For a direct upload, the registry gives the CLI a signed URL, and the CLI sends
+the blob to storage. The registry records the blob only after `get` finds the
+stored object.
+
+- The machine that runs `publish` must be able to connect to the storage URL.
+- If a direct upload fails, `publish` stops. It does not try again through the
+  registry.
 - The signed URL must make storage reject bytes that do not match `hash`.
-- The registry records the blob only after `get` finds the stored object.
 - The registry does not delete an uploaded object that it never records.
-- The `database` adapter always uploads through the registry, with its
-  `maxInlineBytes` limit.
+
+**Download paths.** The result of `get` controls how a reader receives a blob.
+With `{ kind: 'redirect' }`, the registry sends the reader to storage. With
+`bytes` or `stream`, the registry sends the blob itself.
 
 **Changing the adapter.** The registry records which adapter stores each blob.
 Blobs in PostgreSQL stay readable after you select a custom adapter. A publish
