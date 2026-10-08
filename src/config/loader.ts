@@ -5,7 +5,6 @@ import mergeWith from 'lodash/mergeWith';
 import omit from 'lodash/omit';
 import { createRequire } from 'module';
 import path from 'path';
-import { DEFAULT_EMAIL_PROVIDER } from '../registry/email/resolve';
 import { Config, HandoffEmailConfig, ResolvedConfig } from '../types/config';
 import { Logger } from '../utils/logger';
 import { resolveWorkingPath } from '../utils/path';
@@ -240,7 +239,7 @@ const replaceValues = (destination: unknown, source: unknown) => {
  * the deep merge never mixes the settings of two providers.
  */
 const resetEmailOnProviderChange = (layers: Partial<Config>[]): Partial<Config>[] => {
-  let provider: string = DEFAULT_EMAIL_PROVIDER;
+  let provider: string | undefined;
   let start = 0;
   layers.forEach((layer, index) => {
     const next = layer.runtime?.registry?.email?.provider;

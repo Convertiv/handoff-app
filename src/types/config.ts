@@ -129,16 +129,6 @@ interface HandoffEmailBase {
   from?: string;
 }
 
-/** Send through the Resend HTTP API. */
-export interface HandoffResendEmail extends HandoffEmailBase {
-  /** @default "resend" */
-  provider?: 'resend';
-  options?: {
-    /** Environment reference to the Resend API key. @default fromEnv('RESEND_API_KEY') */
-    apiKey?: RuntimeEnvReference<string>;
-  };
-}
-
 /** Send through an SMTP server, such as Amazon SES, SendGrid, Postmark, Mailgun or Microsoft 365. */
 export interface HandoffSmtpEmail extends HandoffEmailBase {
   provider: 'smtp';
@@ -170,7 +160,7 @@ export interface HandoffCustomEmail extends HandoffEmailBase {
 }
 
 /** Registry email settings. `provider` selects the shape of `options`. */
-export type HandoffEmailConfig = HandoffResendEmail | HandoffSmtpEmail | HandoffCustomEmail;
+export type HandoffEmailConfig = HandoffSmtpEmail | HandoffCustomEmail;
 
 /**
  * One AI connection the deployment declares. Connections are the whole surface: a reader can add a

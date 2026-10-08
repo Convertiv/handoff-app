@@ -37,8 +37,8 @@ README section before you use a recipe.
 
 **Email**
 
-- [Resend](#resend)
 - [SMTP](#smtp)
+- [Resend](#resend)
 - [Custom email provider](#custom-email-provider)
 
 **AI assistant**
@@ -671,27 +671,6 @@ Notes:
 The README section [Email](README.md#email) explains when the registry sends
 email.
 
-### Resend
-
-Resend is the default provider. It reads its key from `RESEND_API_KEY`.
-
-```ts
-runtime: {
-  registry: {
-    email: { from: 'Handoff <no-reply@example.com>' },
-  },
-},
-```
-
-To read the key from a different variable, set `options.apiKey`:
-
-```ts
-email: {
-  from: 'Handoff <no-reply@example.com>',
-  options: { apiKey: fromEnv('HANDOFF_RESEND_KEY') },
-},
-```
-
 ### SMTP
 
 Use this provider for an SMTP server, for example Amazon SES, SendGrid, or
@@ -709,6 +688,44 @@ email: {
   },
 },
 ```
+
+### Resend
+
+This custom module sends email through the Resend HTTP API. It uses `fetch`, so
+it needs no package. Resend must verify the sender domain.
+
+```ts
+email: {
+  from: 'Handoff <no-reply@example.com>',
+  provider: 'custom',
+  module: './server/email/resend.mjs',
+  options: { apiKey: fromEnv('RESEND_API_KEY') },
+},
+```
+
+```js
+// server/email/resend.mjs
+import { defineEmailProvider } from 'handoff-app/define';
+
+export default defineEmailProvider(({ options }) => ({
+  async send({ from, to, subject, html, text }) {
+    if (!options.apiKey) throw new Error('RESEND_API_KEY is not set.');
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${options.apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to: [to], subject, html, text }),
+    });
+    if (!response.ok) {
+      throw new Error(`Resend rejected the message: ${response.status} ${await response.text()}`);
+    }
+  },
+}));
+```
+
+Notes:
+
+- The registry does not check the options of a custom module. If
+  `RESEND_API_KEY` is empty, each invitation and password-reset email fails.
 
 ### Custom email provider
 

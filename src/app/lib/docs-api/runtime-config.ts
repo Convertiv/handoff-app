@@ -4,7 +4,7 @@ import type { RuntimeMode } from '@handoff/types/config';
 import { DEFAULT_DATABASE_URL_ENV, DEFAULT_REGISTRY_DRIVER, type RegistryDatabaseDriver } from '@handoff/registry/db/driver';
 import { DEFAULT_ASSET_STORAGE_ADAPTER, type AssetStorageSettings } from '@handoff/registry/asset-storage/resolve';
 import { mergeAiConnections, parseAiConnections, type AiSettings } from '@handoff/ai/connections';
-import { DEFAULT_EMAIL_PROVIDER, parseEmailSettings, type EmailSettings } from '@handoff/registry/email/resolve';
+import { parseEmailSettings, type EmailSettings } from '@handoff/registry/email/resolve';
 
 /**
  * Server-side runtime resolution for the docs read API.
@@ -61,7 +61,7 @@ const defaults = (): ServerRuntimeConfig => ({
     databaseUrlEnv: DEFAULT_DATABASE_URL_ENV,
   },
   assetStorage: { adapter: DEFAULT_ASSET_STORAGE_ADAPTER },
-  email: { provider: DEFAULT_EMAIL_PROVIDER, options: {} },
+  email: { options: {} },
 });
 
 /** Parse the baked asset-storage selection from env (names/selectors only; JSON options tolerated). */

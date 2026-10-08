@@ -1,5 +1,4 @@
 import { isEnvReference, resolveEnvReferences } from '@handoff/config/from-env';
-import { createResendProvider } from '@handoff/registry/email/adapters/resend';
 import { createSmtpProvider } from '@handoff/registry/email/adapters/smtp';
 import type { EmailProviderKind, EmailSettings } from '@handoff/registry/email/resolve';
 import type { EmailProvider } from '@handoff/registry/email/types';
@@ -7,7 +6,7 @@ import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 import { loadServerModule } from '../server-module';
 
 /** Options a provider needs before email counts as configured. */
-const REQUIRED_OPTIONS: Record<EmailProviderKind, readonly string[]> = { resend: ['apiKey'], smtp: ['host'], custom: [] };
+const REQUIRED_OPTIONS: Record<EmailProviderKind, readonly string[]> = { smtp: ['host'], custom: [] };
 
 /**
  * The settings that still need a value, named as the administrator sets them: the config key, or the
@@ -17,6 +16,7 @@ export const missingRegistryEmailSettings = (): string[] => {
   const settings = getServerRuntimeConfig().email;
   const options = resolveEnvReferences(settings.options, process.env);
   const missing = settings.from ? [] : ['runtime.registry.email.from'];
+  if (!settings.provider) return [...missing, 'runtime.registry.email.provider'];
   if (settings.provider === 'custom' && !settings.module) missing.push('runtime.registry.email.module');
   for (const key of REQUIRED_OPTIONS[settings.provider]) {
     if (options[key] !== undefined) continue;
@@ -31,7 +31,7 @@ export const registryEmailIsConfigured = (): boolean => missingRegistryEmailSett
 /** The provider name for messages shown to an administrator. */
 export const registryEmailProviderName = (): string => {
   const { provider } = getServerRuntimeConfig().email;
-  return provider === 'resend' ? 'Resend' : provider === 'smtp' ? 'SMTP' : 'the custom email provider';
+  return provider === 'smtp' ? 'SMTP' : 'the custom email provider';
 };
 
 let customProvider: Promise<EmailProvider> | null = null;
@@ -46,7 +46,6 @@ const loadCustomProvider = async (settings: EmailSettings, options: Record<strin
 };
 
 const getEmailProvider = (settings: EmailSettings, options: Record<string, unknown>): Promise<EmailProvider> => {
-  if (settings.provider === 'resend') return Promise.resolve(createResendProvider(options));
   if (settings.provider === 'smtp') return Promise.resolve(createSmtpProvider(options));
   customProvider ??= loadCustomProvider(settings, options).catch((error) => {
     customProvider = null;

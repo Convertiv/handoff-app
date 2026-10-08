@@ -1,6 +1,6 @@
 /**
  * Server-only email provider contract. Handoff renders every message, and a provider only delivers it.
- * Resend and SMTP are built in. Anything else is a {@link defineEmailProvider} module.
+ * SMTP is built in. Anything else is a {@link defineEmailProvider} module.
  */
 
 /** One rendered message. */

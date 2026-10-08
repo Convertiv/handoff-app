@@ -407,7 +407,6 @@ variable that the build needs, with the names from your config.
 | `HANDOFF_REGISTRY_URL` | `runtime.registryConnection.url` | Registry URL of a connected workspace |
 | `HANDOFF_REGISTRY_ACCESS_TOKEN` | `runtime.registryConnection.accessToken` | Registry access token of a connected workspace |
 | `DATABASE_URL` | `runtime.registry.database.url` | PostgreSQL connection string. Required by a registry. |
-| `RESEND_API_KEY` | `runtime.registry.email.options.apiKey` | Resend key, when email uses the default provider |
 | `HANDOFF_APP_PORT` | `app.ports.app` | Workspace documentation server port. The default is 3000. |
 | `HANDOFF_WEBSOCKET_PORT` | `app.ports.websocket` | Workspace live-reload server port. The default is 3001. |
 | `HANDOFF_OUTPUT_DIR` | `exportsOutputDirectory` | Fetched output directory. The default is `exported`. |
@@ -788,25 +787,28 @@ it manually, and password reset is not available.
 ```ts
 runtime: {
   registry: {
-    email: { from: 'Handoff <no-reply@example.com>' },
+    email: {
+      from: 'Handoff <no-reply@example.com>',
+      provider: 'smtp',
+      options: { host: fromEnv('SMTP_HOST') },
+    },
   },
 },
 ```
 
-`provider` selects the delivery service:
+`provider` selects the delivery service. It is required when you set `email`.
 
-- `resend` is the default. It reads its key from `RESEND_API_KEY`, unless
-  `options.apiKey` names a different variable.
 - `smtp` sends through an SMTP server, for example Amazon SES, SendGrid, or
   Microsoft 365.
 - `custom` names a [custom server module](#custom-server-modules) that
-  default-exports `defineEmailProvider()`.
+  default-exports `defineEmailProvider()`. Use it for an HTTP API, for example
+  Resend or Postmark.
 
 `apiKey` and `password` must use `fromEnv()`. A profile can set a different
 sender or provider. When a profile changes the provider, it replaces
 `options`.
 
-> **Recipes:** [Resend](RECIPES.md#resend) · [SMTP](RECIPES.md#smtp) ·
+> **Recipes:** [SMTP](RECIPES.md#smtp) · [Resend](RECIPES.md#resend) ·
 > [Custom email provider](RECIPES.md#custom-email-provider)
 
 ### Custom server modules
