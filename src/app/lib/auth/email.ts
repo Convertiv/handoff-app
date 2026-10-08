@@ -1,5 +1,5 @@
 import { isEnvReference, resolveEnvReferences } from '@handoff/config/from-env';
-import { createSmtpProvider } from '@handoff/registry/email/adapters/smtp';
+import { createSmtpProvider } from '@handoff/registry/email/providers/smtp';
 import type { EmailProviderKind, EmailSettings } from '@handoff/registry/email/resolve';
 import type { EmailProvider } from '@handoff/registry/email/types';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';

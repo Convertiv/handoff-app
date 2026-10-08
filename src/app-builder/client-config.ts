@@ -64,7 +64,7 @@ const buildServerRuntimeConfig = (config: ResolvedConfig, modeOverride?: Runtime
       databaseUrlEnv: resolveDatabaseUrlEnv(config),
     },
     assetStorage: {
-      adapter: assetStorage.adapterKind,
+      provider: assetStorage.provider,
       module: assetStorage.module,
       maxInlineBytes: assetStorage.maxInlineBytes,
       options: assetStorage.options,

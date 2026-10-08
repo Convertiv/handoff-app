@@ -5,7 +5,7 @@ import { ensureGet, resolveDocsBackend, sendDocsData, sendDocsError } from '@/li
 // Kept static so the baked structure is traced into every registry serverless bundle.
 import navShell from '@/generated/nav-shell.json';
 
-/** Thin registry refresh adapter. The adapter/resolver owns all navigation structure and filling. */
+/** Thin route: `getRegistryNavData` builds and fills the whole navigation. */
 export default async function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
   if (!ensureGet(req, res)) return;
 

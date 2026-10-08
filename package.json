@@ -40,9 +40,9 @@
       "types": "./dist/pattern.d.ts",
       "default": "./dist/pattern.js"
     },
-    "./define": {
-      "types": "./dist/define.d.ts",
-      "default": "./dist/define.js"
+    "./providers": {
+      "types": "./dist/providers.d.ts",
+      "default": "./dist/providers.js"
     },
     "./package.json": "./package.json",
     "./*": "./*"
@@ -58,8 +58,8 @@
       "pattern": [
         "./dist/pattern.d.ts"
       ],
-      "define": [
-        "./dist/define.d.ts"
+      "providers": [
+        "./dist/providers.d.ts"
       ]
     }
   },

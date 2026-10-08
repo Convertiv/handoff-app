@@ -113,9 +113,9 @@ const nextConfig = {
     HANDOFF_AI_DEFAULT_MODEL: '%HANDOFF_AI_DEFAULT_MODEL%',
     HANDOFF_REGISTRY_DRIVER: '%HANDOFF_REGISTRY_DRIVER%',
     HANDOFF_REGISTRY_DATABASE_URL_ENV: '%HANDOFF_REGISTRY_DATABASE_URL_ENV%',
-    // Asset storage adapter, module, and options JSON. Option references keep only their variable
+    // Asset storage provider, module, and options JSON. Option references keep only their variable
     // name and are resolved at request time, so secret values are never baked.
-    HANDOFF_ASSET_STORAGE_ADAPTER: '%HANDOFF_ASSET_STORAGE_ADAPTER%',
+    HANDOFF_ASSET_STORAGE_PROVIDER: '%HANDOFF_ASSET_STORAGE_PROVIDER%',
     HANDOFF_ASSET_STORAGE_MODULE: '%HANDOFF_ASSET_STORAGE_MODULE%',
     HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES: '%HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES%',
     HANDOFF_ASSET_STORAGE_OPTIONS: '%HANDOFF_ASSET_STORAGE_OPTIONS%',

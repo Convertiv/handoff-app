@@ -9,7 +9,7 @@ export interface RegistryNavRecords {
   tokenSets: NavTokenSet[];
 }
 
-export interface RegistryNavAdapterOptions {
+export interface RegistryNavOptions {
   shell: SectionLink[];
   load: NavLoad;
   basePath?: string;
@@ -18,8 +18,8 @@ export interface RegistryNavAdapterOptions {
 
 const emptyRecords = (): RegistryNavRecords => ({ components: [], patterns: [], pages: [], tokenSets: [] });
 
-/** Registry adapter: shell-only initial load, or one best-effort runtime-record fetch on refresh. */
-export const getRegistryNavData = async (options: RegistryNavAdapterOptions): Promise<NavData> => {
+/** Registry nav data: shell-only initial load, or one best-effort runtime-record fetch on refresh. */
+export const getRegistryNavData = async (options: RegistryNavOptions): Promise<NavData> => {
   let records = emptyRecords();
   if (options.load === 'refresh') {
     try {

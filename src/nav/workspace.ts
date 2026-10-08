@@ -14,7 +14,7 @@ export interface WorkspaceNavLoaders {
   tokenSets: () => Awaitable<NavTokenSet[]>;
 }
 
-export interface WorkspaceNavAdapterOptions {
+export interface WorkspaceNavOptions {
   docRoot: string;
   workingPagesDir?: string;
   basePath?: string;
@@ -43,8 +43,8 @@ const markdownTitle = (id: string, docRoot: string, workingPagesDir?: string): s
   return undefined;
 };
 
-/** Workspace/static adapter: live filesystem shell plus best-effort local snapshot loaders. */
-export const getWorkspaceNavData = async (options: WorkspaceNavAdapterOptions): Promise<NavData> => {
+/** Workspace/static nav data: live filesystem shell plus best-effort local snapshot loaders. */
+export const getWorkspaceNavData = async (options: WorkspaceNavOptions): Promise<NavData> => {
   const [loadedComponents, patterns, pages, loadedTokenSets] = await Promise.all([
     safeLoad(options.loaders.components),
     safeLoad(options.loaders.patterns),

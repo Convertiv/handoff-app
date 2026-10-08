@@ -2,7 +2,7 @@
  * Server-only AI provider contract for connections that are not OpenAI-compatible.
  *
  * Every built-in connection speaks the OpenAI-compatible `/chat/completions` API and needs no
- * adapter — Ollama, LiteLLM, OpenRouter, vLLM, LM Studio and Azure OpenAI all serve it, and each of
+ * custom module — Ollama, LiteLLM, OpenRouter, vLLM, LM Studio and Azure OpenAI all serve it, and each of
  * them fronts Anthropic, Google and xAI models. A provider that fits nothing else names a
  * {@link defineAiProvider} module instead of a base URL.
  */

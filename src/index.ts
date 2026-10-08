@@ -697,13 +697,13 @@ export type {
   SourceFormat,
   RendererKind,
 } from './catalog';
-export { defineAssetStorage } from './registry/asset-storage/define';
+export { defineStorageProvider } from './registry/asset-storage/define';
 export type {
-  AssetStorage,
-  AssetStorageContext,
-  AssetStorageFactory,
-  AssetStorageInput,
-  AssetStorageReadResult,
+  StorageProvider,
+  StorageProviderContext,
+  StorageProviderFactory,
+  StorageInput,
+  StorageReadResult,
   AssetUpload,
   AssetUploadInput,
 } from './registry/asset-storage/types';

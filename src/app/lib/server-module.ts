@@ -4,7 +4,7 @@ import { pathToFileURL } from 'url';
 import { resolveEnvReferences } from '@handoff/config/from-env';
 
 /**
- * Import a consumer's server-only module (a custom asset storage adapter, AI provider or email
+ * Import a consumer's server-only module (a custom asset storage, AI or email
  * provider) by the path the config gives, relative to the project.
  *
  * A registry bundle mirrors the tracing root and runs with its root as the working directory, so the

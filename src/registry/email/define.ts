@@ -1,5 +1,5 @@
 /**
- * Typed identity helper for custom email providers (mirrors `defineAssetStorage`): a consumer
+ * Typed identity helper for custom email providers (mirrors `defineStorageProvider`): a consumer
  * default-exports its result from a **server-only** module and points `runtime.registry.email.module`
  * at it. It must be its own module (not an inline `defineConfig` function) so the build can trace it
  * into the deployed registry. The default export may be the provider object, or a factory

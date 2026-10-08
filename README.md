@@ -314,7 +314,7 @@ change to a deployed registry needs a rebuild:
 - `runtime.mcp`
 - `runtime.ai.enabled`
 - The database driver
-- The asset storage adapter and the email provider
+- The asset storage provider and the email provider
 - Every custom server module
 
 ### Profiles
@@ -376,7 +376,7 @@ Handoff reads two kinds of variables:
   To use a different name, set the setting to `fromEnv('YOUR_NAME')`.
 
 This section does not list the variables that you name in the config. Examples
-are the keys of a custom asset storage adapter or of an AI connection. A
+are the keys of a custom asset storage provider or of an AI connection. A
 standalone registry build writes `out/registry/README.md`, which lists every
 variable that the build needs, with the names from your config.
 
@@ -728,7 +728,7 @@ different service:
 runtime: {
   registry: {
     assetStorage: {
-      adapter: 'custom',
+      provider: 'custom',
       module: './server/storage/s3.mjs',
       options: { bucket: 'handoff-assets', secretKey: fromEnv('S3_SECRET_KEY') },
     },
@@ -736,7 +736,7 @@ runtime: {
 },
 ```
 
-The module default-exports a `defineAssetStorage()` adapter with these
+The module default-exports a `defineStorageProvider()` result with these
 methods:
 
 - `put` stores a blob and returns the `storageRef` that the registry records.
@@ -746,13 +746,13 @@ methods:
 - `createUpload` is optional. It enables direct uploads.
 
 **Upload paths.** `publish` uploads only the blobs that the registry does not
-have. The active adapter decides which of two paths each blob takes. No
+have. The active provider decides which of two paths each blob takes. No
 setting changes the path.
 
 | Path | When | Hash check | Size limit |
 | --- | --- | --- | --- |
-| Through the registry | The `database` adapter, or a custom adapter without `createUpload` | The registry | The request limit of the host, about 4.5 MB on Vercel. The `database` adapter also applies `maxInlineBytes`. |
-| Direct to storage | A custom adapter with `createUpload` | Storage, through the signed URL | The limit of the storage |
+| Through the registry | The `database` provider, or a custom provider without `createUpload` | The registry | The request limit of the host, about 4.5 MB on Vercel. The `database` provider also applies `maxInlineBytes`. |
+| Direct to storage | A custom provider with `createUpload` | Storage, through the signed URL | The limit of the storage |
 
 For a direct upload, the registry gives the CLI a signed URL, and the CLI sends
 the blob to storage. The registry records the blob only after `get` finds the
@@ -768,12 +768,12 @@ stored object.
 With `{ kind: 'redirect' }`, the registry sends the reader to storage. With
 `bytes` or `stream`, the registry sends the blob itself.
 
-**Changing the adapter.** The registry records which adapter stores each blob.
-Blobs in PostgreSQL stay readable after you select a custom adapter. A publish
-does not move blobs. If you change the custom adapter or its storage, copy the
-stored objects first. The new adapter must find each object by the
-`storageRef` that the previous adapter returned. After a change back to
-`database`, the registry cannot read the blobs of the custom adapter.
+**Changing the provider.** The registry records which provider stores each blob.
+Blobs in PostgreSQL stay readable after you select a custom provider. A publish
+does not move blobs. If you change the custom provider or its storage, copy the
+stored objects first. The new provider must find each object by the
+`storageRef` that the previous provider returned. After a change back to
+`database`, the registry cannot read the blobs of the custom provider.
 
 > **Recipes:** [S3-compatible storage](RECIPES.md#s3-compatible-storage) ·
 > [Vercel Blob](RECIPES.md#vercel-blob)
@@ -819,7 +819,7 @@ module must obey these rules:
 - The path is relative to the working directory.
 - The file is `.js` or `.mjs`.
 - The default export is the object, or a factory that returns it.
-- The module imports its define helper from `handoff-app/define`. The registry
+- The module imports its define helper from `handoff-app/providers`. The registry
   build stops when a module imports `handoff-app`.
 - The project installs the packages that the module imports. The registry
   build copies them into the bundle.

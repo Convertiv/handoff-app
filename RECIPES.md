@@ -511,11 +511,11 @@ Notes:
 ## Asset storage
 
 The README section [Asset storage](README.md#asset-storage) explains the
-adapter contract and direct uploads.
+provider contract and direct uploads.
 
 ### S3-compatible storage
 
-This adapter works with Amazon S3, Cloudflare R2, MinIO, SeaweedFS, and other
+This provider works with Amazon S3, Cloudflare R2, MinIO, SeaweedFS, and other
 services with an S3 API. It uses `@aws-sdk/client-s3` and
 `@aws-sdk/s3-request-presigner`.
 
@@ -523,7 +523,7 @@ services with an S3 API. It uses `@aws-sdk/client-s3` and
 runtime: {
   registry: {
     assetStorage: {
-      adapter: 'custom',
+      provider: 'custom',
       module: './server/storage/s3.mjs',
       options: {
         endpoint: 'http://127.0.0.1:8333',
@@ -540,9 +540,9 @@ runtime: {
 // server/storage/s3.mjs
 import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { defineAssetStorage } from 'handoff-app/define';
+import { defineStorageProvider } from 'handoff-app/providers';
 
-export default defineAssetStorage(({ options }) => {
+export default defineStorageProvider(({ options }) => {
   const client = new S3Client({
     endpoint: options.endpoint,
     region: 'us-east-1',
@@ -585,16 +585,16 @@ Notes:
 
 ### Vercel Blob
 
-This adapter stores blobs in a private Vercel Blob store. It uses
+This provider stores blobs in a private Vercel Blob store. It uses
 `@vercel/blob` 2.x. When the store is connected to the Vercel project, the SDK
-reads the store credentials from the deployment environment. Thus the adapter
+reads the store credentials from the deployment environment. Thus the provider
 needs no `options`.
 
 ```ts
 runtime: {
   registry: {
     assetStorage: {
-      adapter: 'custom',
+      provider: 'custom',
       module: './server/storage/vercel-blob.mjs',
     },
   },
@@ -605,12 +605,12 @@ runtime: {
 // server/storage/vercel-blob.mjs
 import { Readable } from 'node:stream';
 import { del, get, issueSignedToken, parseStoreIdFromDelegationToken, presignUrl, put } from '@vercel/blob';
-import { defineAssetStorage } from 'handoff-app/define';
+import { defineStorageProvider } from 'handoff-app/providers';
 
 const access = 'private';
 const pathnameFor = (hash) => `assets/${hash}`;
 
-export default defineAssetStorage({
+export default defineStorageProvider({
   async put({ hash, bytes, contentType }) {
     const blob = await put(pathnameFor(hash), bytes, { access, contentType, addRandomSuffix: false, allowOverwrite: true });
     return { storageRef: blob.pathname };
@@ -705,7 +705,7 @@ email: {
 
 ```js
 // server/email/resend.mjs
-import { defineEmailProvider } from 'handoff-app/define';
+import { defineEmailProvider } from 'handoff-app/providers';
 
 export default defineEmailProvider(({ options }) => ({
   async send({ from, to, subject, html, text }) {
@@ -743,7 +743,7 @@ email: {
 
 ```js
 // server/email/postmark.mjs
-import { defineEmailProvider } from 'handoff-app/define';
+import { defineEmailProvider } from 'handoff-app/providers';
 
 export default defineEmailProvider(({ options }) => ({
   async send({ from, to, subject, html, text }) {
@@ -863,7 +863,7 @@ runtime: {
 ```js
 // server/ai/anthropic.mjs
 import { createAnthropic } from '@ai-sdk/anthropic';
-import { defineAiProvider } from 'handoff-app/define';
+import { defineAiProvider } from 'handoff-app/providers';
 
 export default defineAiProvider(({ apiKey }) => createAnthropic({ apiKey }));
 ```

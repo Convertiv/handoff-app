@@ -16,7 +16,7 @@
 
 import { orderPreviews } from '../catalog/previews';
 import { and, eq, inArray, or, sql, type SQLWrapper } from 'drizzle-orm';
-import type { AssetStorage, AssetStorageReadResult } from '../registry/asset-storage/types';
+import type { StorageProvider, StorageReadResult } from '../registry/asset-storage/types';
 import type { RegistryDatabase } from '../registry/db/client';
 import {
   assetBlobs,
@@ -53,11 +53,11 @@ import type {
 export interface RegistryStoreContext {
   db: RegistryDatabase;
   /**
-   * Resolve the {@link AssetStorage} adapter for a blob's recorded provider (or `null` for the inline
+   * Resolve the {@link StorageProvider} for a blob's recorded provider (or `null` for the inline
    * `database` provider). Injected by the app runtime so `src/store` stays free of app-side imports;
    * when omitted, only inline DB-backed asset content is resolvable.
    */
-  resolveAssetAdapter?: (provider: AssetStorageProvider) => Promise<AssetStorage | null>;
+  resolveStorageProvider?: (provider: AssetStorageProvider) => Promise<StorageProvider | null>;
 }
 
 /** A persisted text-file row, as selected from `component_files`/`pattern_files`. */
@@ -422,14 +422,14 @@ export class RegistryAssetStore implements AssetStore {
     }
 
     // Object-backed - resolve through the provider that stored it.
-    if (!row.storageRef || !this.context.resolveAssetAdapter) {
+    if (!row.storageRef || !this.context.resolveStorageProvider) {
       return null;
     }
-    const adapter = await this.context.resolveAssetAdapter(row.storageProvider);
-    if (!adapter) {
+    const storage = await this.context.resolveStorageProvider(row.storageProvider);
+    if (!storage) {
       return null;
     }
-    const result: AssetStorageReadResult = await adapter.get(row.storageRef);
+    const result: StorageReadResult = await storage.get(row.storageRef);
     if (result.kind === 'redirect') {
       return { ...base, redirectUrl: result.url };
     }

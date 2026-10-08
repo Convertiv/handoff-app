@@ -6,9 +6,9 @@ import type { RegistryDatabase } from '@handoff/registry/db/client';
 import { assetBlobs, assetCollections, assets } from '@handoff/registry/db/schema';
 import { isAssetCollection, type AssetCollection } from '@handoff/registry/assets/sets';
 import type { AssetCollectionTransferPackage, AssetManifestEntry } from '@handoff/registry/assets/transfer';
-import type { AssetStorage } from '@handoff/registry/asset-storage/types';
+import type { StorageProvider } from '@handoff/registry/asset-storage/types';
 import { singleQueryValue } from '../api/query';
-import { getActiveAssetStorage, getActiveAssetStorageAdapter, getAssetStorageAdapter } from '../asset-storage';
+import { getActiveAssetStorage, getActiveStorageProvider, getStorageProvider } from '../asset-storage';
 import { sendRegistryError } from './errors';
 import { buildMeta } from './meta';
 import { handleRegistryRoute, sendRegistryData } from './handler';
@@ -318,10 +318,10 @@ export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse):
         'application/octet-stream';
       const active = getActiveAssetStorage();
 
-      const storageProvider = active.adapterKind;
+      const storageProvider = active.provider;
       let content: Buffer | null = null;
       let storageRef: string | null = null;
-      if (active.adapterKind === 'database') {
+      if (active.provider === 'database') {
         if (bytes.length > active.maxInlineBytes) {
           sendRegistryError(
             res,
@@ -332,12 +332,12 @@ export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse):
         }
         content = bytes;
       } else {
-        const adapter = await getActiveAssetStorageAdapter();
-        if (!adapter) {
-          sendRegistryError(res, 'unexpected_error', `No storage adapter is available for provider "${active.adapterKind}".`);
+        const storage = await getActiveStorageProvider();
+        if (!storage) {
+          sendRegistryError(res, 'unexpected_error', `No asset storage is available for provider "${active.provider}".`);
           return;
         }
-        ({ storageRef } = await adapter.put({ hash, bytes, contentType, size: bytes.length }));
+        ({ storageRef } = await storage.put({ hash, bytes, contentType, size: bytes.length }));
       }
 
       await db
@@ -376,12 +376,12 @@ export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse):
       sendRegistryError(res, 'not_found', `Blob "${hash}" has no resolvable content.`);
       return;
     }
-    const adapter = await getAssetStorageAdapter(blob.storageProvider);
-    if (!adapter) {
-      sendRegistryError(res, 'unexpected_error', `No storage adapter is available for provider "${blob.storageProvider}".`);
+    const storage = await getStorageProvider(blob.storageProvider);
+    if (!storage) {
+      sendRegistryError(res, 'unexpected_error', `No asset storage is available for provider "${blob.storageProvider}".`);
       return;
     }
-    const result = await adapter.get(blob.storageRef);
+    const result = await storage.get(blob.storageRef);
     if (result.kind === 'redirect') {
       res.redirect(302, result.url);
       return;
@@ -394,13 +394,13 @@ export const handleAssetBlobRoute = (req: NextApiRequest, res: NextApiResponse):
     result.stream.pipe(res);
   });
 
-/** The active adapter when it supports direct uploads, otherwise `null` (the client then uses `PUT`). */
-const getDirectUploadAdapter = async (): Promise<AssetStorage | null> => {
-  if (getActiveAssetStorage().adapterKind === 'database') {
+/** The active provider when it supports direct uploads, otherwise `null` (the client then uses `PUT`). */
+const getDirectUploadProvider = async (): Promise<StorageProvider | null> => {
+  if (getActiveAssetStorage().provider === 'database') {
     return null;
   }
-  const adapter = await getActiveAssetStorageAdapter();
-  return adapter?.createUpload ? adapter : null;
+  const storage = await getActiveStorageProvider();
+  return storage?.createUpload ? storage : null;
 };
 
 const readDirectUploadRequest = (req: NextApiRequest, res: NextApiResponse): { hash: string; size: number; contentType: string } | null => {
@@ -422,8 +422,8 @@ const readDirectUploadRequest = (req: NextApiRequest, res: NextApiResponse): { h
  * Throw unless `storageRef` resolves to a stored object. A redirect is checked with a one-byte
  * ranged `GET`, because a signed read URL usually rejects `HEAD`.
  */
-const assertStored = async (adapter: AssetStorage, storageRef: string, size: number): Promise<void> => {
-  const result = await adapter.get(storageRef);
+const assertStored = async (storage: StorageProvider, storageRef: string, size: number): Promise<void> => {
+  const result = await storage.get(storageRef);
   if (result.kind === 'bytes') {
     if (result.bytes.length !== size) {
       throw new Error(`stored size ${result.bytes.length} does not match ${size}`);
@@ -452,8 +452,8 @@ export const handleAssetBlobUploadRoute = (req: NextApiRequest, res: NextApiResp
       sendRegistryData(res, 200, { upload: null, stored: true }, buildMeta());
       return;
     }
-    const adapter = await getDirectUploadAdapter();
-    const upload = adapter?.createUpload ? await adapter.createUpload(input) : null;
+    const storage = await getDirectUploadProvider();
+    const upload = storage?.createUpload ? await storage.createUpload(input) : null;
     sendRegistryData(res, 200, { upload }, buildMeta());
   });
 
@@ -468,13 +468,13 @@ export const handleAssetBlobCompleteRoute = (req: NextApiRequest, res: NextApiRe
       return;
     }
 
-    const adapter = await getDirectUploadAdapter();
-    if (!adapter) {
+    const storage = await getDirectUploadProvider();
+    if (!storage) {
       sendRegistryError(res, 'bad_request', 'The active asset storage provider does not accept direct uploads.');
       return;
     }
     try {
-      await assertStored(adapter, storageRef, input.size);
+      await assertStored(storage, storageRef, input.size);
     } catch (error) {
       const reason = error instanceof Error ? error.message : String(error);
       sendRegistryError(res, 'bad_request', `Blob "${input.hash}" was not found in storage (${reason}).`, {
@@ -487,7 +487,7 @@ export const handleAssetBlobCompleteRoute = (req: NextApiRequest, res: NextApiRe
       .insert(assetBlobs)
       .values({
         hash: input.hash,
-        storageProvider: getActiveAssetStorage().adapterKind,
+        storageProvider: getActiveAssetStorage().provider,
         content: null,
         storageRef,
         contentType: input.contentType,

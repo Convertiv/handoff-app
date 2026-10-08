@@ -1,16 +1,16 @@
 /**
- * Define helpers for custom server modules. This entry point has no runtime dependencies, so a module
- * that imports it does not pull the CLI into the registry bundle.
+ * Define helpers for custom server modules: storage, email and AI providers. This entry point has no
+ * runtime dependencies, so a module that imports it does not pull the CLI into the registry bundle.
  */
 export { defineAiProvider } from './ai/define';
 export type { AiProvider, AiProviderContext, AiProviderFactory } from './ai/types';
-export { defineAssetStorage } from './registry/asset-storage/define';
+export { defineStorageProvider } from './registry/asset-storage/define';
 export type {
-  AssetStorage,
-  AssetStorageContext,
-  AssetStorageFactory,
-  AssetStorageInput,
-  AssetStorageReadResult,
+  StorageProvider,
+  StorageProviderContext,
+  StorageProviderFactory,
+  StorageInput,
+  StorageReadResult,
   AssetUpload,
   AssetUploadInput,
 } from './registry/asset-storage/types';

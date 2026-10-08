@@ -30,7 +30,7 @@ import type { TokenSetKind } from '../tokens/sets';
 
 /**
  * PostgreSQL `bytea` column. Drizzle pg-core has no built-in binary type, so declare it once here.
- * Reads/writes are Node `Buffer`s. The default asset storage adapter keeps small/ordinary asset
+ * Reads/writes are Node `Buffer`s. The default asset storage provider keeps small/ordinary asset
  * bytes inline in this column; larger assets are offloaded to an object-storage `storageRef` instead.
  */
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({
@@ -39,7 +39,7 @@ const bytea = customType<{ data: Buffer; driverData: Buffer }>({
   },
 });
 
-/** Where an asset blob's bytes live: inline in the database (`database`) or in the custom adapter (`custom`). */
+/** Where an asset blob's bytes live: inline in the database (`database`) or in a custom provider (`custom`). */
 export type AssetStorageProvider = 'database' | 'custom';
 import type { ComponentListObject, PageListObject, PatternComponentEntry, PatternListObject } from '../../transformers/preview/types';
 
@@ -432,7 +432,7 @@ export const assets = pgTable(
 /**
  * Content-addressed binary blob store, shared across assets/collections (the `hash` is the blob
  * identity, so an unchanged file re-references the same row). Exactly one location is active per row:
- * inline `content` (bytea, default DB adapter) or an external `storageRef` resolved through the
+ * inline `content` (bytea, default `database` provider) or an external `storageRef` resolved through the
  * recorded `storageProvider`. Both nullable so DB- and object-backed blobs coexist.
  */
 export const assetBlobs = pgTable('asset_blobs', {

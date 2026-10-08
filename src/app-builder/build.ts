@@ -300,9 +300,9 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const escapedMcpEnabled = escapeForSingleQuotedJsString(String(isMcpEnabled(handoff.config)));
   const escapedRegistryDriver = escapeForSingleQuotedJsString(resolveRegistryDriver(handoff.config));
   const escapedDatabaseUrlEnv = escapeForSingleQuotedJsString(resolveDatabaseUrlEnv(handoff.config));
-  // Asset storage selection baked (adapter + module + options JSON with `{ $env }` references).
+  // Asset storage selection baked (provider + module + options JSON with `{ $env }` references).
   const assetStorage = resolveAssetStorageFromConfig(handoff.config);
-  const escapedAssetStorageAdapter = escapeForSingleQuotedJsString(assetStorage.adapterKind);
+  const escapedAssetStorageProvider = escapeForSingleQuotedJsString(assetStorage.provider);
   const escapedAssetStorageModule = escapeForSingleQuotedJsString(assetStorage.module ?? '');
   const escapedAssetStorageMaxInline = escapeForSingleQuotedJsString(String(assetStorage.maxInlineBytes));
   const escapedAssetStorageOptions = escapeForSingleQuotedJsString(JSON.stringify(assetStorage.options ?? {}));
@@ -330,7 +330,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_MCP_ENABLED%': escapedMcpEnabled,
     '%HANDOFF_REGISTRY_DRIVER%': escapedRegistryDriver,
     '%HANDOFF_REGISTRY_DATABASE_URL_ENV%': escapedDatabaseUrlEnv,
-    '%HANDOFF_ASSET_STORAGE_ADAPTER%': escapedAssetStorageAdapter,
+    '%HANDOFF_ASSET_STORAGE_PROVIDER%': escapedAssetStorageProvider,
     '%HANDOFF_ASSET_STORAGE_MODULE%': escapedAssetStorageModule,
     '%HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES%': escapedAssetStorageMaxInline,
     '%HANDOFF_ASSET_STORAGE_OPTIONS%': escapedAssetStorageOptions,
@@ -474,7 +474,7 @@ merged over the list this build baked in, keyed by \`id\`. Use it to add or repo
 without rebuilding.
 `;
 
-  const assetStorageEnvs = assetStorage.adapterKind === 'custom' ? envReferenceNames(assetStorage.options) : [];
+  const assetStorageEnvs = assetStorage.provider === 'custom' ? envReferenceNames(assetStorage.options) : [];
   const emailEnvs = envReferenceNames(email.options);
   const emailSection = !email.from
     ? 'Email delivery is off because `runtime.registry.email.from` is not set. Invitation links are shown once to an administrator for manual delivery.'
@@ -498,7 +498,7 @@ and \`.next/static/\` already copied alongside so the server serves them.
 - \`${databaseUrlEnv}\` — PostgreSQL/Neon connection string, read at request time.
 - \`AUTH_SECRET\` — a long, random secret used to sign browser sessions.
 - \`AUTH_URL\` — the canonical public registry URL, including the configured base path.
-${assetStorageEnvs.map((name) => `- \`${name}\` — read by the custom asset storage adapter at request time.\n`).join('')}
+${assetStorageEnvs.map((name) => `- \`${name}\` — read by the custom asset storage provider at request time.\n`).join('')}
 ${emailSection}
 ${aiSection}
 ## Database migrations
@@ -569,8 +569,8 @@ For multi-instance self-hosting, front \`/_next/static\` with a CDN and configur
 
 ## Deploying to Vercel
 
-Vercel does **not** use \`output: 'standalone'\` — it ignores that setting and builds with its own
-adapter, so this pre-built bundle is **not** the artifact you deploy there. For Vercel, deploy the
+Vercel does **not** use \`output: 'standalone'\` — it ignores that setting and runs its
+own build, so this pre-built bundle is **not** the artifact you deploy there. For Vercel, deploy the
 registry app via Vercel's Git/CLI source build (it produces and serves the dynamic app itself) and
 supply the same environment variables above as project env vars. Use this standalone bundle for
 containers, custom Node servers, and other non-Vercel hosts.
@@ -635,7 +635,7 @@ const getCustomServerModules = (handoff: Handoff): string[] => {
   const assetStorage = resolveAssetStorageFromConfig(handoff.config);
   const email = resolveEmailFromConfig(handoff.config);
   const modules = [
-    assetStorage.adapterKind === 'custom' ? assetStorage.module : undefined,
+    assetStorage.provider === 'custom' ? assetStorage.module : undefined,
     email.provider === 'custom' ? email.module : undefined,
     ...resolveAiFromConfig(handoff.config).connections.map((connection) => connection.module),
   ];
@@ -667,7 +667,7 @@ const copyCustomServerModules = async (handoff: Handoff, tracingRoot: string, en
     }
     if ([...fileList].some((file) => file.split(path.sep).join('/').endsWith('node_modules/handoff-app/dist/index.js'))) {
       throw new HandoffBuildError(
-        `The custom server module "${module}" imports "handoff-app", which loads the whole CLI. Import the define helpers from "handoff-app/define".`
+        `The custom server module "${module}" imports "handoff-app", which loads the whole CLI. Import the define helpers from "handoff-app/providers".`
       );
     }
     fileList.forEach((file) => files.add(file));

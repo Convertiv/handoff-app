@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import type { RuntimeMode } from '@handoff/types/config';
 import { DEFAULT_DATABASE_URL_ENV, DEFAULT_REGISTRY_DRIVER, type RegistryDatabaseDriver } from '@handoff/registry/db/driver';
-import { DEFAULT_ASSET_STORAGE_ADAPTER, type AssetStorageSettings } from '@handoff/registry/asset-storage/resolve';
+import { DEFAULT_ASSET_STORAGE_PROVIDER, type AssetStorageSettings } from '@handoff/registry/asset-storage/resolve';
 import { mergeAiConnections, parseAiConnections, type AiSettings } from '@handoff/ai/connections';
 import { parseEmailSettings, type EmailSettings } from '@handoff/registry/email/resolve';
 
@@ -41,7 +41,7 @@ export interface ServerRuntimeConfig {
   ai: AiSettings;
   registry: ServerRegistryRuntimeConfig;
   /**
-   * Asset storage adapter, module, and options for registry mode. Options hold `{ $env }` references,
+   * Asset storage provider, module, and options for registry mode. Options hold `{ $env }` references,
    * never secret values.
    */
   assetStorage: AssetStorageSettings;
@@ -60,13 +60,13 @@ const defaults = (): ServerRuntimeConfig => ({
     driver: DEFAULT_REGISTRY_DRIVER,
     databaseUrlEnv: DEFAULT_DATABASE_URL_ENV,
   },
-  assetStorage: { adapter: DEFAULT_ASSET_STORAGE_ADAPTER },
+  assetStorage: { provider: DEFAULT_ASSET_STORAGE_PROVIDER },
   email: { options: {} },
 });
 
 /** Parse the baked asset-storage selection from env (names/selectors only; JSON options tolerated). */
 const assetStorageFromEnv = (): AssetStorageSettings => {
-  const adapter = process.env.HANDOFF_ASSET_STORAGE_ADAPTER?.trim();
+  const provider = process.env.HANDOFF_ASSET_STORAGE_PROVIDER?.trim();
   let options: Record<string, unknown> | undefined;
   const rawOptions = process.env.HANDOFF_ASSET_STORAGE_OPTIONS?.trim();
   if (rawOptions) {
@@ -79,7 +79,7 @@ const assetStorageFromEnv = (): AssetStorageSettings => {
   }
   const maxInline = Number(process.env.HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES);
   return {
-    adapter: adapter === 'custom' ? adapter : DEFAULT_ASSET_STORAGE_ADAPTER,
+    provider: provider === 'custom' ? provider : DEFAULT_ASSET_STORAGE_PROVIDER,
     module: process.env.HANDOFF_ASSET_STORAGE_MODULE?.trim() || undefined,
     maxInlineBytes: Number.isFinite(maxInline) && maxInline > 0 ? maxInline : undefined,
     options,
@@ -167,7 +167,7 @@ export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
           ? parsed.registry.databaseUrlEnv.trim()
           : DEFAULT_DATABASE_URL_ENV;
       const assetStorage: AssetStorageSettings =
-        parsed?.assetStorage && typeof parsed.assetStorage === 'object' ? parsed.assetStorage : { adapter: DEFAULT_ASSET_STORAGE_ADAPTER };
+        parsed?.assetStorage && typeof parsed.assetStorage === 'object' ? parsed.assetStorage : { provider: DEFAULT_ASSET_STORAGE_PROVIDER };
       cached = {
         mode: parsed?.mode === 'registry' ? 'registry' : 'workspace',
         mcp: parsed?.mcp !== false,

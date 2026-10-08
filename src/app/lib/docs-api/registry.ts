@@ -21,7 +21,7 @@ import {
 import { defaultPageDetail, type BakedDefaultPage } from './page-rendering';
 import { MAX_SEARCH_BODY_LENGTH, MAX_SEARCH_CANDIDATES, truncateSearchBody, type SearchResponse } from './search';
 import { getRegistryConnection } from '../registry-connection';
-import { getAssetStorageAdapter } from '../asset-storage';
+import { getStorageProvider } from '../asset-storage';
 // A static import includes package defaults in each registry serverless bundle. A deployed function
 // cannot read the build machine's `config/docs` directory.
 import defaultPages from '../../generated/default-pages.json';
@@ -148,8 +148,7 @@ const searchRegistryPages = async (db: RegistryDatabase, request: PageSearchRequ
 export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
   const connection = await getRegistryConnection();
   const { db } = connection;
-  // Inject the storage-adapter resolver so object-backed asset content resolves by provider id.
-  const store = createRegistryStore({ db, resolveAssetAdapter: getAssetStorageAdapter });
+  const store = createRegistryStore({ db, resolveStorageProvider: getStorageProvider });
 
   return {
     async listComponents() {

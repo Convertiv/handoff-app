@@ -89,6 +89,6 @@ export interface NavData {
 export { getNavData } from './resolver';
 export type { GetNavDataInput } from './resolver';
 export { getWorkspaceNavData } from './workspace';
-export type { WorkspaceNavAdapterOptions, WorkspaceNavLoaders } from './workspace';
+export type { WorkspaceNavOptions, WorkspaceNavLoaders } from './workspace';
 export { getRegistryNavData } from './registry';
-export type { RegistryNavAdapterOptions, RegistryNavRecords } from './registry';
+export type { RegistryNavOptions, RegistryNavRecords } from './registry';

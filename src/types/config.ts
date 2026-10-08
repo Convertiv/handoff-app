@@ -267,13 +267,13 @@ export interface HandoffRuntimeConfig {
        * `custom` module for object storage.
        * @default "database"
        */
-      adapter?: 'database' | 'custom';
-      /** For `adapter: "custom"` - server-only module path default-exporting a `defineAssetStorage` adapter. */
+      provider?: 'database' | 'custom';
+      /** For `provider: "custom"` - server-only module path default-exporting a `defineStorageProvider()` result. */
       module?: string;
       /** Max bytes kept inline in the database `bytea` column (larger uploads are rejected). @default 4194304 */
       maxInlineBytes?: number;
       /**
-       * Options passed to the adapter factory. Literals are baked. Environment references are resolved
+       * Options passed to the provider factory. Literals are baked. Environment references are resolved
        * at request time, so secrets must be environment references.
        */
       options?: Record<string, unknown>;
