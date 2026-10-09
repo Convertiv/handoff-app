@@ -1,7 +1,6 @@
 ---
 title: Typography Guidelines
 description: Best practices for type scale, hierarchy, and readability across the system.
-metaTitle: 'Typography Guidelines | Handoff Design System'
 metaDescription: 'Best practices for type scale, hierarchy, and readability across the system.'
 ---
 

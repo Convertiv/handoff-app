@@ -20,7 +20,7 @@ export const getStaticProps: GetStaticProps = async () => ({ props: { config: ge
 
 export default function DeviceApprovalPage({ config }: { config: ClientConfig }) {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
-    return <AuthShell title="Authorize CLI">{null}</AuthShell>;
+    return <AuthShell config={config} title="Authorize CLI">{null}</AuthShell>;
   }
 
   return <RegistryDeviceApprovalPage config={config} />;

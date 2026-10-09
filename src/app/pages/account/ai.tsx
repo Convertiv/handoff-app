@@ -34,7 +34,7 @@ export const getStaticProps: GetStaticProps = async () => ({ props: { config: ge
 
 export default function AiKeysPage({ config }: { config: ClientConfig }) {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
-    return <AccountLayout title="AI providers">{null}</AccountLayout>;
+    return <AccountLayout config={config} title="AI providers">{null}</AccountLayout>;
   }
 
   return <RegistryAiKeysPage config={config} />;

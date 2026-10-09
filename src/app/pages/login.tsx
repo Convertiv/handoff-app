@@ -2,29 +2,34 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import type { ClientConfig } from '@handoff/types/config';
+import type { GetStaticProps } from 'next';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import { FormEvent, useEffect, useState } from 'react';
 import { AuthShell } from '../components/Auth/AuthShell';
 import { loadInstallStatus } from '../components/Auth/installStatus';
+import { getClientRuntimeConfig } from '../components/util';
 
 const safeCallbackUrl = (value: unknown): string =>
   typeof value === 'string' && value.startsWith('/') && !value.startsWith('//') && !value.startsWith('/\\') ? value : '/';
 
-export default function LoginPage() {
+export const getStaticProps: GetStaticProps = async () => ({ props: { config: getClientRuntimeConfig() } });
+
+export default function LoginPage({ config }: { config: ClientConfig }) {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
     return (
-      <AuthShell title="Sign in" centered>
+      <AuthShell config={config} title="Sign in" centered>
         {null}
       </AuthShell>
     );
   }
 
-  return <RegistryLoginPage />;
+  return <RegistryLoginPage config={config} />;
 }
 
-function RegistryLoginPage() {
+function RegistryLoginPage({ config }: { config: ClientConfig }) {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [pending, setPending] = useState(false);
@@ -77,7 +82,7 @@ function RegistryLoginPage() {
   };
 
   return (
-    <AuthShell title="Sign in" centered>
+    <AuthShell config={config} title="Sign in" centered>
       <Card>
         <CardHeader>
           <CardTitle>Sign in</CardTitle>

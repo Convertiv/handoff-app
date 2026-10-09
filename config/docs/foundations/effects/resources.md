@@ -1,7 +1,6 @@
 ---
 title: Effects Resources
 description: Reference values and assets for reproducing the brand's effects in any tool.
-metaTitle: 'Effects Resources | Handoff Design System'
 metaDescription: 'Reference values and assets for reproducing effects in any tool.'
 ---
 

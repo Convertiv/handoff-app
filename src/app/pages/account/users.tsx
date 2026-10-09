@@ -37,7 +37,7 @@ export const getStaticProps: GetStaticProps = async () => ({ props: { config: ge
 
 export default function UsersPage({ config }: { config: ClientConfig }) {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
-    return <AccountLayout title="Users">{null}</AccountLayout>;
+    return <AccountLayout config={config} title="Users">{null}</AccountLayout>;
   }
 
   return <RegistryUsersPage config={config} />;

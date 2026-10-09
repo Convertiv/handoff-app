@@ -1,7 +1,6 @@
 ---
 title: Image Resources
 description: Source files and downloads for approved photography and illustration.
-metaTitle: 'Image Resources | Handoff Design System'
 metaDescription: 'Source files and downloads for approved photography and illustration.'
 ---
 

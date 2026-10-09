@@ -31,7 +31,7 @@ export const documentationMetadata = (source: Record<string, unknown>) => {
   return {
     title,
     description,
-    metaTitle: value('metaTitle') || title,
+    metaTitle: value('metaTitle'),
     metaDescription: value('metaDescription') || description,
   };
 };

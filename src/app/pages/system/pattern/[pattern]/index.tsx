@@ -130,7 +130,7 @@ export const getStaticProps = async (context: { params: IParams }) => {
       metadata: {
         title: fallbackTitle,
         description: patternData?.description || '',
-        metaTitle: `${fallbackTitle}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`,
+        metaTitle: '',
         metaDescription: patternData?.description || '',
       },
       previousPattern,
@@ -189,7 +189,7 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
 
   if (patternNotFound) {
     return (
-      <Layout config={config} menu={menu} current={current} metadata={{ ...metadata, title: '404 - Page Not Found', metaTitle: '404 - Page Not Found' }}>
+      <Layout config={config} menu={menu} current={current} metadata={{ ...metadata, title: 'Page Not Found', metaTitle: '' }}>
         <div className="flex min-h-[60vh] flex-col items-center justify-center">
           <NotFound />
         </div>

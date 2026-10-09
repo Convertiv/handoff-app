@@ -2,14 +2,19 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
+import type { ClientConfig } from '@handoff/types/config';
+import type { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { FormEvent, useEffect, useState } from 'react';
 import { AuthShell } from '../components/Auth/AuthShell';
 import { authApiUrl, readApiError } from '../components/Auth/api';
+import { getClientRuntimeConfig } from '../components/util';
 
-export default function ResetPasswordPage() {
+export const getStaticProps: GetStaticProps = async () => ({ props: { config: getClientRuntimeConfig() } });
+
+export default function ResetPasswordPage({ config }: { config: ClientConfig }) {
   const router = useRouter();
   const [token, setToken] = useState('');
   const [purpose, setPurpose] = useState<'invite' | 'reset'>('reset');
@@ -87,7 +92,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <AuthShell title={token ? 'Set a new password' : 'Reset password'} centered>
+    <AuthShell config={config} title={token ? 'Set a new password' : 'Reset password'} centered>
       <Head>
         <meta name="referrer" content="no-referrer" />
       </Head>

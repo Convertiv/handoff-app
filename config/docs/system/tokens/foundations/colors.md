@@ -7,7 +7,6 @@ description: |
 weight: 5
 image: hero-components
 menuTitle: 'Colors'
-metaTitle: 'Colors | Handoff Design System'
 metaDescription: |
   Element that represents a control that provides a menu of options, collection 
   of UI components used.'

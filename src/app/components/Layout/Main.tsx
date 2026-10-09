@@ -5,7 +5,7 @@ import { Header } from '../../components/Layout/Header';
 import { ThemeProvider } from '../../components/util/theme-provider';
 import SideNav from '../Navigation/SideNav';
 import { ConfigContextProvider } from '../context/ConfigContext';
-import { hasRenderableNav } from '../../lib/utils';
+import { hasRenderableNav, pageTitle } from '../../lib/utils';
 import { SidebarInset, SidebarProvider } from '../ui/sidebar';
 import { SectionLink } from '../util';
 
@@ -34,7 +34,7 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
       <ConfigContextProvider defaultConfig={config} defaultMenu={menu}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Head>
-            <title>{metadata.metaTitle}</title>
+            <title>{pageTitle(metadata, config?.app?.title)}</title>
             <meta name="description" content={metadata.metaDescription} />
           </Head>
           <div className="absolute left-[-200px] top-[-200px] z-[-1] h-[400px] w-[600px] bg-[#111111] opacity-[0.05] blur-[350px]">

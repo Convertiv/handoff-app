@@ -70,14 +70,10 @@ export const getStaticProps = async (context) => {
     description = componentData?.description;
   }
 
-  const fallbackTitle = displayName || startCase(componentSlug);
-  const fallbackMetaTitle = `${fallbackTitle}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`;
-
   markdownProps.metadata = {
     ...markdownProps.metadata,
     title: displayName || markdownProps.metadata.title || startCase(componentSlug),
     description: markdownProps.metadata.description || description || '',
-    metaTitle: markdownProps.metadata.metaTitle || fallbackMetaTitle,
     metaDescription: markdownProps.metadata.metaDescription || description || '',
   };
 

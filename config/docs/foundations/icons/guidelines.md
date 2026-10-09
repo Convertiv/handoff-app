@@ -1,7 +1,6 @@
 ---
 title: Icon Guidelines
 description: Sizing, spacing, and usage rules that keep the icon set consistent.
-metaTitle: 'Icon Guidelines | Handoff Design System'
 metaDescription: 'Sizing, spacing, and usage rules that keep the icon set consistent.'
 ---
 

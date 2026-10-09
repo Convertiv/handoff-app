@@ -33,6 +33,10 @@ export const getStaticProps: GetStaticProps = async () => {
   };
 };
 
+// Tokens without a Figma group land under an empty key.
+const groupTitle = (group: string) => upperFirst(group) || 'Other';
+const groupId = (group: string) => group || 'other';
+
 const ColorsPage = ({
   content,
   menu,
@@ -82,20 +86,17 @@ const ColorsPage = ({
       <div className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
         <div className="flex flex-col gap-0">
           {Object.keys(colorGroups).map((group) => (
-            <ColorGrid
-              title={upperFirst(group)}
-              group={group}
-              description="Colors that are used most frequently across all pages and components."
-              colors={colorGroups[group]}
-              key={group}
-            />
+            <ColorGrid title={groupTitle(group)} group={groupId(group)} colors={colorGroups[group]} key={group} />
           ))}
           <PrevNextNav previous={null} next={{ title: 'Typography', href: '/foundations/typography' }} />
         </div>
 
         <AnchorNav
           groups={[
-            Object.assign({}, ...[...Object.keys(colorGroups).map((group) => ({ [`${group}-colors`]: `${upperFirst(group)} Colors` }))]),
+            Object.assign(
+              {},
+              ...[...Object.keys(colorGroups).map((group) => ({ [`${groupId(group)}-colors`]: `${groupTitle(group)} Colors` }))]
+            ),
           ]}
         />
 

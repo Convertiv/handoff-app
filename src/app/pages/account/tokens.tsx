@@ -37,7 +37,7 @@ export const getStaticProps: GetStaticProps = async () => ({ props: { config: ge
 
 export default function TokensPage({ config }: { config: ClientConfig }) {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
-    return <AccountLayout title="Access tokens">{null}</AccountLayout>;
+    return <AccountLayout config={config} title="Access tokens">{null}</AccountLayout>;
   }
 
   return <RegistryTokensPage config={config} />;

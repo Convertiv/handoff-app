@@ -4,7 +4,6 @@ description: Library of production-ready UI components built to deliver consiste
 weight: 5
 image: hero-components
 menuTitle: 'Design System'
-metaTitle: 'Design System | Handoff Design System'
 metaDescription: 'Element that represents a control that provides a menu of options, collection of UI components used.'
 enabled: true
 menu:

@@ -558,17 +558,6 @@ export const fetchDocPageMetadataAndContent = (localPath: string, slug: string |
 export const filterOutUndefined = <T>(value: T): value is NonNullable<T> => value !== undefined;
 
 /**
- * Create a title string from a prefix
- * @param prefix
- * @returns
- */
-export const titleString = (prefix: string | null): string => {
-  const config = getClientRuntimeConfig();
-  const prepend = prefix ? `${prefix} | ` : '';
-  return `${prepend}${config?.app?.client} Design System`;
-};
-
-/**
  * Get the tokens for a component
  * @param component
  * @param type

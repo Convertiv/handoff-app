@@ -2,7 +2,6 @@
 title: Grid
 description: Layout grid and spacing system that keeps compositions aligned and balanced.
 image: hero-design
-metaTitle: 'Grid | Handoff Design System'
 metaDescription: 'Layout grid and spacing system that keeps compositions aligned and balanced.'
 ---
 

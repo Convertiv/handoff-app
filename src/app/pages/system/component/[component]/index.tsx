@@ -96,9 +96,6 @@ export const getStaticProps = async (context) => {
   const previousComponent = sameGroupComponents[groupIndex - 1] ?? null;
   const nextComponent = sameGroupComponents[groupIndex + 1] ?? null;
 
-  const fallbackTitle = componentData.title || startCase(component as string);
-  const fallbackMetaTitle = `${fallbackTitle}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`;
-
   return {
     props: {
       id: component,
@@ -110,7 +107,7 @@ export const getStaticProps = async (context) => {
         ...componentData,
         title: componentData.title || docs.metadata.title || startCase(component as string),
         description: componentData.description,
-        metaTitle: docs.metadata.metaTitle || fallbackMetaTitle,
+        metaTitle: docs.metadata.metaTitle ?? '',
         metaDescription: docs.metadata.metaDescription || componentData.description,
         image: docs.metadata.image || 'hero-brand-assets',
       },

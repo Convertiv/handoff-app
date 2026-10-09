@@ -1,7 +1,6 @@
 ---
 title: Logo Resources
 description: Downloadable logo files and everything teams need to represent the brand correctly.
-metaTitle: 'Logo Resources | Handoff Design System'
 metaDescription: 'Downloadable logo files and everything teams need to represent the brand correctly.'
 ---
 

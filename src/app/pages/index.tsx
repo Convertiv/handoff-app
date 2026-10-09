@@ -57,11 +57,11 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
 export const Home = ({ content, menu, metadata, config, current }: DocumentationProps) => {
   return (
-    <Layout config={config} menu={menu} current={current} metadata={metadata} fullWidthHero={true}>
+    <Layout config={config} menu={menu} current={current} metadata={{ ...metadata, metaTitle: metadata.metaTitle || config?.app?.title }} fullWidthHero={true}>
       <div className="w-full bg-linear-to-r py-12 dark:from-gray-900 dark:to-gray-800 sm:py-20">
         <div className="container mx-auto px-8">
           <HeadersType.H1 className="max-w-4xl text-3xl font-semibold leading-[-0.05px]  sm:text-4xl">
-            {config?.app?.client} Design System
+            {config?.app?.title}
           </HeadersType.H1>
           {content && (
             <div className="text-lg max-w-4xl empty:hidden [&>*]:mt-6 [&>p]:font-light [&>h2:first-child]:mt-0 [&>h2:first-child]:font-normal sm:text-xl">

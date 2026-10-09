@@ -2,7 +2,6 @@
 title: Images
 description: Photography and illustration style that shapes how the brand looks and feels.
 image: hero-design
-metaTitle: 'Images | Handoff Design System'
 metaDescription: 'Photography and illustration style that shapes how the brand looks and feels.'
 ---
 

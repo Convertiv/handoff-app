@@ -41,7 +41,7 @@ interface AccountLayoutProps {
 
 export function AccountLayout({ children, config, title, description }: AccountLayoutProps) {
   if (process.env.HANDOFF_RUNTIME_MODE !== 'registry') {
-    return <AuthShell title={title}>{null}</AuthShell>;
+    return <AuthShell config={config} title={title}>{null}</AuthShell>;
   }
 
   return (

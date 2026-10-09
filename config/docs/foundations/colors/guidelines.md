@@ -1,7 +1,6 @@
 ---
 title: Color Guidelines
 description: How to apply the color palette consistently and accessibly across products.
-metaTitle: 'Color Guidelines | Handoff Design System'
 metaDescription: 'How to apply the color palette consistently and accessibly across products.'
 ---
 

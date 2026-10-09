@@ -1,7 +1,6 @@
 ---
 title: Effects Guidelines
 description: When and how to apply shadows, blurs, and elevation across the interface.
-metaTitle: 'Effects Guidelines | Handoff Design System'
 metaDescription: 'When and how to apply shadows, blurs, and elevation across the interface.'
 ---
 

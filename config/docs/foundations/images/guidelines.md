@@ -1,7 +1,6 @@
 ---
 title: Image Guidelines
 description: How to select, crop, and treat imagery so it stays on brand.
-metaTitle: 'Image Guidelines | Handoff Design System'
 metaDescription: 'How to select, crop, and treat imagery so it stays on brand.'
 ---
 

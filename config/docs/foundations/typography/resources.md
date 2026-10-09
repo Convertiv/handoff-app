@@ -1,7 +1,6 @@
 ---
 title: Typography Resources
 description: Font files, licenses, and assets needed to work with the brand typography.
-metaTitle: 'Typography Resources | Handoff Design System'
 metaDescription: 'Font files, licenses, and assets needed to work with the brand typography.'
 ---
 

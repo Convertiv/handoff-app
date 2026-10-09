@@ -51,3 +51,10 @@ export const filterOutNull = <T>(value: T): value is NonNullable<T> => value !==
  */
 export const hasRenderableNav = (section?: SectionLink | null): boolean =>
   !!section?.subSections?.some((sub) => (sub.menu && sub.menu.length > 0) || !!sub.dynamic);
+
+/**
+ * The browser title: a page's own `metaTitle` as written, otherwise its title followed by the
+ * site title from `app.title`.
+ */
+export const pageTitle = (metadata: { title?: string; metaTitle?: string }, siteTitle?: string): string =>
+  metadata.metaTitle || [metadata.title, siteTitle].filter(Boolean).join(' | ');

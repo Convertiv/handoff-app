@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import type { ClientConfig } from '@handoff/types/config';
 import type { ReactNode } from 'react';
+import { pageTitle } from '../../lib/utils';
 import { ConfigContextProvider } from '../context/ConfigContext';
 import { Header } from '../Layout/Header';
 import { Button } from '../ui/button';
@@ -21,9 +22,17 @@ interface AuthShellProps {
 }
 
 export function AuthShell({ children, config, title, description, wide = false, hideNav = false, centered = false }: AuthShellProps) {
+  const head = (
+    <Head>
+      <title>{pageTitle({ title }, config?.app?.title)}</title>
+      {description ? <meta name="description" content={description} /> : null}
+    </Head>
+  );
+
   if (!isRegistryRuntime) {
     return (
       <main className="flex min-h-screen items-center justify-center px-6">
+        {head}
         <div className="max-w-md text-center">
           <h1 className="text-2xl font-semibold">Registry only</h1>
           <p className="mt-2 text-sm text-muted-foreground">Account management is available only in a deployed registry.</p>
@@ -40,10 +49,7 @@ export function AuthShell({ children, config, title, description, wide = false, 
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-      <Head>
-        <title>{title} · Handoff Registry</title>
-        {description ? <meta name="description" content={description} /> : null}
-      </Head>
+      {head}
       {centered ? (
         <main className="flex min-h-[calc(100vh-8rem)] items-center justify-center bg-background px-4 py-12">
           <div className="w-full max-w-md">{children}</div>

@@ -20,6 +20,7 @@ import {
 } from '../../components/util';
 import { resolveDocsBackend } from '../../lib/docs-api/backend';
 import { documentationMetadata, REGISTRY_PAGE_REVALIDATE_SECONDS } from '../../lib/docs-api/page-rendering';
+import { pageTitle } from '../../lib/utils';
 import { Home, getStaticProps as getHomeStaticProps } from '../index';
 
 type CatchAllDocumentationProps = DocumentationProps & { homeAlias?: boolean };
@@ -114,7 +115,7 @@ export default function DocCatchAllPage({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-white dark:bg-gray-900">
         <Head>
-          <title>404 - Page Not Found</title>
+          <title>{pageTitle({ title: 'Page Not Found' }, config?.app?.title)}</title>
           <meta name="description" content="Page Not Found" />
         </Head>
         <NotFound />
