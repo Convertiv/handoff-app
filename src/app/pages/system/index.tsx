@@ -107,20 +107,20 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
         <div className="mt-3 flex flex-row justify-between gap-3">
           <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
           <Drawer direction="right">
-            <DrawerTrigger>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DrawerTrigger asChild>
                     <Button variant="outline">
                       API <Webhook strokeWidth={1.5} />
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="left">
-                    <Badge>{apiUrl}</Badge>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </DrawerTrigger>
+                  </DrawerTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <Badge>{apiUrl}</Badge>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <DrawerContent>
               <div className="mx-5 w-full max-w-lg">
                 <DrawerHeader>

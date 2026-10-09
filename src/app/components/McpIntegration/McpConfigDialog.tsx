@@ -134,18 +134,13 @@ type EndpointStatus = 'checking' | 'live' | 'unreachable';
 let cachedStatus: EndpointStatus | null = null;
 let inFlight: Promise<EndpointStatus> | null = null;
 
-/**
- * Statuses that prove the route is being served. A GET is the cheapest question to ask: the handler
- * answers 405 without ever building an MCP server, and a registry answers 401 ahead of that because
- * the credential check runs first. Anything else, 404 and 5xx included, means it is not there.
- */
-const LIVE_STATUSES = new Set([200, 401, 403, 405]);
-
 const probeEndpoint = (url: string): Promise<EndpointStatus> => {
   if (cachedStatus) return Promise.resolve(cachedStatus);
   if (inFlight) return inFlight;
-  inFlight = fetch(url, { method: 'GET' })
-    .then((res): EndpointStatus => (LIVE_STATUSES.has(res.status) ? 'live' : 'unreachable'))
+  // The endpoint answers HEAD with 204 before the credential check. Thus a served route never logs an
+  // error status to the console.
+  inFlight = fetch(url, { method: 'HEAD' })
+    .then((res): EndpointStatus => (res.ok ? 'live' : 'unreachable'))
     .catch((): EndpointStatus => 'unreachable')
     .then((status) => {
       cachedStatus = status;

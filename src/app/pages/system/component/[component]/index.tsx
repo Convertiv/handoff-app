@@ -253,7 +253,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
               </Button>
             )}
             <Drawer direction="right">
-              <DrawerTrigger>
+              <DrawerTrigger asChild>
                 <Button variant="outline" size={'sm'} className="font-normal [&_svg]:size-3!">
                   API Reference
                 </Button>

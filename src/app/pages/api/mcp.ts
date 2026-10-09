@@ -22,6 +22,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
+  // The status probe of the docs app. A 204 shows only that the route is served, so the probe needs no credential.
+  if (req.method === 'HEAD') {
+    res.status(204).end();
+    return;
+  }
+
   if (!(await authorizeMcpRequest(req, res))) {
     return;
   }
