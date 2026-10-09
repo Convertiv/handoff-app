@@ -7,9 +7,6 @@ description: |
 weight: 5
 image: hero-components
 menuTitle: 'Colors'
-metaDescription: |
-  Element that represents a control that provides a menu of options, collection 
-  of UI components used.'
 enabled: true
 menu:
   - title: Design System

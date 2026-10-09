@@ -4,9 +4,6 @@ description: Effects are the shadows and insets pulled automatically from Figma
 weight: 5
 image: hero-components
 menuTitle: 'Effects'
-metaDescription: |
-  Element that represents a control that provides a menu of options, collection 
-  of UI components used.
 enabled: true
 menu:
   - title: Design System
