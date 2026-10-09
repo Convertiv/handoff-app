@@ -50,7 +50,7 @@ const DesignPage = ({ content, menu, metadata, current, config }: DocumentationP
             },
             {
               title: 'Colors',
-              description: 'Official logo used for all digital and offline materials.',
+              description: 'Official color palette used for all digital products.',
               icon: Palette,
               link: '/foundations/colors',
               cta: 'Explore Colors',
@@ -74,14 +74,14 @@ const DesignPage = ({ content, menu, metadata, current, config }: DocumentationP
               description: 'Downloadable icon set for use in digital and offline materials.',
               icon: Shapes,
               link: '/foundations/icons',
-              cta: 'View Library',
+              cta: 'Explore Icons',
             },
             {
               title: 'Effects',
               description: 'Shadows, blurs, and other effects used in the design system.',
               icon: Sun,
               link: '/foundations/effects',
-              cta: 'View Effects',
+              cta: 'Explore Effects',
             },
           ]}
         />
