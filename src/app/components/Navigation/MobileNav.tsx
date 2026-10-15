@@ -4,7 +4,6 @@ import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { AiAssistantMobileTrigger } from '../../components/AiAssistant/AiAssistantProvider';
-import { McpConfigMobile } from '../../components/McpIntegration/McpConfigDialog';
 import { Button } from '../../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet';
 import { cn } from '../../lib/utils';
@@ -72,7 +71,6 @@ export function MobileNav() {
                 </Link>
               );
             })}
-          <McpConfigMobile />
           <div className="mt-4 border-t pt-4">
             <Button variant="ghost" className="w-full justify-start font-normal" onClick={toggleTheme}>
               {theme === 'light' && (

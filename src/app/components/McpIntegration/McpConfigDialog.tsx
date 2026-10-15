@@ -179,29 +179,19 @@ const StatusDot: React.FC<{ status: EndpointStatus; className?: string }> = ({ s
   <span role="status" aria-label={DOT[status].label} title={DOT[status].label} className={cn('size-1.5 rounded-full', DOT[status].className, className)} />
 );
 
-const Snippet: React.FC<{ label: string; value: string; compact?: boolean }> = ({ label, value, compact }) => (
+const Snippet: React.FC<{ label: string; value: string }> = ({ label, value }) => (
   <div className="min-w-0 space-y-1.5">
     <div className="flex items-center justify-between gap-2">
       <code className="truncate rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">{label}</code>
       <CopyToClipboard value={value} tooltip={`Copy ${label}`} showTooltip={false} className="relative size-7 shrink-0" />
     </div>
-    <pre
-      className={cn(
-        'overflow-auto rounded-md border bg-muted/50 p-3 leading-relaxed',
-        compact ? 'max-h-48 text-[10px]' : 'max-h-64 text-xs'
-      )}
-    >
+    <pre className="max-h-64 overflow-auto rounded-md border bg-muted/50 p-3 text-xs leading-relaxed">
       <code>{value}</code>
     </pre>
   </div>
 );
 
-const ClientConfig: React.FC<{ client: McpClient; name: string; target: McpTarget; compact?: boolean }> = ({
-  client,
-  name,
-  target,
-  compact,
-}) => {
+const ClientConfig: React.FC<{ client: McpClient; name: string; target: McpTarget }> = ({ client, name, target }) => {
   // A one-click install would write the `<your-token>` placeholder verbatim and register a server
   // that cannot connect, so a registry gets the snippet and the token pointer instead.
   const deeplink = isRegistryRuntime ? undefined : client.deeplink?.(name, target);
@@ -217,8 +207,8 @@ const ClientConfig: React.FC<{ client: McpClient; name: string; target: McpTarge
           </a>
         </Button>
       )}
-      {command && <Snippet label="command line" value={command} compact={compact} />}
-      <Snippet label={client.configPath} value={JSON.stringify(client.file(name, target), null, 2)} compact={compact} />
+      {command && <Snippet label="command line" value={command} />}
+      <Snippet label={client.configPath} value={JSON.stringify(client.file(name, target), null, 2)} />
       <p className="text-xs text-muted-foreground">{client.note}</p>
     </div>
   );
@@ -256,8 +246,8 @@ const Credential: React.FC = () => (
   </p>
 );
 
-/** Endpoint, per-client config and credential guidance. Shared by the dialog and the mobile nav. */
-const ConnectionDetails: React.FC<{ url: string; status: EndpointStatus; compact?: boolean }> = ({ url, status, compact }) => {
+/** Endpoint, per-client config and credential guidance. */
+const ConnectionDetails: React.FC<{ url: string; status: EndpointStatus }> = ({ url, status }) => {
   const name = useServerName();
   const target: McpTarget = { url, headers: isRegistryRuntime ? CREDENTIAL_HEADERS : undefined };
 
@@ -274,7 +264,7 @@ const ConnectionDetails: React.FC<{ url: string; status: EndpointStatus; compact
         </TabsList>
         {CLIENTS.map((client) => (
           <TabsContent key={client.id} value={client.id} className="min-w-0">
-            <ClientConfig client={client} name={name} target={target} compact={compact} />
+            <ClientConfig client={client} name={name} target={target} />
           </TabsContent>
         ))}
       </Tabs>
@@ -316,29 +306,5 @@ const McpDialog: React.FC = () => {
         <ConnectionDetails url={url} status={status} />
       </DialogContent>
     </Dialog>
-  );
-};
-
-/**
- * Inline variant for the mobile nav, which is itself a sheet, so a nested dialog would sit on top of
- * it. It owns its divider, so a build without the endpoint renders nothing and leaves no stray rule.
- */
-export function McpConfigMobile() {
-  return isAvailable ? <McpMobile /> : null;
-}
-
-const McpMobile: React.FC = () => {
-  const url = useMcpEndpoint();
-  const status = useEndpointStatus(url);
-
-  return (
-    <div className="mt-4 space-y-3 border-t pt-4">
-      <div className="flex flex-wrap items-center gap-2">
-        <McpIcon className="h-4 w-4" />
-        <span className="text-sm font-medium">Connect a coding agent</span>
-        <RuntimeModeBadge mode={mode} />
-      </div>
-      <ConnectionDetails url={url} status={status} compact />
-    </div>
   );
 };
