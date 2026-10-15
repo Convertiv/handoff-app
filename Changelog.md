@@ -6,6 +6,90 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[2.0.0] - TBD
+
+Handoff 2.0 adds a shared registry to the local workspace. You write content in
+a workspace, publish it to a registry, and check it out in other projects.
+Coding agents and an AI assistant can read the design system through MCP.
+
+### Registry and connected workspaces
+
+* Added the registry: a deployed catalog with a PostgreSQL database. It stores
+  the catalog items, pages, tokens, and assets that a workspace publishes.
+* Added `publish` and `checkout`. Each command transfers all content, one
+  kind, or specific ids. `--dry-run` lists the changes and writes nothing.
+* Added registry accounts, invitations, password reset, and access tokens with
+  read or read-and-write access.
+* Added `login` and `logout`. `login` authorizes the CLI with a device code in
+  the browser.
+* Added `build --target registry` for a standalone registry server, and
+  `--package vercel` for a Vercel bundle of either build target.
+* Added `db:migrate` to apply the registry database migrations.
+* Added asset storage. The registry stores assets in PostgreSQL by default. A
+  custom provider module can store them in a different service and can accept
+  direct uploads.
+* Added registry email through SMTP or a custom provider module.
+
+### MCP and AI assistant
+
+* Added an MCP endpoint at `/api/mcp/`. Coding agents use it to search and read
+  components, previews, component source, tokens, and pages.
+* Added a connect dialog with client settings for Claude Code, Cursor, and
+  VS Code.
+* Added an AI assistant to the documentation app. It uses the same MCP tools,
+  knows the current page, and links to the content that it read.
+* Added AI connections for OpenAI-compatible APIs, for example gateways and
+  local Ollama, and for custom provider modules. In registry mode, readers can
+  add their own keys.
+
+MCP and the AI assistant need a server: a workspace or a registry. A static
+site has neither.
+
+### Catalog authoring
+
+* Added `defineCatalogItem`, one API for components and patterns.
+  `catalog.include` registers the catalog directories.
+* Previews are named exports. `Preview<typeof item>` gives a React preview the
+  argument type of its component. A preview can declare a `render` function.
+* Handoff builds the CSS of a React item from the stylesheets that its imports
+  load.
+* Previews keep their export order in builds, publish, and checkout.
+
+### Other changes
+
+* Added config profiles (`--profile`, `HANDOFF_PROFILE`), `fromEnv()`
+  references, and one registry login for each profile.
+* Added `-c, --config` to every command.
+* The build cache records every file that the last build of a component read,
+  Sass partials included. Every full build and every publish uses the cache.
+* Page titles use `app.title`. The default pages no longer show a hard-coded
+  Handoff title.
+* Reorganized the README, and added RECIPES.md and a migration guide in
+  UPGRADE.md.
+
+### Breaking changes
+
+* Handoff requires Node.js 22 or newer and npm 10 or newer.
+* `defineCatalogItem` replaces `defineReactComponent`,
+  `defineHandlebarsComponent`, `defineCsfComponent`, `defineComponent`, and
+  `definePattern`.
+* `catalog.include` replaces `entries.components` and `entries.patterns`.
+* Previews are named exports, not a `previews` map. Some fields have new
+  names, for example `title` is `name` and `values` is `args`.
+* Declarations use `.handoff.ts`, `.handoff.js`, or `.handoff.cjs`. Handoff
+  does not read JSON declarations or legacy `<name>.json` and `<name>.js` files.
+* Figma settings moved to `integrations.figma`. The access token must be an
+  environment reference.
+* The static build goes to `out/static`, and fetched tokens and assets go to
+  `exported/`. Neither path contains the project id. Removed the
+  `public-<projectId>` directories.
+* Removed the `make:template` command.
+* Removed the legacy `/assets` pages. The foundation pages show logos and
+  icons.
+
+See the [migration guide](UPGRADE.md#version-1xx-to-version-2xx) for the
+upgrade steps.
+
 ## \[1.2.2] - TBD
 
 This patch release improves watch-mode reliability for patterns, broadens slot
