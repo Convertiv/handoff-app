@@ -89,7 +89,7 @@
     "plugins": [
       "prettier-plugin-tailwindcss"
     ],
-    "tailwindConfig": "./tailwind.config.ts"
+    "tailwindStylesheet": "./src/app/css/index.css"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.53",
