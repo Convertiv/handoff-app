@@ -64,3 +64,9 @@ yarn-error.log*
 
 # github
 .github
+
+# editor and lint tooling
+.editorconfig
+.eslintrc.json
+.prettierignore
+.vscode
