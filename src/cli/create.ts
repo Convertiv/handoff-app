@@ -125,8 +125,7 @@ const renderTemplate = (content: string, data: CreateOptions): string => {
 };
 
 const getDependenciesToInstall = (options: CreateOptions): { dependencies: string[]; devDependencies: string[] } => {
-  // TODO: switch back to `handoff-app@latest` before the 2.0 stable release.
-  const dependencies = ['handoff-app@next'];
+  const dependencies = ['handoff-app@latest'];
   const devDependencies: string[] = [];
 
   if (options.includeExamples) {
