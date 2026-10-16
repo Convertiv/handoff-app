@@ -90,7 +90,7 @@ site has neither.
 See the [migration guide](UPGRADE.md#version-1xx-to-version-2xx) for the
 upgrade steps.
 
-## \[1.2.2] - TBD
+## \[1.2.2] - 2026-08-03
 
 This patch release improves watch-mode reliability for patterns, broadens slot
 default typing, clears downstream lint/build compatibility issues, and fixes a
