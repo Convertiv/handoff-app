@@ -1,8 +1,7 @@
 import { CommandModule } from 'yargs';
-import Handoff from '../..';
 import { Logger } from '../../utils/logger';
 import { SharedArgs } from '../types';
-import { getSharedOptions } from '../utils';
+import { createHandoff, getSharedOptions } from '../utils';
 
 export interface MakeComponentArgs extends SharedArgs {
   name: string;
@@ -19,7 +18,7 @@ const command: CommandModule<{}, MakeComponentArgs> = {
   },
 
   handler: async (args: MakeComponentArgs) => {
-    const handoff = new Handoff(args.debug, args.force);
+    const handoff = createHandoff(args);
     const componentName = args.name;
 
     if (!/^[a-z0-9_-]+$/i.test(componentName)) {

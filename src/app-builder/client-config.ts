@@ -1,7 +1,12 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
-import { getClientConfig } from '../config';
+import { getClientConfig, isMcpEnabled } from '../config';
+import { resolveAssetStorageFromConfig } from '../registry/asset-storage/resolve';
+import { resolveAuthenticatedRegistryConnection } from '../registry/connection';
+import { resolveDatabaseUrlEnv, resolveRegistryDriver } from '../registry/db/driver';
+import { resolveEmailFromConfig } from '../registry/email/resolve';
+import type { ResolvedConfig, RuntimeMode } from '../types/config';
 import { getAppPath } from './paths';
 
 /**
@@ -42,12 +47,69 @@ export const generateTokensApi = async (handoff: Handoff) => {
 };
 
 /**
- * Persists the client config to a JSON file.
+ * Build the server-only runtime config consumed by the docs read API.
+ *
+ * The browser-facing `client.config.json` carries only the resolved mode; the server additionally
+ * needs the registry connection *inputs* (selected driver + the *name* of the database-URL env
+ * var) to back the registry-mode docs read API. These are non-secret — the connection-string value
+ * itself is never persisted, only resolved from the env var at request time.
  */
-export const persistClientConfig = async (handoff: Handoff) => {
+const buildServerRuntimeConfig = (config: ResolvedConfig, modeOverride?: RuntimeMode) => {
+  const assetStorage = resolveAssetStorageFromConfig(config);
+  return {
+    mode: modeOverride ?? config?.runtime?.mode ?? 'workspace',
+    mcp: isMcpEnabled(config),
+    registry: {
+      driver: resolveRegistryDriver(config),
+      databaseUrlEnv: resolveDatabaseUrlEnv(config),
+    },
+    assetStorage: {
+      provider: assetStorage.provider,
+      module: assetStorage.module,
+      maxInlineBytes: assetStorage.maxInlineBytes,
+      options: assetStorage.options,
+    },
+    email: resolveEmailFromConfig(config),
+  };
+};
+
+/** Options for {@link persistClientConfig}. */
+export interface PersistClientConfigOptions {
+  /**
+   * Force the runtime mode persisted to both `client.config.json` and `runtime.server.json`,
+   * irrespective of the source project's `runtime.mode`. The registry build sets this to `registry`
+   * so the packaged artifact reports registry mode (badge + DB-backed reads) even when built from a
+   * workspace-mode project.
+   */
+  runtimeModeOverride?: RuntimeMode;
+}
+
+/**
+ * Persists the app's resolved config to disk: the browser-facing `client.config.json` and the
+ * server-only `runtime.server.json` the docs read API resolves the active mode + registry
+ * connection inputs from. Both are always written together so they never drift.
+ */
+export const persistClientConfig = async (handoff: Handoff, options: PersistClientConfigOptions = {}) => {
   const appPath = getAppPath(handoff);
-  const destination = path.resolve(appPath, 'client.config.json');
   // Ensure directory exists
   await fs.ensureDir(appPath);
-  await fs.writeJson(destination, { config: getClientConfig(handoff.config) }, { spaces: 2 });
+
+  const clientConfig = getClientConfig(handoff.config);
+  const mode = options.runtimeModeOverride ?? clientConfig.runtime.mode;
+  // A registry build target is never a connected workspace, so it must bake `connected: false`
+  // even when packaged from a connected project. Otherwise a workspace is connected whenever a
+  // registry URL resolves — from config/env or a saved device login — so `login` alone surfaces
+  // the publish/checkout UI without also requiring HANDOFF_REGISTRY_URL.
+  const connected =
+    mode === 'registry'
+      ? false
+      : Boolean((await resolveAuthenticatedRegistryConnection(handoff.config, handoff.workingPath, handoff.getProfile())).url);
+  clientConfig.runtime = { ...clientConfig.runtime, mode, connected };
+
+  await fs.writeJson(path.resolve(appPath, 'client.config.json'), { config: clientConfig }, { spaces: 2 });
+  await fs.writeJson(
+    path.resolve(appPath, 'runtime.server.json'),
+    buildServerRuntimeConfig(handoff.config, options.runtimeModeOverride),
+    { spaces: 2 }
+  );
 };

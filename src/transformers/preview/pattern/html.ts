@@ -1,33 +1,46 @@
 import escape from 'lodash/escape';
 import { parse } from 'node-html-parser';
+import { SHARED_MAIN_CSS_ARTIFACT_PATH, SHARED_MAIN_JS_ARTIFACT_PATH } from '../../../artifacts';
+import { buildArtifactUrl } from '../../../artifacts/url';
+import type { ComponentArtifactPresence, SharedArtifactPresence } from '../component/shared-artifacts';
 
 /**
  * Composes multiple component preview HTML documents into a single-page HTML.
  *
- * Each component preview may be a React SSR document (with hydration scripts
- * and a `#root` / `#__APP_PROPS__` pair) or a static Handlebars document.
+ * Each component preview may be a React SSR document (server-rendered markup plus a `#root` /
+ * `#__APP_PROPS__` pair) or a static Handlebars document.
  *
- * This function namespaces the element ids per-fragment so multiple React
- * components can coexist and hydrate independently on the same page.
+ * React client/hydration bundles are component-owned artifacts (`component/<id>.client.js`). This
+ * composer copies no per-fragment bundle: it namespaces each fragment's root/props so multiple
+ * instances coexist, marks each root with the `data-handoff-component`/`data-handoff-props`
+ * attributes the component bundle hydrates by, and references each unique component's client artifact
+ * exactly once.
  *
- * Each hydration bundle gets its own `<script type="module">` tag for full
- * module-level isolation. This is critical because esbuild bundles React
- * into each script using module-scoped `var` declarations, and `hydrateRoot`
- * is asynchronous — sharing a single module scope would cause later bundles
- * to overwrite earlier React instances before hydration completes.
+ * Shared/global artifacts follow the shared-artifact model: `component/main.css` and
+ * `component/main.js` are referenced only when present, and the global script is emitted exactly once
+ * (deduplicated across fragments) so its top-level side effects run a single time, ahead of the
+ * per-component client bundles.
  */
 export const composePatternHtml = (
   _patternId: string,
   patternTitle: string,
   fragments: { componentId: string; html: string }[],
-  basePath: string
+  basePath: string,
+  sharedArtifacts: SharedArtifactPresence,
+  componentArtifacts: Map<string, ComponentArtifactPresence>
 ): string => {
   const cssHrefs = new Set<string>();
   const bodyParts: string[] = [];
-  const scriptTags: string[] = [];
+  const clientArtifactHrefs = new Set<string>();
 
-  cssHrefs.add(`${basePath}/api/component/main.css`);
+  if (sharedArtifacts.mainCss) {
+    cssHrefs.add(buildArtifactUrl(SHARED_MAIN_CSS_ARTIFACT_PATH, basePath));
+  }
   cssHrefs.add(`${basePath}/assets/css/preview.css`);
+
+  // Canonical URL of the shared global script; used to strip any per-fragment reference so the
+  // global script is emitted (and executed) exactly once for the whole composed page.
+  const globalScriptUrl = buildArtifactUrl(SHARED_MAIN_JS_ARTIFACT_PATH, basePath);
 
   const seenComponents = new Set<string>();
 
@@ -36,40 +49,56 @@ export const composePatternHtml = (
 
     if (!seenComponents.has(componentId)) {
       seenComponents.add(componentId);
-      cssHrefs.add(`${basePath}/api/component/${componentId}.css`);
+      // Reference a component's stylesheet only when it actually exists, so a pattern never requests
+      // an absent optional artifact for a component that declares no styles.
+      if (componentArtifacts.get(componentId)?.css) {
+        cssHrefs.add(buildArtifactUrl(`component/${componentId}.css`, basePath));
+      }
     }
 
-    const doc = parse(html);
+    // React SSR separates adjacent text children with `<!-- -->`. The parser drops comments by
+    // default, which would make every composed React fragment fail to hydrate.
+    const doc = parse(html, { comment: true });
     const suffix = `_p${i}`;
     const namespacedRootId = `root${suffix}`;
     const namespacedPropsId = `__APP_PROPS__${suffix}`;
 
     // -- Extract props JSON (React SSR) ------------------------------------
     const propsScript = doc.querySelector('#__APP_PROPS__');
-    let propsContent = '{}';
+    let propsContent: string | null = null;
     if (propsScript) {
       propsContent = propsScript.textContent || '{}';
       propsScript.remove();
     }
 
-    // -- Extract and rewrite hydration scripts (React SSR) -----------------
-    // Each script becomes its own <script type="module"> for full isolation.
-    const moduleScripts = doc.querySelectorAll('script[type="module"]');
-    for (const script of moduleScripts) {
-      let code = script.textContent || '';
-      if (code.trim()) {
-        code = code
-          .replace(/__APP_PROPS__/g, namespacedPropsId)
-          .replace(/getElementById\(\s*["']root["']\s*\)/g, `getElementById("${namespacedRootId}")`);
-        scriptTags.push(`    <script type="module">\n${code}\n    </script>`);
-      }
+    // -- Drop the fragment's own client-artifact reference -----------------
+    // The bundle is referenced once per component for the whole page (below); a fragment must not
+    // carry its standalone-preview script tag into the composed document.
+    for (const script of doc.querySelectorAll('script[type="module"]')) {
       script.remove();
     }
 
+    // -- Drop the fragment's own global-script reference -------------------
+    // Static (Handlebars) fragments render the global `component/main.js` tag inside their body; left
+    // in place it would be inlined per fragment and run the global side effects multiple times. The
+    // page references the global script exactly once (below).
+    for (const script of doc.querySelectorAll('script')) {
+      if (script.getAttribute('src') === globalScriptUrl) {
+        script.remove();
+      }
+    }
+
     // -- Namespace the root element (React SSR) ----------------------------
+    // A React fragment exposes its mount point to the component bundle via stable data attributes.
     const rootEl = doc.querySelector('#root');
+    const isReactFragment = !!rootEl && propsContent !== null;
     if (rootEl) {
       rootEl.setAttribute('id', namespacedRootId);
+      if (isReactFragment) {
+        rootEl.setAttribute('data-handoff-component', componentId);
+        rootEl.setAttribute('data-handoff-props', namespacedPropsId);
+        clientArtifactHrefs.add(buildArtifactUrl(`component/${componentId}.client.js`, basePath));
+      }
     }
 
     // -- Extract body content ----------------------------------------------
@@ -80,9 +109,14 @@ export const composePatternHtml = (
         ? rootEl.outerHTML
         : doc.innerHTML || '';
 
+    const propsScriptTag =
+      propsContent !== null
+        ? `      <script id="${namespacedPropsId}" type="application/json">${propsContent}</script>\n`
+        : '';
+
     bodyParts.push(
       `    <div class="handoff-pattern-block" data-component="${componentId}" data-fragment="${i}">\n` +
-      `      <script id="${namespacedPropsId}" type="application/json">${propsContent}</script>\n` +
+      propsScriptTag +
       `      ${bodyContent}\n` +
       `    </div>`
     );
@@ -91,6 +125,18 @@ export const composePatternHtml = (
   const linkTags = Array.from(cssHrefs)
     .map((href) => `    <link rel="stylesheet" href="${href}" />`)
     .join('\n');
+
+  // The global script is referenced once for the whole page (deduplicated across fragments) and
+  // placed before the per-component client bundles so its side effects run first and exactly once.
+  const globalScriptTag = sharedArtifacts.mainJs
+    ? `    <script src="${buildArtifactUrl(SHARED_MAIN_JS_ARTIFACT_PATH, basePath)}"></script>`
+    : '';
+
+  const clientScriptTags = Array.from(clientArtifactHrefs)
+    .map((href) => `    <script type="module" src="${href}"></script>`)
+    .join('\n');
+
+  const scriptTags = [globalScriptTag, clientScriptTags].filter(Boolean).join('\n');
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -101,7 +147,7 @@ ${linkTags}
   </head>
   <body>
 ${bodyParts.join('\n')}
-${scriptTags.join('\n')}
+${scriptTags}
   </body>
 </html>`;
 };

@@ -1,3 +1,4 @@
+import type { RendererKind } from '@handoff/catalog/renderers';
 import { PreviewObject } from '@handoff/types/preview';
 // @ts-ignore
 import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
@@ -34,6 +35,60 @@ SyntaxHighlighter.registerLanguage('html', html);
 SyntaxHighlighter.registerLanguage('xml', html);
 SyntaxHighlighter.registerLanguage('handlebars', handlebars);
 SyntaxHighlighter.registerLanguage('hbs', handlebars);
+
+type CodeFormat = { label: string; language: string };
+
+/**
+ * How each renderer's implementation code is shown. Exhaustive over `RendererKind`, so a new
+ * renderer fails to compile until its label and highlighting are declared. `RENDERER_PLUGINS`
+ * puts the same guard on preview support.
+ */
+const CODE_FORMATS: Record<RendererKind, CodeFormat> = {
+  react: { label: 'React (TSX)', language: 'tsx' },
+  handlebars: { label: 'Handlebars', language: 'handlebars' },
+};
+
+/**
+ * Formats that are not a renderer name: the synthetic `html` that the string and empty-data
+ * branches set, and the language names that older artifacts carry in `format`.
+ */
+const FORMAT_ALIASES: Record<string, CodeFormat> = {
+  html: { label: 'HTML', language: 'html' },
+  tsx: CODE_FORMATS.react,
+  jsx: { label: 'React (JSX)', language: 'jsx' },
+  ts: { label: 'TypeScript', language: 'typescript' },
+  typescript: { label: 'TypeScript', language: 'typescript' },
+  js: { label: 'JavaScript', language: 'javascript' },
+  javascript: { label: 'JavaScript', language: 'javascript' },
+};
+
+const formatFor = (format?: string): CodeFormat => {
+  const key = format?.toLowerCase() ?? '';
+  // Legacy default: an unrecognized format reads as plain code and highlights as Handlebars.
+  return CODE_FORMATS[key as RendererKind] ?? FORMAT_ALIASES[key] ?? { label: 'Code', language: 'handlebars' };
+};
+
+type CodeView = { label?: string; language?: string };
+
+/**
+ * The code views, in the order they are offered. An allowlist rather than a denylist of metadata:
+ * a field added to the record later cannot become a view by default. An absent `label` or
+ * `language` is computed: from the item's format for `code`, from the `type` prop for `html`, and
+ * by JSX detection for `js`.
+ */
+const CODE_VIEWS: Record<string, CodeView> = {
+  usage: { label: 'Usage', language: 'tsx' },
+  code: {},
+  html: { label: 'HTML' },
+  css: { label: 'CSS', language: 'css' },
+  js: { label: 'JavaScript' },
+  sass: { label: 'SASS', language: 'scss' },
+  sharedStyles: { label: 'Shared CSS', language: 'css' },
+};
+
+/** `usage` is derived from the previews, not read off the record, so it is offered separately. */
+const RECORD_VIEWS = Object.keys(CODE_VIEWS).filter((key) => key !== 'usage');
+
 /**
  * Highlight code for preview elements
  * @param param0
@@ -88,14 +143,7 @@ export const CodeHighlight: React.FC<{
   }
   if (!type) type = 'html';
 
-  const metadataKeys = [
-    'id', 'preview', 'image', 'categories', 'title', 'format',
-    'description', 'type', 'group', 'tags', 'previews', 'properties',
-    'should_do', 'should_not_do', 'figma', 'usage',
-  ];
-
-  const states = Object.keys(data)
-    .filter((key) => !metadataKeys.includes(key) && !!(data as Record<string, any>)[key]);
+  const states = RECORD_VIEWS.filter((key) => !!(data as Record<string, any>)[key]);
   const hasPerPreviewUsage =
     typeof data === 'object' &&
     !!data.previews &&
@@ -116,35 +164,11 @@ export const CodeHighlight: React.FC<{
   theme['pre[class*="language-"]'].maxHeight = height ?? '450px';
   theme['pre[class*="language-"]'].margin = '0';
 
-  const labels: Record<string, string> = {
-    code: 'Code',
-    handlebars: 'Handlebars',
-    hbs: 'Handlebars',
-    html: 'HTML',
-    css: 'CSS',
-    js: 'JavaScript',
-    javascript: 'JavaScript',
-    jsx: 'JSX',
-    tsx: 'TSX',
-    typescript: 'TypeScript',
-    ts: 'TypeScript',
-    sass: 'SASS',
-    scss: 'SCSS',
-    sharedStyles: 'Shared CSS',
-    usage: 'Usage',
-    json: 'JSON',
-    markdown: 'Markdown',
-  };
-
   const getLabel = (state: string): string => {
     if (state === 'code' && typeof data === 'object') {
-      const format = data.format?.toLowerCase();
-      if (format === 'react' || format === 'tsx') return 'React (TSX)';
-      if (format === 'jsx') return 'React (JSX)';
-      if (format === 'typescript' || format === 'ts') return 'TypeScript';
-      if (format === 'javascript' || format === 'js') return 'JavaScript';
+      return formatFor(data.format).label;
     }
-    return labels[state] || state.charAt(0).toUpperCase() + state.slice(1);
+    return CODE_VIEWS[state]?.label ?? state.charAt(0).toUpperCase() + state.slice(1);
   };
 
   /**
@@ -155,39 +179,22 @@ export const CodeHighlight: React.FC<{
       return activeState === 'html' ? type : activeState;
     }
 
-    // Handle React/JSX/TSX code format
-    if ('code' in data && !!data.code && activeState === 'code') {
-      const format = data.format?.toLowerCase();
-      if (format === 'react' || format === 'tsx') return 'tsx';
-      if (format === 'jsx') return 'jsx';
-      if (format === 'typescript' || format === 'ts') return 'typescript';
-      if (format === 'javascript' || format === 'js') return 'javascript';
-      return 'handlebars';
+    if (activeState === 'code') {
+      return formatFor(data.format).language;
     }
 
-    // Handle JavaScript state
+    // The `type` prop names the markup language of the rendered preview.
+    if (activeState === 'html') {
+      return type || 'html';
+    }
+
+    // A component's compiled JS can be plain JavaScript or still hold JSX.
     if (activeState === 'js') {
-      // Check if the JS code contains JSX syntax (common patterns)
       const jsCode = 'js' in data ? data.js : '';
-      if (typeof jsCode === 'string' && hasJsxSyntax(jsCode)) {
-        return 'jsx';
-      }
-      return 'javascript';
+      return typeof jsCode === 'string' && hasJsxSyntax(jsCode) ? 'jsx' : 'javascript';
     }
 
-    // Map common state names to language identifiers
-    const languageMap: Record<string, string> = {
-      html: type || 'html',
-      css: 'css',
-      sass: 'scss',
-      sharedStyles: 'css',
-      usage: 'tsx',
-      json: 'json',
-      handlebars: 'handlebars',
-      hbs: 'handlebars',
-    };
-
-    return languageMap[activeState] || activeState;
+    return CODE_VIEWS[activeState]?.language ?? activeState;
   };
 
   /**
@@ -285,15 +292,11 @@ export const CodeHighlight: React.FC<{
                 <SelectValue placeholder="Code View" />
               </SelectTrigger>
               <SelectContent>
-                {selectableStates
-                  .filter((value) => ['usage', 'code', 'html', 'css', 'js', 'sass', 'sharedStyles'].includes(value))
-                  .map((state) => {
-                    return (
-                      <SelectItem key={state} value={state}>
-                        {getLabel(state)}
-                      </SelectItem>
-                    );
-                  })}
+                {selectableStates.map((state) => (
+                  <SelectItem key={state} value={state}>
+                    {getLabel(state)}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           )}

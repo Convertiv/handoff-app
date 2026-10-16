@@ -12,7 +12,8 @@ import AnchorNav from '../../components/Navigation/AnchorNav';
 import PrevNextNav from '../../components/Navigation/PrevNextNav';
 import HeadersType from '../../components/Typography/Headers';
 import * as util from '../../components/util';
-import { getTokens } from '../../components/util';
+import { buildTimeFoundationDesign, getTokens } from '../../components/util';
+import { useFoundationTokens } from '../../components/util/useFoundationTokens';
 
 /**
  * This statically renders content from the markdown, creating menu and providing
@@ -25,25 +26,38 @@ import { getTokens } from '../../components/util';
 export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
-      ...util.fetchFoundationDocPageMarkdown('docs/foundations/', 'colors', `/foundations`).props,
+      ...(await util.fetchFoundationDocPageMarkdown('docs/foundations/', 'colors', `/foundations`)).props,
       config: util.getClientRuntimeConfig(),
-      design: getTokens().localStyles,
+      design: buildTimeFoundationDesign(),
     },
   };
 };
+
+// Tokens without a Figma group land under an empty key.
+const groupTitle = (group: string) => upperFirst(group) || 'Other';
+const groupId = (group: string) => group || 'other';
 
 const ColorsPage = ({
   content,
   menu,
   metadata,
   current,
-  scss,
-  css,
-  styleDictionary,
-  types,
-  design,
+  scss: scssProp,
+  css: cssProp,
+  styleDictionary: styleDictionaryProp,
+  types: typesProp,
+  design: designProp,
   config,
 }: util.FoundationDocumentationProps) => {
+  // In registry mode the build-time token data/downloads are empty; hydrate from the docs read API.
+  const { design, css, scss, styleDictionary, types } = useFoundationTokens('colors', {
+    design: designProp,
+    css: cssProp,
+    scss: scssProp,
+    styleDictionary: styleDictionaryProp,
+    types: typesProp,
+  });
+
   const colorGroups = Object.fromEntries(
     Object.entries(groupBy(design.color, 'group'))
       .map(([groupKey, colors]) => {
@@ -72,20 +86,17 @@ const ColorsPage = ({
       <div className="lg:gap-10 lg:py-8 xl:grid xl:grid-cols-[1fr_280px]">
         <div className="flex flex-col gap-0">
           {Object.keys(colorGroups).map((group) => (
-            <ColorGrid
-              title={upperFirst(group)}
-              group={group}
-              description="Colors that are used most frequently across all pages and components."
-              colors={colorGroups[group]}
-              key={group}
-            />
+            <ColorGrid title={groupTitle(group)} group={groupId(group)} colors={colorGroups[group]} key={group} />
           ))}
           <PrevNextNav previous={null} next={{ title: 'Typography', href: '/foundations/typography' }} />
         </div>
 
         <AnchorNav
           groups={[
-            Object.assign({}, ...[...Object.keys(colorGroups).map((group) => ({ [`${group}-colors`]: `${upperFirst(group)} Colors` }))]),
+            Object.assign(
+              {},
+              ...[...Object.keys(colorGroups).map((group) => ({ [`${groupId(group)}-colors`]: `${groupTitle(group)} Colors` }))]
+            ),
           ]}
         />
 

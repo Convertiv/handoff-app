@@ -4,7 +4,6 @@ description: Set of design principles and visual guidelines that define the bran
 weight: 0
 image: hero-design
 menuTitle: 'Foundations'
-metaTitle: 'Design Foundations | Handoff Design System'
 metaDescription: 'Set of design principles and visual guidelines that define the brand across every experience'
 enabled: true
 menu:
@@ -67,8 +66,10 @@ menu:
         title: Images
         icon: image
         menu:
-          - path: foundations/icons
-            title: Library
-          - path: foundations/icons/guidelines
+          - path: foundations/images
+            title: Overview
+          - path: foundations/images/guidelines
             title: Guidelines
+          - path: foundations/images/resources
+            title: Resources
 ---

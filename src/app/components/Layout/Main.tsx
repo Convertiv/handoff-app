@@ -5,6 +5,7 @@ import { Header } from '../../components/Layout/Header';
 import { ThemeProvider } from '../../components/util/theme-provider';
 import SideNav from '../Navigation/SideNav';
 import { ConfigContextProvider } from '../context/ConfigContext';
+import { hasRenderableNav, pageTitle } from '../../lib/utils';
 import { SidebarInset, SidebarProvider } from '../ui/sidebar';
 import { SectionLink } from '../util';
 
@@ -21,12 +22,19 @@ interface LayoutComponentProps {
   fullWidthHero?: boolean;
 }
 export default function Layout<LayoutComponentProps>({ children, config, menu, metadata, current, fullWidthHero = false }) {
+  // In registry mode the per-page `current` is empty for lambda-rendered (fallback) pages, so mount
+  // the sidebar regardless and let SideNav resolve its section from the cached shell (and collapse
+  // itself to full width when that section has no renderable nav). Workspace/static know the section
+  // at render time, so drop the left column entirely for pages with no side-nav content (e.g. a
+  // standalone page with no children) and let the content go full width.
+  const isRegistry = config?.runtime?.mode === 'registry';
+  const showSidebar = isRegistry || hasRenderableNav(current as SectionLink);
   return (
     <div>
       <ConfigContextProvider defaultConfig={config} defaultMenu={menu}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Head>
-            <title>{metadata.metaTitle}</title>
+            <title>{pageTitle(metadata, config?.app?.title)}</title>
             <meta name="description" content={metadata.metaDescription} />
           </Head>
           <div className="absolute left-[-200px] top-[-200px] z-[-1] h-[400px] w-[600px] bg-[#111111] opacity-[0.05] blur-[350px]">
@@ -48,10 +56,10 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
                   <div className="mx-auto w-full">{children}</div>
                 </div>
               </div>
-            ) : current ? (
+            ) : showSidebar ? (
               <SidebarProvider>
                 <div className="flex w-full">
-                  <SideNav menu={current} />
+                  <SideNav />
                   <SidebarInset className="relative bg-transparent py-8 pl-8 pr-8 md:pl-8 lg:gap-10 lg:py-16 lg:pl-16">
                     <div className="mx-auto w-full">{children}</div>
                   </SidebarInset>
@@ -59,7 +67,7 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
               </SidebarProvider>
             ) : (
               <div className="flex w-full">
-                <div className="relative bg-transparent px-16 py-8 lg:gap-10 lg:py-16 xl:grid">
+                <div className="relative w-full bg-transparent px-16 py-8 lg:gap-10 lg:py-16">
                   <div className="mx-auto w-full">{children}</div>
                 </div>
               </div>

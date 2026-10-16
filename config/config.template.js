@@ -54,13 +54,10 @@ const config = {
     ports: { app: 3000, websocket: 3001 },
   },
   // These are the entry points used to compile the target application
+  catalog: { include: ['./components'] },
   entries: {
     scss: './sass/main.scss',
     js: './js/main.js',
-    components: ['./components'],
-    // Uncomment to enable pattern documentation pages.
-    // Patterns compose component previews into single-page views.
-    // patterns: ['./patterns'],
   },
   // These are the asset zip file download links
   assetsZipLinks: {

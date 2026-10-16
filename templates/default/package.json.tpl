@@ -6,13 +6,18 @@
   "scripts": {
     "start": "handoff-app start",
     "dev": "handoff-app dev",
-    "build": "handoff-app build:app",
-    "fetch": "handoff-app fetch"
+    "fetch": "handoff-app fetch",
+    "build": "handoff-app build",
+    "login": "handoff-app login",
+    "logout": "handoff-app logout",
+    "publish": "handoff-app publish",
+    "checkout": "handoff-app checkout",
+    "db:migrate": "handoff-app db:migrate"
   },
   "dependencies": {},
   "devDependencies": {},
   "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=8.0.0"
+    "node": ">=22",
+    "npm": ">=10"
   }
 }

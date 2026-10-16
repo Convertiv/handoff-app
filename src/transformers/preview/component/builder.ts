@@ -1,10 +1,14 @@
 import { Types as CoreTypes } from 'handoff-core';
 import cloneDeep from 'lodash/cloneDeep';
+import { buildComponentDetailUrl } from '../../../artifacts/url';
+import type { SourceFormat } from '../../../catalog/renderers';
 import {
   BuildCache,
   checkOutputExists,
+  computeBuildInputStates,
   computeComponentFileStates,
   computeGlobalDepsState,
+  createBuildInputs,
   createEmptyCache,
   hasComponentChanged,
   haveGlobalDepsChanged,
@@ -66,8 +70,16 @@ type ComponentBuildPlan = {
   validationMode: boolean;
 };
 
+/**
+ * A source format reads its previews out of the source file. A placeholder there is a preview
+ * nothing can render: the docs would offer a "Default" entry with no artifact. Only a renderer
+ * that renders whatever previews it is given needs the placeholder.
+ */
+const ownsItsPreviews = (data: { sourceFormat?: SourceFormat } | undefined): boolean => !!data?.sourceFormat;
+
 const ensureDefaultPreview = (data: TransformComponentTokensResult): void => {
   if (!data) return;
+  if (ownsItsPreviews(data)) return;
   if (!data.previews || Object.keys(data.previews).length === 0) {
     data.previews = {
       default: {
@@ -153,53 +165,48 @@ const createComponentBuildPlan = (
 };
 
 /**
- * Options for processing components
- */
-export interface ProcessComponentsOptions {
-  /** Enable caching to skip unchanged components */
-  useCache?: boolean;
-}
-
-/**
  * Process components and generate their code, styles, and previews
  * @param handoff - The Handoff instance containing configuration and state
  * @param id - Optional component ID to process a specific component
  * @param segmentToProcess - Optional segment to update
- * @param options - Optional processing options including cache settings
  * @returns Promise resolving to an array of processed components
  */
 export async function processComponents(
   handoff: Handoff,
   id?: string,
-  segmentToProcess?: ComponentSegment,
-  options?: ProcessComponentsOptions
+  segmentToProcess?: ComponentSegment
 ): Promise<ComponentListObject[]> {
   const result: ComponentListObject[] = [];
 
   const documentationObject = await handoff.getDocumentationObject();
   const components = documentationObject?.components ?? ({} as CoreTypes.IDocumentationObject['components']);
-  const runtimeComponents = handoff.runtimeConfig?.entries?.components ?? {};
+  // Resolve the component set through the storage-agnostic store (v2). The filesystem store is a
+  // read view over `runtimeConfig.entities.components`, so these are the same records the build has
+  // always used — rebuilt into the id-keyed map the build logic below expects.
+  const runtimeComponents: Record<string, ComponentListObject> = {};
+  for (const component of await handoff.store.components.list()) {
+    if (component) runtimeComponents[component.id] = component;
+  }
   const allComponentIds = Object.keys(runtimeComponents);
 
   if (id && !runtimeComponents[id]) {
     await removeComponentApi(handoff, id);
     await removeComponentFromSummaryApi(handoff, id);
-    await syncComponentArtifacts(handoff);
+    await syncComponentArtifacts(handoff, [id]);
     return [];
   }
 
-  // Determine which components need building based on cache (when enabled)
+  // Determine which components need building based on cache
   let componentsToBuild: Set<string>;
   let cache: BuildCache | null = null;
   let currentGlobalDeps = {};
   const componentFileStatesMap: Map<string, Awaited<ReturnType<typeof computeComponentFileStates>>> = new Map();
 
   // Only use caching when:
-  // - useCache option is enabled
   // - No specific component ID is requested (full build scenario)
   // - No specific segment is requested (full build scenario)
   // - Force flag is not set
-  const shouldUseCache = options?.useCache && !id && !segmentToProcess && !handoff.force;
+  const shouldUseCache = !id && !segmentToProcess && !handoff.force;
 
   if (shouldUseCache) {
     Logger.debug('Loading build cache...');
@@ -224,7 +231,7 @@ export async function processComponents(
         if (!cachedEntry) {
           Logger.info(`Component '${componentId}': new component, will build`);
           componentsToBuild.add(componentId);
-        } else if (hasComponentChanged(cachedEntry, currentFileStates)) {
+        } else if (await hasComponentChanged(cachedEntry, currentFileStates)) {
           Logger.info(`Component '${componentId}': source files changed, will rebuild`);
           componentsToBuild.add(componentId);
         } else if (!(await checkOutputExists(handoff, componentId))) {
@@ -295,7 +302,7 @@ export async function processComponents(
     // If this is NOT a figma component, add the default generic preview.
     // We add it here (before merge) so that if the user explicitly provided previews in 'restMetadata',
     // those will override this default (standard "config overrides defaults" behavior).
-    if (!restMetadata.figmaComponentId) {
+    if (!restMetadata.figmaComponentId && !ownsItsPreviews(restMetadata)) {
       componentDefaults.previews = {
         default: {
           title: 'Default',
@@ -330,12 +337,14 @@ export async function processComponents(
         data.css = existingData.css;
         data.sass = existingData.sass;
       }
-      // If we're not building previews, preserve pre-existing HTML, code snippet, usage, and previews.
+      // If we're not building previews, preserve pre-existing HTML, code snippet, usage, previews,
+      // and the code language they were rendered in.
       if (!buildPlan.previews) {
         data.html = existingData.html;
         data.code = existingData.code;
         data.usage = existingData.usage;
         data.previews = existingData.previews;
+        data.format = existingData.format;
       }
       /**
        * Always keep validation results from the previous data,
@@ -354,6 +363,7 @@ export async function processComponents(
     // Components should always have at least one preview variation.
     ensureDefaultPreview(data);
 
+    const inputs = shouldUseCache ? createBuildInputs() : undefined;
     const runsViteBuildSteps = buildPlan.js || buildPlan.css || buildPlan.previews;
     let viteBuildStartedAtMs = 0;
     if (runsViteBuildSteps) {
@@ -363,11 +373,11 @@ export async function processComponents(
 
     // Build JS if needed (new build, validation missing, or explicit segment request).
     if (buildPlan.js) {
-      data = await buildComponentJs(data, handoff);
+      data = await buildComponentJs(data, handoff, inputs);
     }
     // Build CSS if needed.
     if (buildPlan.css) {
-      data = await buildComponentCss(data, handoff);
+      data = await buildComponentCss(data, handoff, inputs);
     }
     // Build previews (HTML, snapshots, etc) if needed.
     if (buildPlan.previews) {
@@ -377,7 +387,8 @@ export async function processComponents(
           previews: getBuildPreviews(data),
         },
         handoff,
-        components
+        components,
+        inputs
       );
     }
 
@@ -410,17 +421,18 @@ export async function processComponents(
     result.push(summary);
 
     // Update cache entry for this component after successful build
-    if (shouldUseCache) {
+    if (shouldUseCache && inputs) {
       if (!cache) {
         cache = createEmptyCache();
       }
-      const fileStates = componentFileStatesMap.get(runtimeComponentId);
-      if (fileStates) {
-        updateComponentCacheEntry(cache, runtimeComponentId, fileStates);
+      // Compute file states if not already computed (e.g., when global deps changed)
+      const fileStates = componentFileStatesMap.get(runtimeComponentId) ?? (await computeComponentFileStates(handoff, runtimeComponentId));
+      const inputStates = await computeBuildInputStates(handoff, runtimeComponentId, inputs);
+      if (inputStates) {
+        updateComponentCacheEntry(cache, runtimeComponentId, fileStates, inputStates);
       } else {
-        // Compute file states if not already computed (e.g., when global deps changed)
-        const computedFileStates = await computeComponentFileStates(handoff, runtimeComponentId);
-        updateComponentCacheEntry(cache, runtimeComponentId, computedFileStates);
+        // An incomplete list can miss a changed file, so the next run builds this component again.
+        delete cache.components[runtimeComponentId];
       }
     }
   }
@@ -458,7 +470,9 @@ const buildComponentSummary = (id: string, data: TransformComponentTokensResult)
     tags: data.tags ? data.tags : [],
     properties: data.properties,
     previews: getDocumentedPreviews(data.previews),
-    path: `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${id}.json`,
+    path: buildComponentDetailUrl(id, process.env.HANDOFF_APP_BASE_PATH ?? ''),
+    ...(data.renderer ? { renderer: data.renderer } : {}),
+    ...(data.sourceFormat ? { sourceFormat: data.sourceFormat } : {}),
   };
 };
 

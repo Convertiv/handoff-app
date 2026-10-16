@@ -1,51 +1,121 @@
 import { GetStaticProps } from 'next';
 import Head from 'next/head';
 import { useRef } from 'react';
-import NotFound from '../../components/NotFound';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+import { HOME_PAGE_ID } from '@handoff/registry/content-kinds';
 import Layout from '../../components/Layout/Main';
 import { MarkdownComponents, remarkCodeMeta } from '../../components/Markdown/MarkdownComponents';
 import { PageTOC } from '../../components/Navigation/AnchorNav';
+import NotFound from '../../components/NotFound';
 import HeadersType from '../../components/Typography/Headers';
 import {
   buildCatchAllStaticPaths,
   DocumentationProps,
   fetchDocPageMarkdown,
   getClientRuntimeConfig,
+  getNavProps,
+  isRegistryRuntime,
 } from '../../components/util';
+import { resolveDocsBackend } from '../../lib/docs-api/backend';
+import { documentationMetadata, REGISTRY_PAGE_REVALIDATE_SECONDS } from '../../lib/docs-api/page-rendering';
+import { pageTitle } from '../../lib/utils';
+import { Home, getStaticProps as getHomeStaticProps } from '../index';
+
+type CatchAllDocumentationProps = DocumentationProps & { homeAlias?: boolean };
 
 export async function getStaticPaths() {
+  // Registry resolves every catch-all page on demand so a cold serverless instance queries the DB
+  // before it can cache a package default. Defaults are baked into the server bundle as JSON.
+  // Workspace/static stays fully prerendered from markdown (workspace pages included).
+  if (isRegistryRuntime()) {
+    return { paths: [], fallback: 'blocking' as const };
+  }
   return {
     paths: buildCatchAllStaticPaths(),
     fallback: false,
   };
 }
 
-export const getStaticProps: GetStaticProps = (context) => {
+export const getStaticProps: GetStaticProps = async (context) => {
   const { slug } = context.params as { slug: string[] };
+  const config = getClientRuntimeConfig();
   const dirParts = slug.slice(0, -1);
   const file = slug[slug.length - 1];
   const docPath = dirParts.length > 0 ? `docs/${dirParts.join('/')}/` : 'docs/';
   const sectionId = `/${slug[0]}`;
 
+  // The backing resolves published content first and the baked package default second. Workspace
+  // markdown is never read, so the deployed server needs no build-machine path and anything the
+  // backing cannot resolve is a real 404.
+  if (isRegistryRuntime()) {
+    const id = slug.join('/');
+    // Next shares the root ISR cache key with its internal `/index` data alias. The public URL
+    // redirects to `/`, but any internal alias regeneration must still produce the same home page.
+    if (id === HOME_PAGE_ID) {
+      const result = await getHomeStaticProps(context);
+      if ('props' in result) {
+        return { ...result, props: { ...(await result.props), homeAlias: true } };
+      }
+      return result;
+    }
+    const detail = await (await resolveDocsBackend()).getPageDetail(id);
+    if (!detail) {
+      return { notFound: true, revalidate: REGISTRY_PAGE_REVALIDATE_SECONDS };
+    }
+
+    const navProps = await getNavProps(sectionId);
+    return {
+      props: {
+        metadata: documentationMetadata(detail as unknown as Record<string, unknown>),
+        content: detail.content,
+        ...navProps,
+        config,
+      },
+      revalidate: REGISTRY_PAGE_REVALIDATE_SECONDS,
+    };
+  }
+
   return {
     props: {
-      ...fetchDocPageMarkdown(docPath, file, sectionId).props,
-      config: getClientRuntimeConfig(),
+      ...(await fetchDocPageMarkdown(docPath, file, sectionId)).props,
+      config,
     },
   };
 };
 
-export default function DocCatchAllPage({ content, menu, metadata, current, config }: DocumentationProps) {
+export default function DocCatchAllPage({
+  content,
+  menu,
+  metadata,
+  current,
+  config,
+  navData,
+  currentSectionId,
+  homeAlias,
+}: CatchAllDocumentationProps) {
   const bodyRef = useRef<HTMLDivElement>(null);
 
-  if (!content) {
+  if (homeAlias) {
+    return (
+      <Home
+        content={content}
+        menu={menu}
+        metadata={metadata}
+        current={current}
+        config={config}
+        navData={navData}
+        currentSectionId={currentSectionId}
+      />
+    );
+  }
+
+  if (!content && !metadata?.title) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-white dark:bg-gray-900">
         <Head>
-          <title>404 - Page Not Found</title>
+          <title>{pageTitle({ title: 'Page Not Found' }, config?.app?.title)}</title>
           <meta name="description" content="Page Not Found" />
         </Head>
         <NotFound />

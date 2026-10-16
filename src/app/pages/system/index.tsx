@@ -36,7 +36,7 @@ export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
       config,
-      ...fetchDocPageMarkdown('docs/', 'system', `/system`).props,
+      ...(await fetchDocPageMarkdown('docs/', 'system', `/system`)).props,
     } as ComponentPageDocumentationProps,
   };
 };
@@ -49,13 +49,22 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
   // Fetch components from api
   const [components, setComponents] = useState<PreviewObject[]>(undefined);
   const fetchComponents = async () => {
-    const data = await fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/components.json`).then((res) => res.json());
+    const data = await fetch(`${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/docs/components.json`).then((res) => res.json());
     setComponents(data as PreviewObject[]);
   };
   useEffect(() => {
     fetchComponents();
   }, []);
-  if (!components) return <p>Loading...</p>;
+  if (!components) {
+    return (
+      <Layout config={config} menu={menu} current={current} metadata={metadata}>
+        <div className="flex flex-col gap-2 pb-7" aria-busy="true" aria-live="polite">
+          <HeadersType.H1>{metadata.title}</HeadersType.H1>
+          <p className="mt-3 text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
+        </div>
+      </Layout>
+    );
+  }
 
   if ((components ?? []).length === 0) {
     return (
@@ -90,7 +99,7 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
     );
   }
 
-  const apiUrl = (window.location.origin && window.location.origin) + `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/components.json`;
+  const apiUrl = (window.location.origin && window.location.origin) + `${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/docs/components.json`;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-2 pb-7">
@@ -98,20 +107,20 @@ const ComponentsPage = ({ content, menu, metadata, current, config }: ComponentP
         <div className="mt-3 flex flex-row justify-between gap-3">
           <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
           <Drawer direction="right">
-            <DrawerTrigger>
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DrawerTrigger asChild>
                     <Button variant="outline">
                       API <Webhook strokeWidth={1.5} />
                     </Button>
-                  </TooltipTrigger>
-                  <TooltipContent side="left">
-                    <Badge>{apiUrl}</Badge>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </DrawerTrigger>
+                  </DrawerTrigger>
+                </TooltipTrigger>
+                <TooltipContent side="left">
+                  <Badge>{apiUrl}</Badge>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
             <DrawerContent>
               <div className="mx-5 w-full max-w-lg">
                 <DrawerHeader>

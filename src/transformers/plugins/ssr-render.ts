@@ -6,6 +6,7 @@ import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import { Plugin, normalizePath } from 'vite';
 import Handoff from '../..';
+import { buildArtifactUrl } from '../../artifacts/url';
 import { Logger } from '../../utils/logger';
 import {
     enrichPropertiesWithDocgen,
@@ -14,9 +15,17 @@ import {
     getPropertiesFromGeneratedDocs,
 } from '../docgen';
 import { SlotMetadata } from '../preview/component';
-import { MAIN_COMPONENT_CSS_FILE } from '../preview/component/css';
+import {
+  renderComponentStyleLink,
+  renderGlobalScriptTag,
+  renderSharedStyleLinks,
+  resolveComponentArtifactPresence,
+  resolveSharedArtifactPresence,
+  type ComponentArtifactPresence,
+  type SharedArtifactPresence,
+} from '../preview/component/shared-artifacts';
 import { TransformComponentTokensResult } from '../preview/types';
-import { DEFAULT_CLIENT_BUILD_CONFIG, createReactResolvePlugin } from '../utils/build';
+import { DEFAULT_CLIENT_BUILD_CONFIG, createReactResolvePlugin, withStyleLoaders } from '../utils/build';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { loadSchemaFromComponent, loadSchemaFromFile } from '../utils/schema-loader';
@@ -40,6 +49,23 @@ const PLUGIN_CONSTANTS = {
   PROPS_SCRIPT_ID: '__APP_PROPS__',
   INSPECT_SUFFIX: '-inspect',
 } as const;
+
+/**
+ * Suffix of the component-owned client/hydration artifact.
+ * One artifact per component (`component/<id>.client.js`) drives hydration for every preview of
+ * that component; it is referenced via the canonical artifact URL.
+ */
+const CLIENT_ARTIFACT_SUFFIX = 'client.js';
+
+/** Logical artifact path of a component's client/hydration bundle. */
+const clientArtifactPath = (componentId: string): string => `component/${componentId}.${CLIENT_ARTIFACT_SUFFIX}`;
+
+function selectComponentExport(moduleExports: Record<string, any>, exportName?: string): ReactComponent | null {
+  if (exportName && exportName !== 'default' && moduleExports?.[exportName]) {
+    return moduleExports[exportName];
+  }
+  return moduleExports?.default ?? null;
+}
 
 /**
  * Loads and processes component schema using hierarchical approach
@@ -66,7 +92,7 @@ async function loadComponentSchemaAndModule(
   if (!componentData.entries?.schema) {
     try {
       const moduleExports = await buildAndEvaluateModule(componentPath, handoff);
-      component = moduleExports.exports.default;
+      component = selectComponentExport(moduleExports.exports, componentData.componentExport);
 
       // Try to load schema from component exports
       properties = await loadSchemaFromComponent(moduleExports.exports, handoff);
@@ -84,7 +110,7 @@ async function loadComponentSchemaAndModule(
   if (!component) {
     try {
       const moduleExports = await buildAndEvaluateModule(componentPath, handoff);
-      component = moduleExports.exports.default;
+      component = selectComponentExport(moduleExports.exports, componentData.componentExport);
     } catch (error) {
       Logger.error(`Failed to load component for rendering "${componentPath}":`, error);
       return [null, null];
@@ -95,47 +121,127 @@ async function loadComponentSchemaAndModule(
 }
 
 /**
- * Generates client-side hydration source code
+ * Generates client-side hydration source code for the component-owned client artifact.
+ *
+ * The bundle is shared by every preview of a component and is emitted once as
+ * `component/<id>.client.js`. It hydrates two shapes of mount point so the same artifact serves both
+ * a standalone preview document and a composed pattern document without per-fragment inline code:
+ *
+ *  - The standalone preview's `#${ROOT_ELEMENT_ID}` element paired with the `#${PROPS_SCRIPT_ID}`
+ *    props script (one mount per document).
+ *  - Any number of pattern mount points marked `[data-handoff-component="<id>"]`, each carrying a
+ *    `data-handoff-props` attribute naming its (namespaced) props script id. A pattern document
+ *    references this artifact once per component and the bundle hydrates every matching mount.
+ *
+ * @param componentId - Component identifier used to match pattern mount points to this bundle
  * @param componentPath - Path to the component file
+ * @param componentExport - Export holding the implementation; the default export when absent
  * @returns Client-side hydration source code
  */
-function generateClientHydrationSource(componentPath: string): string {
+function generateClientHydrationSource(
+  componentId: string,
+  componentPath: string,
+  componentExport?: string,
+  declarationPath?: string
+): string {
+  const importClause = componentExport && componentExport !== 'default' ? `{ ${componentExport} as Component }` : 'Component';
+  // A function cannot travel in the JSON props, so the client re-reads `render` from the module that
+  // defines it. Conditional, so an unaffected component does not ship its declaration's imports.
+  const declarationImport = declarationPath ? `import * as previewDeclaration from '${normalizePath(declarationPath)}';` : '';
+  const resolveComponent = declarationPath
+    ? `(mount) => {
+      const previewKey = mount.getAttribute('data-handoff-preview');
+      const render = previewKey ? previewDeclaration[previewKey]?.render : undefined;
+      return typeof render === 'function' ? render : Component;
+    }`
+    : '() => Component';
+
   return `
     import React from 'react';
     import { hydrateRoot } from 'react-dom/client';
-    import Component from '${normalizePath(componentPath)}';
+    import ${importClause} from '${normalizePath(componentPath)}';
+    ${declarationImport}
 
-    const raw = document.getElementById('${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}')?.textContent || '{}';
-    const props = JSON.parse(raw);
-    hydrateRoot(document.getElementById('${PLUGIN_CONSTANTS.ROOT_ELEMENT_ID}'), <Component {...props} />);
+    const resolveComponent = ${resolveComponent};
+
+    const parseProps = (propsId) => {
+      const raw = propsId ? document.getElementById(propsId)?.textContent : '{}';
+      try {
+        return JSON.parse(raw || '{}');
+      } catch (_) {
+        return {};
+      }
+    };
+
+    const standaloneRoot = document.getElementById('${PLUGIN_CONSTANTS.ROOT_ELEMENT_ID}');
+    if (standaloneRoot && !standaloneRoot.hasAttribute('data-handoff-component')) {
+      const StandaloneComponent = resolveComponent(standaloneRoot);
+      hydrateRoot(standaloneRoot, <StandaloneComponent {...parseProps('${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}')} />);
+    }
+
+    const patternMounts = document.querySelectorAll('[data-handoff-component=' + JSON.stringify('${componentId}') + ']');
+    patternMounts.forEach((mount) => {
+      const MountComponent = resolveComponent(mount);
+      hydrateRoot(mount, <MountComponent {...parseProps(mount.getAttribute('data-handoff-props'))} />);
+    });
   `;
 }
 
 /**
- * Generates complete HTML document with SSR content and hydration
+ * Generates complete HTML document with SSR content and a reference to the component-owned client
+ * artifact. The preview HTML carries only document structure, server-rendered markup, preview data,
+ * stylesheets, and standard artifact references. Interactive React previews treat the client
+ * artifact as a required reference, so the script tag surfaces a clear, visible failure if the
+ * artifact cannot be loaded.
  * @param componentId - Component identifier
  * @param previewTitle - Title for the preview
- * @param renderedHtml - Server-rendered HTML content
- * @param clientJs - Client-side JavaScript bundle
+ * @param renderedHtml - Server-rendered HTML, embedded verbatim so the client can hydrate it
  * @param props - Component props as JSON
  * @returns Complete HTML document
  */
-function generateHtmlDocument(componentId: string, previewTitle: string, renderedHtml: string, clientJs: string, props: any): string {
+function generateHtmlDocument(
+  componentId: string,
+  previewKey: string,
+  previewTitle: string,
+  renderedHtml: string,
+  props: any,
+  sharedArtifacts: SharedArtifactPresence,
+  componentArtifacts: ComponentArtifactPresence
+): string {
+  const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
+  const clientArtifactUrl = buildArtifactUrl(clientArtifactPath(componentId), basePath);
+  const clientLoadErrorMessage = `Failed to load the React client artifact (${clientArtifactPath(componentId)}). This preview cannot hydrate.`;
+  // The handler is JS embedded in a double-quoted HTML attribute, so any `"` (e.g. from
+  // JSON.stringify) and `&` must be entity-encoded or the attribute terminates early and
+  // breaks HTML parsing. Browsers decode the entities before the JS engine runs the handler.
+  const clientLoadErrorHandler = `document.getElementById('${PLUGIN_CONSTANTS.ROOT_ELEMENT_ID}').setAttribute('data-handoff-client-error', '1');console.error(${JSON.stringify(
+    clientLoadErrorMessage
+  )});`
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;');
+  // Shared/global stylesheets (`component/main.css`) and the component's own stylesheet
+  // (`component/<id>.css`) are emitted only when present so absent optional artifacts never produce a
+  // missing-file browser request.
+  const sharedStyleLinks = renderSharedStyleLinks(sharedArtifacts, basePath);
+  const componentStyleLink = renderComponentStyleLink(componentArtifacts, componentId, basePath);
+  // The global script (`component/main.js`) is a classic tag placed before the client module so it
+  // runs before dependent component-specific scripts when present.
+  const globalScriptTag = renderGlobalScriptTag(sharedArtifacts, basePath);
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${MAIN_COMPONENT_CSS_FILE}" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${componentId}.css" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/css/preview.css" />
-    <script id="${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}" type="application/json">${JSON.stringify(props)}</script>
-    <script type="module">
-      ${clientJs}
-    </script>
+    <meta charset="UTF-8" />${sharedStyleLinks ? `\n    ${sharedStyleLinks}` : ''}${componentStyleLink ? `\n    ${componentStyleLink}` : ''}
+    <link rel="stylesheet" href="${basePath}/assets/css/preview.css" />
+    <script id="${PLUGIN_CONSTANTS.PROPS_SCRIPT_ID}" type="application/json">${JSON.stringify(props)}</script>${globalScriptTag ? `\n    ${globalScriptTag}` : ''}
+    <script
+      type="module"
+      src="${clientArtifactUrl}"
+      onerror="${clientLoadErrorHandler}"
+    ></script>
     <title>${previewTitle}</title>
   </head>
   <body>
-    <div id="${PLUGIN_CONSTANTS.ROOT_ELEMENT_ID}">${renderedHtml}</div>
+    <div id="${PLUGIN_CONSTANTS.ROOT_ELEMENT_ID}" data-handoff-preview="${previewKey}">${renderedHtml}</div>
   </body>
 </html>`;
 }
@@ -225,60 +331,89 @@ export function ssrRenderPlugin(
         }
       }
 
+      // Build the component-owned client/hydration bundle once and emit it as a single
+      // `component/<id>.client.js` artifact. The hydration source only imports the component and
+      // reads props from the in-document `__APP_PROPS__` element, so it is identical across every
+      // preview of this component.
+      const declarationPath = Object.values(componentData.previews ?? {}).some((preview) => typeof preview.render === 'function')
+        ? componentData.entries?.declaration
+        : undefined;
+      const clientHydrationSource = generateClientHydrationSource(
+        componentId,
+        componentPath,
+        componentData.componentExport,
+        declarationPath
+      );
+      const clientBuildConfig = {
+        ...DEFAULT_CLIENT_BUILD_CONFIG,
+        logLevel: 'silent' as const,
+        stdin: {
+          contents: clientHydrationSource,
+          resolveDir: process.cwd(),
+          loader: 'tsx' as const,
+        },
+        plugins: [createReactResolvePlugin(handoff.workingPath, handoff.modulePath)],
+      };
+
+      const hookedClientBuildConfig = handoff.config?.hooks?.clientBuildConfig
+        ? handoff.config.hooks.clientBuildConfig(clientBuildConfig)
+        : clientBuildConfig;
+      const finalClientBuildConfig = withStyleLoaders(hookedClientBuildConfig);
+
+      let clientBundleJs: string;
+      try {
+        const bundledClient = await esbuild.build(finalClientBuildConfig);
+        if (bundledClient.warnings.length > 0) {
+          const messages = await esbuild.formatMessages(bundledClient.warnings, { kind: 'warning', color: true });
+          messages.forEach((msg) => Logger.warn(msg));
+        }
+        clientBundleJs = bundledClient.outputFiles[0].text;
+      } catch (error: any) {
+        // The client artifact is a required reference for interactive React previews. If it cannot be
+        // built, do not emit preview HTML that points at a missing artifact — fail clearly instead.
+        Logger.error(`Failed to build client bundle for ${componentId}`);
+        if (error.errors) {
+          const messages = await esbuild.formatMessages(error.errors, { kind: 'error', color: true });
+          messages.forEach((msg) => Logger.error(msg));
+        }
+        return;
+      }
+
+      this.emitFile({
+        type: 'asset',
+        fileName: `${componentId}.${CLIENT_ARTIFACT_SUFFIX}`,
+        source: clientBundleJs,
+      });
+
       let finalHtml = '';
+
+      // Resolve which shared/global and component-owned artifacts exist so generated HTML references
+      // them only when present. These are built before component HTML, so this reflects final state.
+      const sharedArtifacts = resolveSharedArtifactPresence(handoff);
+      const componentArtifacts = resolveComponentArtifactPresence(handoff, componentId);
 
       // Generate previews for each variation
       for (const previewKey in componentData.previews) {
-        const previewProps = componentData.previews[previewKey].values;
+        const preview = componentData.previews[previewKey];
+        const previewProps = preview.values;
+        // A synthetic pattern preview is not a named export, so the client looks up its
+        // `sourcePreview` instead. A preview without one has no `render` either.
+        const hydrationPreviewKey = preview.sourcePreview ?? previewKey;
+        // Rendered as a component rather than called, so a preview can use hooks and own state.
+        const PreviewComponent = (typeof preview.render === 'function' ? preview.render : ReactComponent) as ReactComponent;
 
-        // Server-side render the component
-        const serverRenderedHtml = ReactDOMServer.renderToString(React.createElement(ReactComponent, previewProps));
-        const formattedHtml = await formatHtml(serverRenderedHtml);
+        // The markup must reach the document exactly as rendered. Formatting it adds text nodes React
+        // does not expect, so it discards the server markup and re-renders the preview on the client.
+        const serverRenderedHtml = ReactDOMServer.renderToString(React.createElement(PreviewComponent, previewProps));
 
-        // Generate client-side hydration code
-        const clientHydrationSource = generateClientHydrationSource(componentPath);
-
-        // Build client-side bundle
-        const clientBuildConfig = {
-          ...DEFAULT_CLIENT_BUILD_CONFIG,
-          logLevel: 'silent' as const,
-          stdin: {
-            contents: clientHydrationSource,
-            resolveDir: process.cwd(),
-            loader: 'tsx' as const,
-          },
-          plugins: [createReactResolvePlugin(handoff.workingPath, handoff.modulePath)],
-        };
-
-        // Apply user's client build config hook if provided
-        const finalClientBuildConfig = handoff.config?.hooks?.clientBuildConfig
-          ? handoff.config.hooks.clientBuildConfig(clientBuildConfig)
-          : clientBuildConfig;
-
-        let clientBundleJs: string;
-        try {
-          const bundledClient = await esbuild.build(finalClientBuildConfig);
-          if (bundledClient.warnings.length > 0) {
-            const messages = await esbuild.formatMessages(bundledClient.warnings, { kind: 'warning', color: true });
-            messages.forEach((msg) => Logger.warn(msg));
-          }
-          clientBundleJs = bundledClient.outputFiles[0].text;
-        } catch (error: any) {
-          Logger.error(`Failed to build client bundle for ${componentId}`);
-          if (error.errors) {
-            const messages = await esbuild.formatMessages(error.errors, { kind: 'error', color: true });
-            messages.forEach((msg) => Logger.error(msg));
-          }
-          continue;
-        }
-
-        // Generate complete HTML document
         finalHtml = generateHtmlDocument(
           componentId,
-          componentData.previews[previewKey].title,
-          formattedHtml,
-          clientBundleJs,
-          previewProps
+          hydrationPreviewKey,
+          preview.title,
+          serverRenderedHtml,
+          previewProps,
+          sharedArtifacts,
+          componentArtifacts
         );
 
         // Emit preview files
@@ -304,7 +439,7 @@ export function ssrRenderPlugin(
         });
       }
 
-      // Format final HTML and update component data
+      // The previews are already emitted, so this formats only the docs code view.
       finalHtml = await formatHtml(finalHtml);
       componentData.format = 'react';
       componentData.preview = '';

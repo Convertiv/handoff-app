@@ -1,5 +1,8 @@
 # Handoff API
 
+Register implementations and compositions with `defineCatalogItem`. See the
+[catalog examples](../README.md#catalog-items) and [version 1.x.x to version 2.x.x migration guide](../UPGRADE.md#version-1xx-to-version-2xx).
+
 Handoff exposes two APIs - A Javascript API for interacting with the pipeline
 Handoff exposes a Javascript API allowing you to easily integrate Handoff into
 existing Node based applications, CI/CD, and command line tools. This API also
@@ -19,14 +22,43 @@ https://github.com/Convertiv/handoff-0-6-0/
 ```js
 import Handoff from 'handoff-app';
 
-const handoff = new Handoff({
-  // You can customize the configuration here
-});
+const handoff = new Handoff();
 handoff.fetch();
 ```
 
 3. Build your typescript `tsc`
 4. Run your project `node handoff.js`
+
+## Configuration profiles
+
+A profile is a sidecar config file, `handoff.config.<profile>.*`, that merges
+onto the base config. The CLI selects one with `--profile`, and the class takes
+it as a constructor option. Handoff reads `HANDOFF_PROFILE` when neither is
+given.
+
+```js
+const handoff = new Handoff({ profile: 'registry' });
+```
+
+A profile also names the saved registry login that `publish` and `checkout`
+use, so one workspace can address several registries. `profileWithoutConfig`
+decides what a profile may resolve to when it has no config file:
+`'saved-login'` accepts a name a saved login uses, and `'any'` accepts any
+valid name, which is how `login` creates a new one.
+
+```js
+const handoff = new Handoff({ profile: 'staging', profileWithoutConfig: 'saved-login' });
+```
+
+`defineConfig` types a profile as well as a base config.
+
+```ts
+import { defineConfig } from 'handoff-app';
+
+export default defineConfig({
+  runtime: { registry: { database: { driver: 'neon' } } },
+});
+```
 
 ## Methods
 
@@ -48,10 +80,12 @@ class constructor
 handoff.fetch();
 ```
 
-Fetch will connect to the defined Figma file id provided in the
-`env`. If no env or file is found, it will interactively request one. Then it
-will export all of the tokens and generated data into an `exported` directory
-in the local working root.
+Fetch reads the Figma file ID and access token from `integrations.figma`. By
+default, they come from `HANDOFF_FIGMA_PROJECT_ID` and
+`HANDOFF_DEV_ACCESS_TOKEN`. In a terminal, fetch asks for an empty value.
+Without a terminal, it throws `HandoffConfigError`. Then it exports all of the
+tokens and generated data into an `exported` directory in the local working
+root.
 
 ### build
 

@@ -16,7 +16,7 @@ import {
 import { Separator } from '../ui/separator';
 import { Sheet, SheetClose, SheetContent, SheetHeader } from '../ui/sheet';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { hexToRgb } from '../util/colors';
+import { hexToRgb, hexToRgbaCss } from '../util/colors';
 import ColorContrast from './ColorContrast';
 import ColorInfo from './ColorInfo';
 import ColorSpaces from './ColorSpaces';
@@ -25,7 +25,6 @@ import ColorTailwind from './ColorTailwind';
 type ColorGridProps = {
   title: string;
   group: string;
-  description: string;
   colors: CoreTypes.IColorObject[];
 };
 
@@ -33,7 +32,7 @@ const LargeColorGrid: React.FC<{ colors: CoreTypes.IColorObject[]; setOpen: (col
   <div className="@container">
     <div className="mb-6 grid grid-cols-1 gap-6 @md:grid-cols-2">
       {colors.map((color) => (
-        <a href="#" className="flex flex-col items-start" key={color.group + '-' + color.name}>
+        <div className="flex flex-col items-start" key={color.group + '-' + color.name}>
           <div
             className="group relative mb-2 block h-32 w-full rounded-lg"
             style={{ background: color.value ?? '', backgroundBlendMode: color.blend ?? '' }}
@@ -42,7 +41,7 @@ const LargeColorGrid: React.FC<{ colors: CoreTypes.IColorObject[]; setOpen: (col
           </div>
           <p className="mb-1 text-sm font-medium line-clamp-1" title={color.name}>{color.name}</p>
           <small className="font-mono text-xs font-light text-gray-400 line-clamp-1" title={color.value}>{color.value}</small>
-        </a>
+        </div>
       ))}
     </div>
   </div>
@@ -52,10 +51,11 @@ const SmallColorGrid: React.FC<{ colors: CoreTypes.IColorObject[]; setOpen: (col
   // group colors by subgroup
   const groupedColors = colors.reduce(
     (acc, color) => {
-      if (!acc[color.subgroup]) {
-        acc[color.subgroup] = [];
+      const subgroup = color.subgroup ?? '';
+      if (!acc[subgroup]) {
+        acc[subgroup] = [];
       }
-      acc[color.subgroup].push(color);
+      acc[subgroup].push(color);
       return acc;
     },
     {} as Record<string, CoreTypes.IColorObject[]>
@@ -64,11 +64,11 @@ const SmallColorGrid: React.FC<{ colors: CoreTypes.IColorObject[]; setOpen: (col
     <>
       {Object.entries(groupedColors).map(([subgroup]) => (
         <div className="mb-5" key={`group-${subgroup}`}>
-          <HeadersType.H4 key={subgroup}>{startCase(subgroup.replaceAll('-', ' '))}</HeadersType.H4>
+          {subgroup && <HeadersType.H4>{startCase(subgroup.replaceAll('-', ' '))}</HeadersType.H4>}
           <div className="grid grid-cols-[repeat(auto-fit,minmax(60px,60px))] gap-6">
             {groupedColors[subgroup].map((color) => (
               <React.Fragment key={`group-${subgroup}-${color.name}`}>
-                <a href="" className="flex flex-col">
+                <div className="flex flex-col">
                   <div
                     className="group relative mb-2 block h-14 rounded-lg"
                     style={{ background: color.value ?? '', backgroundBlendMode: color.blend ?? '' }}
@@ -77,7 +77,7 @@ const SmallColorGrid: React.FC<{ colors: CoreTypes.IColorObject[]; setOpen: (col
                   </div>
                   <p className="mb-1 text-xs font-medium line-clamp-1" title={color.name}>{color.name}</p>
                   <small className="font-mono text-xs font-light text-gray-400 line-clamp-1" title={color.value}>{color.value}</small>
-                </a>
+                </div>
               </React.Fragment>
             ))}
           </div>
@@ -87,7 +87,7 @@ const SmallColorGrid: React.FC<{ colors: CoreTypes.IColorObject[]; setOpen: (col
   );
 };
 
-const ColorGrid: React.FC<ColorGridProps> = ({ title, description, colors, group }) => {
+const ColorGrid: React.FC<ColorGridProps> = ({ title, colors, group }) => {
   const [open, setOpen] = React.useState(false);
   const [selectedColor, setSelectedColor] = React.useState(null);
   const openSheet = (color) => {
@@ -96,8 +96,7 @@ const ColorGrid: React.FC<ColorGridProps> = ({ title, description, colors, group
   };
   return (
     <div id={`${group}-colors`} className="scroll-mt-24 scroll-smooth pb-10">
-      <h3 className="text-lg font-medium">{title}</h3>
-      <p className="mb-8">{description}</p>
+      <h3 className="mb-8 text-lg font-medium">{title}</h3>
       {colors.length < 5 ? <LargeColorGrid colors={colors} setOpen={openSheet} /> : <SmallColorGrid colors={colors} setOpen={openSheet} />}
       <ColorSheet color={selectedColor} open={open} setOpen={setOpen} />
     </div>
@@ -122,7 +121,7 @@ const ColorDropdown: React.FC<{ color: CoreTypes.IColorObject; openSheet: (color
         <Copy className="text-gray-400" /> HEX
         <DropdownMenuShortcut className="max-w-[100px] truncate">{color.value}</DropdownMenuShortcut>
       </DropdownMenuItem>
-      <DropdownMenuItem onClick={() => navigator.clipboard.writeText('rgba(0, 49, 82, 1)')}>
+      <DropdownMenuItem onClick={() => navigator.clipboard.writeText(hexToRgbaCss(color.value) ?? color.value)}>
         <Copy className="text-gray-400" /> RGBA
         <DropdownMenuShortcut className="max-w-[100px] truncate">{hexToRgb(color.value)}</DropdownMenuShortcut>
       </DropdownMenuItem>

@@ -1,9 +1,10 @@
+import type { EnvValue, EnvSecret, RuntimeEnvReference } from '../config/from-env';
 import { BuildOptions } from 'esbuild';
 import type Handlebars from 'handlebars';
 import { Types as HandoffTypes } from 'handoff-core';
 import { InlineConfig } from 'vite';
 import { SlotMetadata } from '../transformers/preview/component';
-import { ComponentListObject, PatternListObject, TransformComponentTokensResult } from '../transformers/preview/types';
+import { ComponentListObject, PageListObject, PatternListObject, TransformComponentTokensResult } from '../transformers/preview/types';
 import { ValidationResult } from './preview';
 
 export interface ImageStyle {
@@ -58,8 +59,8 @@ export type RegisterHandlebarsHelpersContext = {
 
 export interface NextAppConfig {
   theme?: string;
-  title: string;
-  client: string;
+  title?: string;
+  client?: string;
   google_tag_manager?: string | null | undefined;
   googleTagManager?: string | null | undefined;
   type_copy?: string;
@@ -68,26 +69,249 @@ export interface NextAppConfig {
   typeSort?: string[];
   color_sort?: string[];
   colorSort?: string[];
-  breakpoints: Breakpoints;
+  /** Omit to keep the defaults; a declared block merges onto them rather than replacing them. */
+  breakpoints?: Breakpoints;
   component_sort?: string[];
   componentSort?: string[];
   base_path?: string;
   basePath?: string;
-  attribution: boolean;
+  /** @default true */
+  attribution?: boolean;
   ports?: {
-    app: number;
-    websocket: number;
+    app: EnvValue<number>;
+    websocket: EnvValue<number>;
+  };
+}
+
+/**
+ * Configuration for entry points to assets and components that will be built.
+ */
+export interface ConfigEntries {
+  /**
+   * Path to the main SCSS entry file
+   * @example "styles/main.scss"
+   */
+  scss?: string;
+  /**
+   * Path to the main JavaScript entry file
+   * @example "scripts/main.js"
+   */
+  js?: string;
+}
+
+/** Catalog item registration. */
+export interface ConfigCatalog {
+  /**
+   * Directories to search for catalog items. A path is either an item directory or a collection
+   * directory whose subdirectories are each treated as an item.
+   * @example ["components", "patterns"]
+   */
+  include?: string[];
+}
+
+/** Runtime mode. Resolved solely from `runtime.mode`; never inferred from env vars or connection settings. */
+export type RuntimeMode = 'workspace' | 'registry';
+
+/** Format used when synthesizing local workspace declarations. */
+export type DeclarationFormat = 'ts' | 'js' | 'cjs';
+
+/** How a connection's credential is supplied. Declared, never inferred from a missing key. */
+export type AiCredentialKind = 'service' | 'user' | 'none';
+
+/**
+ * An email option: a literal, baked into the build, or an environment reference, read by the deployed
+ * app at request time.
+ */
+export type HandoffEmailOption<T> = T | RuntimeEnvReference<T>;
+
+interface HandoffEmailBase {
+  /** Sender address, such as `Handoff <no-reply@example.com>`. Use a profile for per-environment values. */
+  from?: string;
+}
+
+/** Send through an SMTP server, such as Amazon SES, SendGrid, Postmark, Mailgun or Microsoft 365. */
+export interface HandoffSmtpEmail extends HandoffEmailBase {
+  provider: 'smtp';
+  options: {
+    host: HandoffEmailOption<string>;
+    /** @default 465, or 587 when `secure` is false */
+    port?: HandoffEmailOption<number>;
+    /**
+     * Use TLS from the start of the connection. When false, the connection upgrades with STARTTLS if
+     * the server offers it. @default true, or false when `port` is set to a port other than 465
+     */
+    secure?: HandoffEmailOption<boolean>;
+    user?: HandoffEmailOption<string>;
+    /** Environment reference to the SMTP password. */
+    password?: RuntimeEnvReference<string>;
+  };
+}
+
+/** Send through a server-only module that default-exports a `defineEmailProvider()` result. */
+export interface HandoffCustomEmail extends HandoffEmailBase {
+  provider: 'custom';
+  /** Server-only module path. It must be its own file so the build can trace it into the deployed registry. */
+  module: string;
+  /**
+   * Options passed to the provider factory. Literals are baked. Environment references are resolved
+   * at request time. `apiKey` and `password` must be environment references.
+   */
+  options?: Record<string, unknown>;
+}
+
+/** Registry email settings. `provider` selects the shape of `options`. */
+export type HandoffEmailConfig = HandoffSmtpEmail | HandoffCustomEmail;
+
+/**
+ * One AI connection the deployment declares. Connections are the whole surface: a reader can add a
+ * key for a declared connection and nothing else, so the server never calls a URL a reader chose.
+ *
+ * Every connection speaks the OpenAI-compatible `/chat/completions` API. A provider that fits
+ * nothing else names a server-only `module` instead of a `baseUrl`.
+ */
+export interface HandoffAiConnection {
+  /** Stable id. A model is addressed as `<id>/<model>`. */
+  id: string;
+  /** Name shown to a reader in the model picker and on the account page. */
+  label: string;
+  /** OpenAI-compatible base URL, such as `https://api.openai.com/v1`. Omit only when `module` is set. */
+  baseUrl?: string;
+  /**
+   * Server-only module path default-exporting a `defineAiProvider()` result, for a provider that is
+   * not OpenAI-compatible. It must be its own file so the build can trace it into the deployed
+   * registry.
+   */
+  module?: string;
+  /**
+   * Environment reference to the deployment's own key. Its presence makes the connection a service
+   * key: the deployment pays and every reader can use it. The name is baked; the value is read at
+   * request time and never leaves the server.
+   */
+  apiKey?: RuntimeEnvReference<string>;
+  /**
+   * Set to `'user'` when each reader supplies their own key. Without it, a connection that needs a
+   * reader's key looks like one that needs none, and the reader gets a raw 401 instead of an
+   * instruction.
+   */
+  credential?: 'user';
+  /** The models this connection offers. A reader cannot use a model that is not listed. */
+  models?: string[];
+  /**
+   * Options passed to a `module` provider factory. Literals are baked. Environment references are
+   * resolved at request time, so secrets must be environment references.
+   */
+  options?: Record<string, unknown>;
+}
+
+/**
+ * The AI assistant block. Presence of the block opts the build in, and `enabled: false` turns it
+ * off. Like `mcp`, `enabled` is config-only and baked at build time, so a build without it leaves
+ * out both the chat route and the header control rather than showing a control that fails.
+ */
+export interface HandoffAiConfig {
+  /** @default true when the `ai` block is present */
+  enabled?: boolean;
+  /** Declared connections. Merged by `id` with any supplied through `HANDOFF_AI_CONNECTIONS`. */
+  connections?: HandoffAiConnection[];
+  /** The `<connectionId>/<model>` used when a reader has not picked one. */
+  defaultModel?: string;
+}
+
+/**
+ * User-facing `runtime` configuration block. A single optional block that selects the runtime
+ * mode and carries mode-specific host/connection settings.
+ *
+ * Note: this is the authored shape. {@link RuntimeConfig} is the separate, resolved post-discovery
+ * shape used internally by the build/runtime.
+ */
+export interface HandoffRuntimeConfig {
+  /**
+   * The sole determinant of runtime mode. Defaults to `'workspace'` when omitted.
+   * Mode is never inferred from environment variables, database settings, or token presence.
+   */
+  mode?: RuntimeMode;
+  /**
+   * Whether the app serves the `/api/mcp/` Model Context Protocol endpoint. Set to `false` to leave
+   * the endpoint and the header affordance out of the build; the route then answers 404. Like
+   * `mode`, this is config-only and baked at build time, so changing it needs a rebuild.
+   * @default true
+   */
+  mcp?: boolean;
+  /** The docs AI assistant. Omit the block to leave it out of the build. See {@link HandoffAiConfig}. */
+  ai?: HandoffAiConfig;
+  /** Workspace-mode settings. */
+  workspace?: {
+    entries?: ConfigEntries;
+    declarationFormat?: DeclarationFormat;
+  };
+  /** Registry-mode host settings. Env-var values are stored as names, never as secrets. */
+  registry?: {
+    database?: {
+      /** Environment reference to the database URL. @default fromEnv('DATABASE_URL') */
+      url?: RuntimeEnvReference<string>;
+      /**
+       * PostgreSQL is the supported database. `driver` selects the built-in connection driver — how
+       * to connect, not which engine — over the same package-owned Postgres schema and migrations.
+       * @default "pg"
+       */
+      driver?: 'pg' | 'neon';
+    };
+    /**
+     * Where published asset blobs (icons/logos/fonts/sprites/archives) are stored. Defaults to the
+     * built-in PostgreSQL `bytea` store when omitted. Secrets are never persisted here - only the
+     * *names* of the env vars their values are read from at request time.
+     */
+    assetStorage?: {
+      /**
+       * Active storage provider for new uploads. `database` keeps bytes inline in Postgres; use a
+       * `custom` module for object storage.
+       * @default "database"
+       */
+      provider?: 'database' | 'custom';
+      /** For `provider: "custom"` - server-only module path default-exporting a `defineStorageProvider()` result. */
+      module?: string;
+      /** Max bytes kept inline in the database `bytea` column (larger uploads are rejected). @default 4194304 */
+      maxInlineBytes?: number;
+      /**
+       * Options passed to the provider factory. Literals are baked. Environment references are resolved
+       * at request time, so secrets must be environment references.
+       */
+      options?: Record<string, unknown>;
+    };
+    /**
+     * Invitation and password-reset email. Email stays off until `from` is set and the required
+     * options of the provider have values. Until then, invitation links are shown to an administrator.
+     */
+    email?: HandoffEmailConfig;
+  };
+  /**
+   * Connected-workspace settings pointing at a remote registry. A connected workspace is
+   * `mode: 'workspace'` plus this block — it is not a third runtime mode.
+   */
+  registryConnection?: {
+    /** @default fromEnv('HANDOFF_REGISTRY_URL', { default: '' }) */
+    url?: EnvValue<string>;
+    /** @default fromEnv('HANDOFF_REGISTRY_ACCESS_TOKEN', { default: '' }) */
+    accessToken?: EnvSecret<string>;
+  };
+}
+
+/** Connections to external services. */
+export interface ConfigIntegrations {
+  /** The Figma file that `fetch` reads foundations from. In a terminal, `fetch` asks for an empty value. */
+  figma?: {
+    /** The Figma file ID. @default fromEnv('HANDOFF_FIGMA_PROJECT_ID', { default: null }) */
+    projectId?: EnvValue<string | null>;
+    /** A Figma personal access token. Accepts only an environment reference. @default fromEnv('HANDOFF_DEV_ACCESS_TOKEN', { default: null }) */
+    accessToken?: EnvSecret<string | null>;
   };
 }
 
 export interface Config {
-  dev_access_token?: string | null | undefined;
-  devAccessToken?: string | null | undefined;
-  figma_project_id?: string | null | undefined;
-  figmaProjectId?: string | null | undefined;
-  exportsOutputDirectory?: string;
-  sitesOutputDirectory?: string;
-  useVariables?: boolean;
+  integrations?: ConfigIntegrations;
+  exportsOutputDirectory?: EnvValue<string>;
+  sitesOutputDirectory?: EnvValue<string>;
+  useVariables?: EnvValue<boolean>;
   /**
    * Configuration for React component docs generation (handoff-docgen).
    */
@@ -109,44 +333,31 @@ export interface Config {
    */
   pipeline?: PipelineConfig;
   /**
+   * Runtime configuration. `runtime.mode` is the sole determinant of runtime mode
+   * (`workspace` | `registry`), defaulting to `workspace` when omitted.
+   */
+  runtime?: HandoffRuntimeConfig;
+  /**
    * Configuration for entry points to assets and components that will be built
    */
-  entries?: {
-    /**
-     * Path to the main SCSS entry file
-     * @example "styles/main.scss"
-     */
-    scss?: string;
-    /**
-     * Path to the main JavaScript entry file
-     * @example "scripts/main.js"
-     */
-    js?: string;
-    /**
-     * Array of component paths to be included in the build
-     * @example ["components/button", "components/input"]
-     */
-    components?: string[];
-    /**
-     * Array of pattern paths to be included in the build.
-     * Patterns compose multiple component previews into single-page views.
-     * @example ["patterns/hero-section", "patterns"]
-     */
-    patterns?: string[];
-  };
+  entries?: ConfigEntries;
   /**
-   * Configuration for asset zip file download links
-   * @default { icons: "/icons.zip", logos: "/logos.zip" }
+   * Where catalog items are registered.
+   */
+  catalog?: ConfigCatalog;
+  /**
+   * Override URLs for the asset zip download links. When unset, each link defaults to the
+   * basePath-aware asset route `{basePath}/api/docs/assets/{collection}/{collection}.zip`, served by
+   * the docs read API in every runtime mode (from the DB in registry mode, from statically
+   * materialized files in a static export).
    */
   assets_zip_links?: {
     /**
-     * Path to the icons zip file
-     * @default "/icons.zip"
+     * Override URL for the icons zip. Defaults to `/api/docs/assets/icons/icons.zip` (basePath-aware).
      */
     icons?: string;
     /**
-     * Path to the logos zip file
-     * @default "/logos.zip"
+     * Override URL for the logos zip. Defaults to `/api/docs/assets/logos/logos.zip` (basePath-aware).
      */
     logos?: string;
   };
@@ -182,6 +393,9 @@ export interface Config {
 
     /**
      * Optional hook to override the SSR build configuration used in the ssrRenderPlugin
+     *
+     * Stylesheet loaders are re-applied after this hook, so a `.css`/`.scss`/`.sass` import stays out
+     * of the JavaScript graph whatever the hook returns.
      * @param config - The default esbuild configuration
      * @returns Modified esbuild configuration
      * @example
@@ -196,6 +410,9 @@ export interface Config {
 
     /**
      * Optional hook to override the client-side build configuration used in the ssrRenderPlugin
+     *
+     * Stylesheet loaders are re-applied after this hook, so a `.css`/`.scss`/`.sass` import stays out
+     * of the JavaScript graph whatever the hook returns.
      * @param config - The default esbuild configuration
      * @returns Modified esbuild configuration
      * @example
@@ -286,7 +503,46 @@ export interface Config {
   };
 }
 
-export type ClientConfig = Pick<Config, 'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'>;
+/**
+ * Non-secret runtime values projected to the browser. Only the resolved {@link RuntimeMode}
+ * crosses to the client; secrets and connection values never do.
+ */
+export interface ClientRuntimeConfig {
+  mode: RuntimeMode;
+  /**
+   * True when the runtime is a connected workspace (`mode: 'workspace'` plus a resolvable
+   * `registryConnection` URL). Non-secret: it never carries the URL or token value, only whether a
+   * connection is configured. Drives the workspace-only publish affordance in the docs UI.
+   */
+  connected: boolean;
+}
+
+/** Values available after config loading. Deferred references retain their names. */
+export type ResolvedConfig = Omit<
+  Config,
+  | 'integrations'
+  | 'exportsOutputDirectory'
+  | 'sitesOutputDirectory'
+  | 'useVariables'
+  | 'app'
+  | 'runtime'
+> & {
+  integrations?: { figma?: { projectId?: string | null; accessToken?: string | null } };
+  exportsOutputDirectory?: string;
+  sitesOutputDirectory?: string;
+  useVariables?: boolean;
+  app?: Omit<NextAppConfig, 'ports'> & { ports?: { app: number; websocket: number } };
+  runtime?: Omit<HandoffRuntimeConfig, 'registryConnection'> & {
+    registryConnection?: { url?: string; accessToken?: string };
+  };
+};
+
+export type ClientConfig = Pick<
+  ResolvedConfig,
+  'app' | 'exportsOutputDirectory' | 'sitesOutputDirectory' | 'assets_zip_links' | 'useVariables'
+> & {
+  runtime: ClientRuntimeConfig;
+};
 
 export interface RuntimeConfigComponentOptions {
   cssRootClass?: string;
@@ -302,18 +558,38 @@ export interface ConfigFileEntry {
   entityId: string;
 }
 
+/** A catalog declaration skipped because another declaration already took its id. */
+export interface DuplicateCatalogId {
+  id: string;
+  /** Absolute path of the declaration that owns the id. */
+  kept: string;
+  /** Absolute path of the declaration that was skipped. */
+  skipped: string;
+}
+
 export interface RuntimeConfig {
+  /** Resolved absolute paths of the project-wide bundle entry points, from `config.entries`. */
   entries?: {
     scss?: string;
     js?: string;
-    templates?: string;
+  };
+  /** Entities discovered from the workspace, keyed by id. Always present, possibly empty. */
+  entities: {
     components: {
       [id: string]: ComponentListObject;
     };
     patterns: {
       [id: string]: PatternListObject;
     };
+    pages: {
+      [id: string]: PageListObject;
+    };
   };
+  /**
+   * Catalog declarations skipped because their id was already taken. Always present, possibly empty.
+   * Discovery is the only pass that sees both declarations, so publish reads the duplicates from here.
+   */
+  duplicateCatalogIds: DuplicateCatalogId[];
   options: {
     [key: string]: RuntimeConfigComponentOptions;
   };

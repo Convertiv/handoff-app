@@ -1,4 +1,4 @@
-import { WebSocket } from 'ws';
+import { WebSocket, WebSocketServer } from 'ws';
 import { Logger } from '../utils/logger';
 
 export interface HandoffWebSocket extends WebSocket {
@@ -15,7 +15,7 @@ export interface HandoffWebSocket extends WebSocket {
 export const createWebSocketServer = async (port: number = 3001) => {
   Logger.info(`Starting WebSocket server for live reload on port ${port}…`);
 
-  const wss = new WebSocket.Server({ port });
+  const wss = new WebSocketServer({ port });
 
   wss.on('listening', () => {
     Logger.info(`WebSocket server listening on ws://localhost:${port} (live reload)`);

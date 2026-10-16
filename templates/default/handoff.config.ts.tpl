@@ -1,4 +1,4 @@
-import { defineConfig } from 'handoff-app';
+import { defineConfig, fromEnv } from 'handoff-app';
 
 export default defineConfig({
   app: {
@@ -40,157 +40,36 @@ export default defineConfig({
     }
   },
 
-  // entries: {
-  //   /**
-  //    * Array of component paths to be included in the build.
-  //    * Each path should point to a directory containing a *.handoff.ts declaration.
-  //    */
-  //   components: ["components/button"],
-  //
-  //   /**
-  //    * Array of pattern paths to be included in the build.
-  //    * Patterns compose multiple component previews into single-page views.
-  //    * Each path should point to a directory containing a *.handoff.ts declaration
-  //    * that uses definePattern().
-  //    *
-  //    * @example
-  //    * patterns: ["patterns/hero-section", "patterns"]
-  //    */
-  //   patterns: ["patterns"],
+  // Where catalog items live. A path is either an item directory, or a collection directory whose
+  // subdirectories are each an item.
+  // catalog: { include: ["components", "patterns"] },
+
+  // Figma: `fetch` reads the file ID and token from these variables. Defaults shown. If a value is
+  // empty, `fetch` asks for it. The token accepts only an environment reference.
+  // integrations: {
+  //   figma: {
+  //     projectId: fromEnv("HANDOFF_FIGMA_PROJECT_ID", { default: null }),
+  //     accessToken: fromEnv("HANDOFF_DEV_ACCESS_TOKEN", { default: null }),
+  //   },
   // },
 
-  // Optional handoff-docgen settings used by component docs generation
-  // reactDocgen: {
-  //   maxDepth: 7,
-  //   excludeDirectories: ["dist", "build", ".next"]
-  // },
-
-  hooks: {
-    /**
-     * Optional validation callback for components
-     * @param component - The component instance to validate
-     * @returns A record of validation results where keys are validation types and values are detailed validation results
-     *
-     * @example
-     * validateComponent: async (component) => ({
-     *   a11y: {
-     *     description: 'Accessibility validation check',
-     *     passed: true,
-     *     messages: ['No accessibility issues found']
-     *   },
-     *   responsive: {
-     *     description: 'Responsive design validation',
-     *     passed: false,
-     *     messages: ['Component breaks at mobile breakpoint']
-     *   }
-     * })
-     */
-    // validateComponent: async (component) => {
-    //   // Add your custom validation logic here
-    //   return {};
-    // },
-
-    /**
-     * Optional hook to override the SSR build configuration used in the ssrRenderPlugin
-     * @param config - The default esbuild configuration
-     * @returns Modified esbuild configuration
-     *
-     * @example
-     * ssrBuildConfig: (config) => {
-     *   // Modify the esbuild config as needed
-     *   return config;
-     * }
-     */
-    // ssrBuildConfig: (config) => {
-    //   // Add your custom SSR build configuration here
-    //   return config;
-    // },
-
-    /**
-     * Optional hook to override the client-side build configuration used in the ssrRenderPlugin
-     * @param config - The default esbuild configuration
-     * @returns Modified esbuild configuration
-     *
-     * @example
-     * clientBuildConfig: (config) => {
-     *   // Modify the esbuild config as needed
-     *   return config;
-     * }
-     */
-    // clientBuildConfig: (config) => {
-    //   // Add your custom client build configuration here
-    //   return config;
-    // },
-
-    /**
-     * Optional hook to specify which export property contains the schema
-     * @param exports - The module exports object containing the schema
-     * @returns The schema object from the exports
-     *
-     * @example
-     * getSchemaFromExports: (exports) => exports.customSchema || exports.default
-     */
-    // getSchemaFromExports: (exports) => {
-    //   // Add your custom schema extraction logic here
-    //   return exports.default;
-    // },
-
-    /**
-     * Optional hook to transform the schema into properties
-     * @param schema - The schema object to transform
-     * @returns The transformed properties object
-     */
-    // schemaToProperties: (schema) => {
-    //   // Add your custom schema to properties transformation here
-    //   return {};
-    // },
-
-    /**
-     * Optional hook to override the JavaScript Vite configuration
-     * @param config - The default Vite configuration
-     * @returns Modified Vite configuration
-     *
-     * @example
-     * jsBuildConfig: (config) => {
-     *   // Modify the Vite config as needed
-     *   return config;
-     * }
-     */
-    // jsBuildConfig: (config) => {
-    //   // Add your custom JavaScript build configuration here
-    //   return config;
-    // },
-
-    /**
-     * Optional hook to override the CSS Vite configuration
-     * @param config - The default Vite configuration
-     * @returns Modified Vite configuration
-     *
-     * @example
-     * cssBuildConfig: (config) => {
-     *   // Modify the Vite config as needed
-     *   return config;
-     * }
-     */
-    // cssBuildConfig: (config) => {
-    //   // Add your custom CSS build configuration here
-    //   return config;
-    // },
-
-    /**
-     * Optional hook to override the HTML Vite configuration
-     * @param config - The default Vite configuration
-     * @returns Modified Vite configuration
-     *
-     * @example
-     * htmlBuildConfig: (config) => {
-     *   // Modify the Vite config as needed
-     *   return config;
-     * }
-     */
-    // htmlBuildConfig: (config) => {
-    //   // Add your custom HTML build configuration here
-    //   return config;
+  // `mode` selects the runtime: "workspace" (no database) or "registry" (Postgres). The registry
+  // block is read only by `build --target registry` and `db:migrate`, and secrets are referenced by
+  // env var name. A named profile (`handoff.config.registry.*`, `--profile registry`) is a good home
+  // for it.
+  runtime: {
+    mode: "workspace",
+    // mcp: false,
+    // registry: {
+    //   database: { url: fromEnv("DATABASE_URL"), driver: "pg" }, // driver: 'pg' | 'neon'
     // },
   },
+
+  // reactDocgen: { maxDepth: 7, excludeDirectories: ["dist", "build", ".next"] },
+
+  // Optional build hooks: component validation, esbuild and Vite config overrides, Handlebars
+  // helper registration. Signatures and examples are on the `Config` type.
+  // hooks: {
+  //   validateComponent: async (component) => ({}),
+  // },
 });

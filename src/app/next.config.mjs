@@ -10,41 +10,129 @@ const resolveBasePath = (rawBasePath) => {
   return trimmed ? `/${trimmed}` : '';
 };
 
+// Resolved build target drives Next's output mode. The target — not NODE_ENV
+// — decides static export vs. dynamic packaging, so workspace dev, the static snapshot, and the
+// registry app never get conflated:
+//   - `static`   → `output: 'export'` (a self-contained static snapshot).
+//   - `registry` → `output: 'standalone'` (a deployable dynamic Next.js app + traced node_modules).
+//   - otherwise  → a normal server (workspace `next dev`/`start`).
+const handoffBuildTarget = process.env.HANDOFF_BUILD_TARGET;
+const handoffWorkingPath = path.resolve('%HANDOFF_WORKING_PATH%');
+const handoffTracingRoot = path.resolve('%HANDOFF_TRACING_ROOT%');
+
+const resolveOutputMode = (target) => {
+  if (target === 'static') {
+    // Static export disables Next API routes, which the workspace docs read API (`/api/docs/*`)
+    // depends on, so the static build materializes that read model into route-shaped files instead.
+    return 'export';
+  }
+  if (target === 'registry') {
+    // The registry app is a deployable dynamic server (DB-backed docs/registry APIs). Standalone
+    // traces the runtime + selected DB driver into a self-contained bundle for Vercel/Node/containers
+    // and never runs a static export.
+    return 'standalone';
+  }
+  return undefined;
+};
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  output: resolveOutputMode(handoffBuildTarget),
+  // Rooted at the common ancestor of the staged app and the `node_modules` that the runtime
+  // dependencies resolve from. The builder bakes this value (`resolveRegistryTracingRoot`), so the
+  // assembly step uses the same root. This applies to the registry target only.
+  outputFileTracingRoot: handoffBuildTarget === 'registry' ? handoffTracingRoot : undefined,
+  // nft speculatively traces the export-only paths the app references (`export-detail.json` and the
+  // materializer's `.next/export/**` targets) as runtime deps. They never exist in a `standalone`
+  // build, and `copyTracedFiles` copies traced files with no existence guard, so leaving them in
+  // fails the build with `ENOENT`. Exclude them (`**` matches the server + every per-page trace).
+  // Registry-only; static export, which legitimately produces these files, is untouched.
+  outputFileTracingExcludes:
+    handoffBuildTarget === 'registry' ? { '**': ['**/export-detail.json', '**/.next/export/**'] } : undefined,
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   trailingSlash: true,
+  // Extra safety for the invite/reset flow. The token now lives in the URL fragment, so it never
+  // reaches the server or leaks via Referer, but this header hardens the page anyway. Only the
+  // dynamic registry server can send response headers; a static export can't.
+  ...(handoffBuildTarget === 'registry'
+    ? {
+        async headers() {
+          return [{ source: '/reset-password', headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }] }];
+        },
+        async redirects() {
+          // Next otherwise sends `/index` through the catch-all route but stores its ISR result
+          // under the root cache key. Canonicalize the alias before routing so it cannot overwrite
+          // the published home page with a catch-all result.
+          return [{ source: '/index/', destination: '/', permanent: true }];
+        },
+      }
+    : {}),
   experimental: {
     externalDir: true,
   },
   eslint: {
-    dirs: ['pages', 'utils'],
+    ignoreDuringBuilds: true,
   },
   transpilePackages: ['handoff-app', 'react-syntax-highlighter'],
   typescript: {
     tsconfigPath: 'tsconfig.json',
   },
-  //distDir: 'out',
   basePath: resolveBasePath('%HANDOFF_APP_BASE_PATH%'),
   env: {
     HANDOFF_PROJECT_ID: '%HANDOFF_PROJECT_ID%',
     HANDOFF_APP_BASE_PATH: '%HANDOFF_APP_BASE_PATH%',
+    // Resolved build target, baked so the client can tell a self-contained static snapshot apart
+    // from a live workspace/registry app (e.g. the header hides the runtime-mode badge in the
+    // static export). Read straight from the build env — empty for workspace dev/start.
+    HANDOFF_BUILD_TARGET: handoffBuildTarget ?? '',
     HANDOFF_WORKING_PATH: '%HANDOFF_WORKING_PATH%',
+    // Where the project sits inside a registry bundle, which mirrors the tracing root. Custom server
+    // modules are imported from there (see `lib/server-module.ts`).
+    HANDOFF_BUNDLE_PROJECT_DIR: path.relative(handoffTracingRoot, handoffWorkingPath),
     HANDOFF_MODULE_PATH: '%HANDOFF_MODULE_PATH%',
     HANDOFF_EXPORT_PATH: '%HANDOFF_EXPORT_PATH%',
     HANDOFF_WEBSOCKET_PORT: '%HANDOFF_WEBSOCKET_PORT%',
+    // Resolved runtime mode + registry connection *inputs* (names only, never secrets), baked at
+    // build time so the deployed registry app resolves its mode and DB env-var name without any
+    // build-machine filesystem (the absolute paths above do not exist on the deploy host). Mode stays
+    // config-only — these are derived from `runtime.*`, not inferred from env at runtime. The DB
+    // connection string itself is read from the named env var at request time (deployment-supplied).
+    HANDOFF_RUNTIME_MODE: '%HANDOFF_RUNTIME_MODE%',
+    // Whether this build serves `/api/mcp/`. Both the route and the header UI read this, so a
+    // disabled build hides the affordance instead of showing it fail against a 404.
+    HANDOFF_MCP_ENABLED: '%HANDOFF_MCP_ENABLED%',
+    // Whether this build serves the docs AI assistant. Config-only and baked, like the MCP flag, so
+    // a build without it leaves out both `/api/ai/*` and the header control.
+    HANDOFF_AI_ENABLED: '%HANDOFF_AI_ENABLED%',
+    // The connection list `runtime.ai.connections` declared (env-var *names* and non-secret options
+    // only). Deliberately not named `HANDOFF_AI_CONNECTIONS`: Next inlines every name in this block
+    // at build time, which would shadow the deployment-supplied list of that name that the server
+    // reads at request time and merges over this one.
+    HANDOFF_AI_BAKED_CONNECTIONS: '%HANDOFF_AI_BAKED_CONNECTIONS%',
+    HANDOFF_AI_DEFAULT_MODEL: '%HANDOFF_AI_DEFAULT_MODEL%',
+    HANDOFF_REGISTRY_DRIVER: '%HANDOFF_REGISTRY_DRIVER%',
+    HANDOFF_REGISTRY_DATABASE_URL_ENV: '%HANDOFF_REGISTRY_DATABASE_URL_ENV%',
+    // Asset storage provider, module, and options JSON. Option references keep only their variable
+    // name and are resolved at request time, so secret values are never baked.
+    HANDOFF_ASSET_STORAGE_PROVIDER: '%HANDOFF_ASSET_STORAGE_PROVIDER%',
+    HANDOFF_ASSET_STORAGE_MODULE: '%HANDOFF_ASSET_STORAGE_MODULE%',
+    HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES: '%HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES%',
+    HANDOFF_ASSET_STORAGE_OPTIONS: '%HANDOFF_ASSET_STORAGE_OPTIONS%',
+    // Registry email provider, sender, module, and options JSON. Option references keep only their
+    // env-var names; the values are read at request time.
+    HANDOFF_EMAIL_PROVIDER: '%HANDOFF_EMAIL_PROVIDER%',
+    HANDOFF_EMAIL_FROM: '%HANDOFF_EMAIL_FROM%',
+    HANDOFF_EMAIL_MODULE: '%HANDOFF_EMAIL_MODULE%',
+    HANDOFF_EMAIL_OPTIONS: '%HANDOFF_EMAIL_OPTIONS%',
   },
   images: {
     unoptimized: true,
   },
   sassOptions: {
     additionalData: (content, _) => {
-      // Local state
       let foundTheme = false;
 
-      // Local environment
       const env = {
         HANDOFF_PROJECT_ID: '%HANDOFF_PROJECT_ID%',
         HANDOFF_APP_BASE_PATH: '%HANDOFF_APP_BASE_PATH%',
@@ -54,22 +142,16 @@ const nextConfig = {
         HANDOFF_WEBSOCKET_PORT: '%HANDOFF_WEBSOCKET_PORT%',
       };
 
-      // Check if client configuration exists
       const clientConfigPath = path.resolve(env.HANDOFF_WORKING_PATH, 'handoff.config.json');
       if (fs.existsSync(clientConfigPath)) {
-        // Load client configuration
         const clientConfigRaw = fs.readFileSync(clientConfigPath);
         const clientConfig = JSON.parse(clientConfigRaw);
-        // Check if client configuration is a valid object
         if (typeof clientConfig === 'object' && !Array.isArray(clientConfig) && clientConfig !== null) {
-          // Check if the client configuration specifies a theme
-          // If the theme is specified, check if the theme exists in the 'themes' folder
           if (
             clientConfig.hasOwnProperty('app') &&
             clientConfig['app'].hasOwnProperty('theme') &&
             fs.existsSync(path.resolve(env.HANDOFF_WORKING_PATH, 'theme', `${clientConfig['app']['theme']}.scss`))
           ) {
-            // Use custom theme
             foundTheme = true;
             content = content + `\n@import '${path.resolve(env.HANDOFF_WORKING_PATH, 'theme', clientConfig['app']['theme'])}';`;
             console.log(
@@ -84,9 +166,7 @@ const nextConfig = {
       }
 
       if (!foundTheme) {
-        // Check if there is a custom version of the default theme
         if (fs.existsSync(path.resolve(env.HANDOFF_WORKING_PATH, 'theme', `default.scss`))) {
-          // Use custom theme
           content = content + `\n@import 'theme/default';`;
           console.log(
             `- ${chalk.cyan('info')} Using default app theme override (path: ${path.resolve(
@@ -96,7 +176,6 @@ const nextConfig = {
             )})`
           );
         } else {
-          // Use default theme
           content = content + `\n@import 'themes/default';`;
           console.log(`- ${chalk.cyan('info')} Using default app theme`);
         }
@@ -105,7 +184,7 @@ const nextConfig = {
       return content;
     },
   },
-  turbopack: { 
+  turbopack: {
     resolveAlias: {
       '@handoff': path.resolve('%HANDOFF_MODULE_PATH%/src'),
       '@': path.resolve('.'),

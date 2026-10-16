@@ -1,0 +1,12 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { handleDocsRoute, sendDocsData } from '@/lib/docs-api';
+
+/**
+ * `GET /api/docs/components.json` — the component list (`ComponentListObject[]`), each record
+ * carrying its `path`. Identical shape in workspace and registry mode.
+ */
+export default function handler(req: NextApiRequest, res: NextApiResponse): Promise<void> {
+  return handleDocsRoute(req, res, async (backend) => {
+    sendDocsData(res, 200, await backend.listComponents());
+  });
+}

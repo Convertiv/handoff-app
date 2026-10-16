@@ -7,10 +7,19 @@ import ReactDOMServer from 'react-dom/server';
 import reactElementToJSXString from 'react-element-to-jsx-string';
 import { Plugin } from 'vite';
 import Handoff from '../..';
+import { orderPreviews, readExportOrderFromSource } from '../../catalog';
 import { Logger } from '../../utils/logger';
 import { generateDocsArtifact, getPropertiesForComponentFromDocs } from '../docgen';
 import { SlotMetadata, SlotType } from '../preview/component';
-import { MAIN_COMPONENT_CSS_FILE } from '../preview/component/css';
+import {
+  renderComponentStyleLink,
+  renderGlobalScriptTag,
+  renderSharedStyleLinks,
+  resolveComponentArtifactPresence,
+  resolveSharedArtifactPresence,
+  type ComponentArtifactPresence,
+  type SharedArtifactPresence,
+} from '../preview/component/shared-artifacts';
 import { TransformComponentTokensResult } from '../preview/types';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
@@ -266,14 +275,25 @@ function buildUsageSnippet(
   });
 }
 
-function createHtmlDocument(componentId: string, previewTitle: string, renderedHtml: string): string {
+function createHtmlDocument(
+  componentId: string,
+  previewTitle: string,
+  renderedHtml: string,
+  sharedArtifacts: SharedArtifactPresence,
+  componentArtifacts: ComponentArtifactPresence
+): string {
+  const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
+  // Shared/global and component-owned artifacts are referenced only when present, so a CSF preview
+  // never requests an absent optional artifact. CSF previews stay static; the global script runs
+  // only for its top-level side effects when a global JS entry exists.
+  const sharedStyleLinks = renderSharedStyleLinks(sharedArtifacts, basePath);
+  const componentStyleLink = renderComponentStyleLink(componentArtifacts, componentId, basePath);
+  const globalScriptTag = renderGlobalScriptTag(sharedArtifacts, basePath);
   return `<!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${MAIN_COMPONENT_CSS_FILE}" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/api/component/${componentId}.css" />
-    <link rel="stylesheet" href="${process.env.HANDOFF_APP_BASE_PATH ?? ''}/assets/css/preview.css" />
+    <meta charset="UTF-8" />${sharedStyleLinks ? `\n    ${sharedStyleLinks}` : ''}${componentStyleLink ? `\n    ${componentStyleLink}` : ''}
+    <link rel="stylesheet" href="${basePath}/assets/css/preview.css" />${globalScriptTag ? `\n    ${globalScriptTag}` : ''}
     <title>${previewTitle}</title>
   </head>
   <body>
@@ -339,9 +359,10 @@ export function csfRenderPlugin(
         Object.entries(incomingPreviews).filter(([key]) => key.startsWith('__pattern_'))
       );
 
-      // Include all named stories as previews and preserve injected pattern previews.
+      // Include all named stories as previews and preserve injected pattern previews. Story order
+      // comes from the source text: esbuild emits its export map alphabetically.
       componentData.previews = {
-        ...createCsfStoryPreviews(moduleExports),
+        ...orderPreviews(createCsfStoryPreviews(moduleExports), readExportOrderFromSource(sourceCode)),
         ...patternPreviews,
       };
 
@@ -425,6 +446,11 @@ export function csfRenderPlugin(
 
       componentData.properties = ensureIds(generatedProperties);
 
+      // Resolve which shared/global and component-owned artifacts exist so generated HTML references
+      // them only when present. These are built before component HTML, so this reflects final state.
+      const sharedArtifacts = resolveSharedArtifactPresence(handoff);
+      const componentArtifacts = resolveComponentArtifactPresence(handoff, componentId);
+
       let lastHtml = '';
       for (const [previewKey, preview] of Object.entries(componentData.previews)) {
         const storyKey = preview.sourcePreview && storyMap[preview.sourcePreview]
@@ -433,7 +459,7 @@ export function csfRenderPlugin(
         const storyValue = storyKey ? storyMap[storyKey] : undefined;
         const storyArgs = preview.values || {};
         const rendered = safeRenderToHtml(meta, storyValue, storyArgs);
-        const html = await formatHtml(createHtmlDocument(componentId, preview.title, rendered));
+        const html = await formatHtml(createHtmlDocument(componentId, preview.title, rendered, sharedArtifacts, componentArtifacts));
         const fileName = `${componentId}-${previewKey}.html`;
 
         this.emitFile({

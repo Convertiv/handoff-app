@@ -1,13 +1,14 @@
 'use client';
+import { buildArtifactUrl } from '@handoff/artifacts/url';
 import { PatternListObject } from '@handoff/transformers/preview/types';
 import { startCase } from 'lodash';
 import React, { useCallback, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import Layout from '../../../../components/Layout/Main';
-import NotFound from '../../../../components/NotFound';
 import { MarkdownComponents } from '../../../../components/Markdown/MarkdownComponents';
 import PrevNextNav from '../../../../components/Navigation/PrevNextNav';
+import NotFound from '../../../../components/NotFound';
 import HeadersType from '../../../../components/Typography/Headers';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '../../../../components/ui/accordion';
 import { Badge } from '../../../../components/ui/badge';
@@ -16,9 +17,9 @@ import {
   DocumentationProps,
   fetchPatterns,
   getClientRuntimeConfig,
-  getCurrentSection,
+  getNavProps,
   IParams,
-  staticBuildMenu,
+  isRegistryRuntime,
 } from '../../../../components/util';
 
 type PatternNavItem = { id: string; title: string; description: string; group: string };
@@ -90,18 +91,29 @@ const getArgSummary = (args?: Record<string, unknown>) => {
 };
 
 export async function getStaticPaths() {
+  // Registry content is mutable at runtime and may be empty/unreachable at build time, so resolve
+  // pattern pages on demand against the live DB instead of freezing the path list to the build
+  // snapshot. The static-export target stays fully prerendered (`fallback: false`).
+  if (isRegistryRuntime()) {
+    return { paths: [], fallback: 'blocking' as const };
+  }
   return {
-    paths: fetchPatterns()?.map((p) => ({ params: { pattern: p.id } })) ?? [],
+    paths: (await fetchPatterns()).map((p) => ({ params: { pattern: p.id } })),
     fallback: false,
   };
 }
 
 export const getStaticProps = async (context: { params: IParams }) => {
   const { pattern: patternId } = context.params;
-  const patterns = fetchPatterns() ?? [];
-  const menu = staticBuildMenu();
-  const config = getClientRuntimeConfig();
+  const patterns = await fetchPatterns();
   const patternData = patterns.find((p) => p.id === patternId);
+  // Under `fallback: 'blocking'` this runs on demand for arbitrary ids; surface a real 404 for ids
+  // that do not exist in the active mode.
+  if (!patternData) {
+    return { notFound: true };
+  }
+  const navProps = await getNavProps('/system');
+  const config = getClientRuntimeConfig();
 
   const sameGroupPatterns = patterns.filter((p) => p.group === patternData?.group);
   const groupIndex = sameGroupPatterns.findIndex((p) => p.id === patternId);
@@ -113,13 +125,12 @@ export const getStaticProps = async (context: { params: IParams }) => {
   return {
     props: {
       id: patternId,
-      menu,
+      ...navProps,
       config,
-      current: getCurrentSection(menu, '/system') ?? [],
       metadata: {
         title: fallbackTitle,
         description: patternData?.description || '',
-        metaTitle: `${fallbackTitle}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`,
+        metaTitle: '',
         metaDescription: patternData?.description || '',
       },
       previousPattern,
@@ -149,7 +160,7 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
     setFetchError(undefined);
     setPatternNotFound(false);
 
-    fetch(`${normalizedBasePath}/api/pattern/${id}.json`, { signal: controller.signal })
+    fetch(buildArtifactUrl(`pattern/${id}.json`, appBasePath), { signal: controller.signal })
       .then((res) => {
         if (res.status === 404) {
           setPatternNotFound(true);
@@ -168,7 +179,7 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
       });
 
     return () => controller.abort();
-  }, [id, normalizedBasePath]);
+  }, [id, appBasePath]);
 
   const onIframeLoad = useCallback(() => {
     if (iframeRef.current?.contentWindow?.document?.body) {
@@ -178,7 +189,7 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
 
   if (patternNotFound) {
     return (
-      <Layout config={config} menu={menu} current={current} metadata={{ ...metadata, title: '404 - Page Not Found', metaTitle: '404 - Page Not Found' }}>
+      <Layout config={config} menu={menu} current={current} metadata={{ ...metadata, title: 'Page Not Found', metaTitle: '' }}>
         <div className="flex min-h-[60vh] flex-col items-center justify-center">
           <NotFound />
         </div>
@@ -197,7 +208,23 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
     );
   }
 
-  if (!pattern) return <p>Loading...</p>;
+  if (!pattern) {
+    return (
+      <Layout config={config} menu={menu} current={current} metadata={metadata}>
+        <div className="flex flex-col gap-3 pb-14" aria-busy="true" aria-live="polite">
+          <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Patterns</small>
+          <HeadersType.H1>{metadata.title}</HeadersType.H1>
+          {metadata.description && (
+            <div className="prose max-w-[800px] text-xl font-light leading-relaxed text-gray-600 dark:text-gray-300">
+              <ReactMarkdown components={MarkdownComponents} rehypePlugins={[rehypeRaw]}>
+                {metadata.description}
+              </ReactMarkdown>
+            </div>
+          )}
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
@@ -246,7 +273,7 @@ const PatternPage = ({ menu, metadata, current, id, config, previousPattern, nex
                   display: 'block',
                   border: 'none',
                 }}
-                src={`${normalizedBasePath}/api/pattern/${pattern.url}`}
+                src={buildArtifactUrl(`pattern/${pattern.url}`, appBasePath)}
               />
             ) : (
               <div className="flex items-center justify-center p-8 text-sm text-gray-500">No preview available for this pattern.</div>

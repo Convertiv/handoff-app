@@ -1,7 +1,14 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { buildPatternDetailUrl } from '../../../artifacts/url';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
+import {
+  resolveComponentArtifactPresence,
+  resolveSharedArtifactPresence,
+  type ComponentArtifactPresence,
+  type SharedArtifactPresence,
+} from '../component/shared-artifacts';
 import { PatternListObject, PatternObject } from '../types';
 import { readPatternSummaryApi, syncPatternArtifacts, writePatternApi, writePatternHtml, writePatternSummaryApi } from './api';
 import { composePatternHtml } from './html';
@@ -19,7 +26,7 @@ export const getPatternIdsReferencingComponents = (handoff: Handoff, componentId
     return [];
   }
   const idSet = new Set(componentIds);
-  const runtimePatterns = handoff.runtimeConfig?.entries?.patterns ?? {};
+  const runtimePatterns = handoff.runtimeConfig?.entities.patterns ?? {};
   const result: string[] = [];
 
   for (const patternId of Object.keys(runtimePatterns)) {
@@ -32,49 +39,76 @@ export const getPatternIdsReferencingComponents = (handoff: Handoff, componentId
   return result;
 };
 
+/** Collapses repeats into one item with a count, so one cause reads as one problem. */
+const summarizeReasons = (reasons: string[]): string => {
+  const counts = new Map<string, number>();
+  for (const reason of reasons) {
+    counts.set(reason, (counts.get(reason) ?? 0) + 1);
+  }
+  return Array.from(counts, ([reason, count]) => (count > 1 ? `${reason} (x${count})` : reason)).join('; ');
+};
+
 async function buildPattern(
   handoff: Handoff,
   patternId: string,
   pattern: PatternObject,
   componentOutputDir: string,
-  basePath: string
+  basePath: string,
+  sharedArtifacts: SharedArtifactPresence
 ): Promise<PatternListObject | null> {
   const fragments: { componentId: string; html: string }[] = [];
-  let hasErrors = false;
+  // Composition is what drops a ref, so it is also what reports why. Discovery recorded its reason
+  // without logging it, and that reason is more precise than the one this loop can build.
+  const skipped: string[] = [];
+  const composedWithFallback: string[] = [];
 
-  for (let i = 0; i < pattern.components.length; i++) {
-    const ref = pattern.components[i];
-
+  for (const ref of pattern.components) {
     if (ref.resolved === false && !ref.resolvedPreview) {
-      hasErrors = true;
+      skipped.push(ref.unresolvedReason ?? `component "${ref.id}" did not resolve`);
       continue;
     }
 
     const previewKey = ref.resolvedPreview || ref.preview;
     if (!previewKey) {
-      const error =
-        `Pattern "${patternId}" component[${i}] ("${ref.id}") has no resolved preview key. Skipping.`;
-      Logger.warn(error);
+      skipped.push(ref.unresolvedReason ?? `component "${ref.id}" has no preview to render`);
       ref.resolved = false;
-      hasErrors = true;
       continue;
     }
     const htmlFileName = `${ref.id}-${previewKey}.html`;
     const htmlFilePath = path.resolve(componentOutputDir, htmlFileName);
 
     if (!fs.existsSync(htmlFilePath)) {
-      const error =
-        `Pattern "${patternId}" component[${i}] ("${ref.id}") preview file not found: ${htmlFileName}. ` +
-        `Ensure the component has a preview named "${previewKey}".`;
-      Logger.warn(error);
+      skipped.push(ref.unresolvedReason ?? `preview "${previewKey}" of component "${ref.id}" was not built (${htmlFileName})`);
       ref.resolved = false;
-      hasErrors = true;
       continue;
     }
 
     ref.resolved = true;
+    if (ref.unresolvedReason) {
+      composedWithFallback.push(ref.unresolvedReason);
+    }
     const html = await fs.readFile(htmlFilePath, 'utf8');
     fragments.push({ componentId: ref.id, html });
+  }
+
+  if (skipped.length > 0) {
+    Logger.warn(
+      `Pattern "${patternId}" skipped ${skipped.length} of ${pattern.components.length} fragment(s): ${summarizeReasons(skipped)}.`
+    );
+  }
+  if (composedWithFallback.length > 0) {
+    Logger.warn(
+      `Pattern "${patternId}" composed ${composedWithFallback.length} fragment(s) from a fallback: ${summarizeReasons(composedWithFallback)}.`
+    );
+  }
+
+  // Resolve component-owned artifact presence for each composed component so the pattern references
+  // only the stylesheets that actually exist (no dangling references for style-less components).
+  const componentArtifacts = new Map<string, ComponentArtifactPresence>();
+  for (const fragment of fragments) {
+    if (!componentArtifacts.has(fragment.componentId)) {
+      componentArtifacts.set(fragment.componentId, resolveComponentArtifactPresence(handoff, fragment.componentId));
+    }
   }
 
   if (fragments.length === 0) {
@@ -82,18 +116,14 @@ async function buildPattern(
     return null;
   }
 
-  if (hasErrors) {
-    Logger.warn(`Pattern "${patternId}" has missing components but will be composed from available fragments.`);
-  }
-
-  const composedHtml = composePatternHtml(patternId, pattern.title, fragments, basePath);
+  const composedHtml = composePatternHtml(patternId, pattern.title, fragments, basePath, sharedArtifacts, componentArtifacts);
   const patternUrl = `${patternId}.html`;
 
   const patternData: PatternListObject = {
     ...pattern,
     id: patternId,
     url: patternUrl,
-    path: `${basePath}/api/pattern/${patternId}.json`,
+    path: buildPatternDetailUrl(patternId, basePath),
   };
 
   await writePatternHtml(patternId, composedHtml, handoff);
@@ -109,7 +139,13 @@ async function buildPattern(
  * so that all component preview HTML files already exist on disk.
  */
 export async function processPatterns(handoff: Handoff, options?: ProcessPatternsOptions): Promise<PatternListObject[]> {
-  const runtimePatterns = handoff.runtimeConfig?.entries?.patterns ?? {};
+  // Resolve the pattern set through the storage-agnostic store (v2). The filesystem store is a read
+  // view over `runtimeConfig.entities.patterns`, so these are the same records the build has always
+  // used — rebuilt into the id-keyed map the build logic below expects.
+  const runtimePatterns: Record<string, PatternListObject> = {};
+  for (const pattern of await handoff.store.patterns.list()) {
+    runtimePatterns[pattern.id] = pattern;
+  }
   const patternIds = Object.keys(runtimePatterns);
   const onlyPatternIds = options?.onlyPatternIds;
   const isPartial = onlyPatternIds !== undefined;
@@ -122,6 +158,9 @@ export async function processPatterns(handoff: Handoff, options?: ProcessPattern
 
   const componentOutputDir = path.resolve(handoff.workingPath, 'public/api/component');
   const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
+  // Resolve the shared/global artifacts once so composed patterns reference `component/main.css` and
+  // `component/main.js` only when present (deduplicated to a single global script per page).
+  const sharedArtifacts = resolveSharedArtifactPresence(handoff);
 
   if (!isPartial) {
     Logger.info(`Building ${patternIds.length} pattern(s)...`);
@@ -129,7 +168,7 @@ export async function processPatterns(handoff: Handoff, options?: ProcessPattern
 
     for (const patternId of patternIds) {
       const pattern = runtimePatterns[patternId];
-      const built = await buildPattern(handoff, patternId, pattern, componentOutputDir, basePath);
+      const built = await buildPattern(handoff, patternId, pattern, componentOutputDir, basePath, sharedArtifacts);
       if (built) {
         result.push(built);
       }
@@ -159,7 +198,7 @@ export async function processPatterns(handoff: Handoff, options?: ProcessPattern
   for (const patternId of patternIds) {
     if (onlyPatternIds.has(patternId)) {
       const pattern = runtimePatterns[patternId];
-      const built = await buildPattern(handoff, patternId, pattern, componentOutputDir, basePath);
+      const built = await buildPattern(handoff, patternId, pattern, componentOutputDir, basePath, sharedArtifacts);
       if (built) {
         existingById.set(patternId, built);
       } else {
@@ -167,7 +206,7 @@ export async function processPatterns(handoff: Handoff, options?: ProcessPattern
       }
     } else if (!existingById.has(patternId)) {
       const pattern = runtimePatterns[patternId];
-      const built = await buildPattern(handoff, patternId, pattern, componentOutputDir, basePath);
+      const built = await buildPattern(handoff, patternId, pattern, componentOutputDir, basePath, sharedArtifacts);
       if (built) {
         existingById.set(patternId, built);
       }

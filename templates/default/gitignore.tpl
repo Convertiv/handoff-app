@@ -1,7 +1,30 @@
+# Dependencies
 node_modules/
-.env
+
+# Build output
 dist/
-.next/
 out/
-.DS_Store
+.next/
+
+# Generated build artifacts
+public/api
+
+# Environment
+.env
+.env.*
+.handoff/
+
+# Local configuration profile
+handoff.config.local.ts
+handoff.config.local.js
+handoff.config.local.cjs
+handoff.config.local.json
+
+# Deployment
+.vercel
+
+# Logs
 *.log
+
+# OS files
+.DS_Store

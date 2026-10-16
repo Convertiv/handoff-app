@@ -1,11 +1,11 @@
 
 import 'dotenv/config';
-import { Config } from './types/config';
+import { ResolvedConfig } from './types/config';
 
 declare module 'handoff-app';
 
 declare class Handoff {
-    config: Config;
+    config: ResolvedConfig;
     modulePath: string;
     workingPath: string;
     force: boolean;

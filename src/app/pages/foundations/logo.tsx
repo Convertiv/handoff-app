@@ -1,7 +1,8 @@
 import type { GetStaticProps } from 'next';
-import Link from 'next/link';
 
-import { AssetDocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig, getTokens } from '../../components/util';
+import { buildAssetDownloadUrl } from '@handoff/artifacts/url';
+import { AssetDocumentationProps, buildTimeAssets, fetchDocPageMarkdown, getClientRuntimeConfig } from '../../components/util';
+import { useCollectionAssets } from '../../components/util/useCollectionAssets';
 
 import { Download } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -39,26 +40,29 @@ import { buttonVariants } from '../../components/ui/button';
 export const getStaticProps: GetStaticProps = async () => {
   return {
     props: {
-      ...fetchDocPageMarkdown('docs/foundations/', 'logo', `/foundations`).props,
+      ...(await fetchDocPageMarkdown('docs/foundations/', 'logo', `/foundations`)).props,
       config: getClientRuntimeConfig(),
-      assets: getTokens().assets,
+      assets: buildTimeAssets(),
     },
   };
 };
 
 const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDocumentationProps) => {
+  // Workspace/static uses build-time props; registry hydrates from the docs read API.
+  const logos = useCollectionAssets('logos', assets?.logos);
   return (
     <Layout config={config} menu={menu} metadata={metadata} current={current}>
       <div className="flex flex-col gap-2 pb-7">
         <HeadersType.H1>{metadata.title}</HeadersType.H1>
         <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">{metadata.description}</p>
         <div className="mt-3 flex flex-row gap-3">
-          <Link
+          <a
             className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' font-normal [&_svg]:size-3!'}
-            href={config?.assets_zip_links?.logos ?? '/logos.zip'}
+            href={config?.assets_zip_links?.logos ?? buildAssetDownloadUrl('logos', process.env.HANDOFF_APP_BASE_PATH)}
+            download
           >
             Download Logos <Download strokeWidth={1.5} />
-          </Link>
+          </a>
         </div>
       </div>
 
@@ -67,7 +71,7 @@ const LogoPage = ({ content, menu, metadata, current, config, assets }: AssetDoc
         <p className="mb-8">There is one main {config?.app?.client} logo that supports two variations.</p>
       </div>
       <div className="mb-8 grid grid-cols-2 gap-6">
-        {assets?.logos?.map((logo) => (
+        {logos.map((logo) => (
           <DisplayLogo logo={logo} content={config?.app?.client} key={logo.path} />
         ))}
       </div>

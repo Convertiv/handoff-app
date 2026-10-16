@@ -1,22 +1,63 @@
 import esbuild from 'esbuild';
+import { STYLE_IMPORT_LOADERS } from '../transformers/utils/build';
 import fs from 'fs-extra';
+import mergeWith from 'lodash/mergeWith';
+import omit from 'lodash/omit';
 import { createRequire } from 'module';
 import path from 'path';
-import { Config } from '../types/config';
+import { Config, HandoffEmailConfig, ResolvedConfig } from '../types/config';
 import { Logger } from '../utils/logger';
+import { resolveWorkingPath } from '../utils/path';
 import { defaultConfig } from './defaults';
+import { loadProfileEnv } from './env';
+import { normalizeConfig } from './helpers';
+import { HandoffConfigError } from './errors';
+import { isEnvReference } from './from-env';
+import { resolveConfigEnv } from './resolve-env';
 
-const CONFIG_FILE_PREFERENCE = [
+export const CONFIG_FILE_PREFERENCE = [
   'handoff.config.ts',
   'handoff.config.js',
   'handoff.config.cjs',
   'handoff.config.json',
 ] as const;
 
+/** Extensions the loader knows how to evaluate, derived from the discoverable file names. */
+const SUPPORTED_CONFIG_EXTENSIONS = Array.from(new Set(CONFIG_FILE_PREFERENCE.map((fileName) => path.extname(fileName))));
+
+/** A profile name becomes part of a file name, so it stays lowercase letters, numbers, and hyphens. */
+const PROFILE_NAME_PATTERN = /^[a-z0-9-]+$/;
+
+export { HandoffConfigError } from './errors';
+
 type ConfigLoadResult = {
-  config: Config;
+  config: ResolvedConfig;
   configPath?: string;
+  profile?: string;
+  /** The profile file merged onto the base config. */
+  profileConfigPath?: string;
 };
+
+/** Where to look for the config: the working directory, plus an optional explicit file. */
+export type ConfigLoadContext = {
+  /** Directory relative config paths resolve from, and the root that gets searched. */
+  workingPath?: string;
+  /** Explicit config file (the CLI's `-c, --config`), replacing discovery entirely. */
+  configPath?: string;
+  /** Profile to merge onto the base config (the CLI's `--profile`), overriding `HANDOFF_PROFILE`. */
+  profile?: string;
+  /**
+   * Profile names that resolve without a `handoff.config.<profile>.*` file, leaving the base config
+   * unchanged. Registry commands pass the names of saved logins, because there a profile selects the
+   * registry rather than a config layer.
+   */
+  knownProfiles?: string[];
+  /** Sentence appended when a selected profile matches neither a config file nor `knownProfiles`. */
+  profileNotFoundHint?: string;
+};
+
+/** Which selector picked the profile, so an error can name the one the user set. */
+type ProfileSelection = { name: string; source: '--profile' | 'HANDOFF_PROFILE' };
 
 const evaluateTypeScriptConfig = (filePath: string, handoffModulePath: string): any => {
   const buildResult = esbuild.buildSync({
@@ -25,9 +66,10 @@ const evaluateTypeScriptConfig = (filePath: string, handoffModulePath: string): 
     write: false,
     platform: 'node',
     format: 'cjs',
-    target: 'node16',
+    target: 'node22',
     logLevel: 'silent',
     external: ['handoff-app'],
+    loader: STYLE_IMPORT_LOADERS,
   });
 
   const code = buildResult.outputFiles?.[0]?.text;
@@ -51,12 +93,14 @@ const evaluateTypeScriptConfig = (filePath: string, handoffModulePath: string): 
 };
 
 const loadConfigFile = (configPath: string): Config => {
-  if (configPath.endsWith('.json')) {
+  const extension = path.extname(configPath);
+
+  if (extension === '.json') {
     const buffer = fs.readFileSync(configPath);
     return JSON.parse(buffer.toString()) as Config;
   }
 
-  if (configPath.endsWith('.ts')) {
+  if (extension === '.ts') {
     const handoffModulePath = path.resolve(__dirname, '../..');
     const importedConfig = evaluateTypeScriptConfig(configPath, handoffModulePath);
     return (importedConfig.default || importedConfig) as Config;
@@ -68,10 +112,15 @@ const loadConfigFile = (configPath: string): Config => {
   return (importedConfig.default || importedConfig) as Config;
 };
 
-const resolveConfigFilePath = (): { selected?: string; ignored: string[] } => {
-  const existing = CONFIG_FILE_PREFERENCE
-    .map((fileName) => path.resolve(process.cwd(), fileName))
-    .filter((filePath) => fs.existsSync(filePath));
+/**
+ * Normalize here and not only in `defineConfig`: a `.json` config, or a profile that skips the
+ * helper, would otherwise keep its camelCase keys. The rest of the codebase reads the runtime keys,
+ * so a later layer could not override an earlier one.
+ */
+const loadConfigLayer = (configPath: string): Partial<Config> => normalizeConfig(loadConfigFile(configPath));
+
+const pickExisting = (candidates: string[]): { selected?: string; ignored: string[] } => {
+  const existing = candidates.filter((filePath) => fs.existsSync(filePath));
 
   if (!existing.length) {
     return { selected: undefined, ignored: [] };
@@ -81,47 +130,194 @@ const resolveConfigFilePath = (): { selected?: string; ignored: string[] } => {
   return { selected, ignored };
 };
 
-/**
- * Loads the handoff configuration from the project root and returns metadata.
- */
-export const initConfigWithMetadata = (configOverride?: Partial<Config>): ConfigLoadResult => {
-  let config: Partial<Config> = {};
-  const { selected: configPath, ignored } = resolveConfigFilePath();
-
-  if (ignored.length > 0 && configPath) {
-    Logger.warn(
-      `Multiple config files found. Using "${path.basename(configPath)}" and ignoring: ${ignored
-        .map((filePath) => `"${path.basename(filePath)}"`)
-        .join(', ')}.`
-    );
+const warnIgnored = (selected: string | undefined, ignored: string[]): void => {
+  if (!selected || ignored.length === 0) {
+    return;
   }
 
-  if (configPath) {
-    config = loadConfigFile(configPath);
-  }
-
-  // Apply overrides if provided
-  if (configOverride) {
-    (Object.entries(configOverride) as [keyof Config, Config[keyof Config]][]).forEach(([key, value]) => {
-      if (value !== undefined) {
-        (config as Record<string, unknown>)[key as string] = value;
-      }
-    });
-  }
-
-  const resolvedConfig = { ...defaultConfig(), ...config } as Config;
-  return { config: resolvedConfig, configPath };
+  Logger.warn(
+    `Multiple config files found. Using "${path.basename(selected)}" and ignoring: ${ignored
+      .map((filePath) => `"${path.basename(filePath)}"`)
+      .join(', ')}.`
+  );
 };
 
 /**
- * Loads the handoff configuration from the project root.
+ * Picks the config file to load. An explicitly requested file replaces discovery - it is resolved
+ * from `workingPath` and must exist in a format the loader can evaluate. Otherwise every known
+ * config name is looked for in `workingPath`, the first match winning.
+ */
+const resolveConfigFilePath = (workingPath: string, requestedPath?: string): { selected?: string; ignored: string[] } => {
+  if (requestedPath) {
+    const selected = path.resolve(workingPath, requestedPath);
+
+    if (!fs.existsSync(selected)) {
+      throw new HandoffConfigError(`Config file not found: "${requestedPath}" (resolved to ${selected})`);
+    }
+
+    if (!SUPPORTED_CONFIG_EXTENSIONS.includes(path.extname(selected))) {
+      throw new HandoffConfigError(
+        `Unsupported config file "${path.basename(selected)}". Supported extensions: ${SUPPORTED_CONFIG_EXTENSIONS.join(', ')}`
+      );
+    }
+
+    return { selected, ignored: [] };
+  }
+
+  return pickExisting(CONFIG_FILE_PREFERENCE.map((fileName) => path.resolve(workingPath, fileName)));
+};
+
+/** `--profile` wins over `HANDOFF_PROFILE`, and an empty value counts as unset. */
+export const resolveProfileSelection = (requestedProfile?: string): ProfileSelection | undefined => {
+  const fromOption = requestedProfile?.trim();
+  if (fromOption) {
+    return { name: fromOption, source: '--profile' };
+  }
+
+  const fromEnvironment = process.env.HANDOFF_PROFILE?.trim();
+  if (fromEnvironment) {
+    return { name: fromEnvironment, source: 'HANDOFF_PROFILE' };
+  }
+
+  return undefined;
+};
+
+/**
+ * Picks the profile file for a selected profile. It sits beside the base config: the base file name
+ * without its extension, then the profile name, then any config extension. So `handoff.config.ts`
+ * pairs with `handoff.config.local.*`, and a config named through `-c` keeps its own name. A selected
+ * profile has to resolve - silently falling back to the base config would deploy the wrong settings.
+ * A name listed in `knownProfiles` resolves without a file, because it names something else that
+ * exists, such as a saved registry login.
+ */
+const resolveProfileFilePath = (
+  workingPath: string,
+  baseConfigPath: string | undefined,
+  selection: ProfileSelection,
+  context: ConfigLoadContext
+): string | undefined => {
+  if (!PROFILE_NAME_PATTERN.test(selection.name)) {
+    throw new HandoffConfigError(
+      `Invalid config profile "${selection.name}" (from ${selection.source}). ` +
+        `A profile name can contain lowercase letters, numbers, and hyphens.`
+    );
+  }
+
+  const baseName = baseConfigPath
+    ? path.join(path.dirname(baseConfigPath), path.basename(baseConfigPath, path.extname(baseConfigPath)))
+    : path.resolve(workingPath, 'handoff.config');
+  const candidates = SUPPORTED_CONFIG_EXTENSIONS.map((extension) => `${baseName}.${selection.name}${extension}`);
+  const { selected, ignored } = pickExisting(candidates);
+
+  if (!selected) {
+    if (context.knownProfiles?.includes(selection.name)) {
+      return undefined;
+    }
+    throw new HandoffConfigError(
+      `Config profile "${selection.name}" (from ${selection.source}) not found. ` +
+        `Create one of: ${candidates.map((candidate) => path.basename(candidate)).join(', ')} in ${path.dirname(candidates[0])}.` +
+        (context.profileNotFoundHint ? ` ${context.profileNotFoundHint}` : '')
+    );
+  }
+
+  warnIgnored(selected, ignored);
+  return selected;
+};
+
+/**
+ * Arrays and environment references are whole values: a later layer replaces them, including
+ * any reference default. Everything else keeps lodash semantics: plain
+ * objects merge recursively, scalars, `null` and functions replace, and `undefined` is skipped.
+ */
+const replaceValues = (destination: unknown, source: unknown) => {
+  if (source === undefined) return undefined;
+  return Array.isArray(source) || isEnvReference(source) || isEnvReference(destination) ? source : undefined;
+};
+
+/**
+ * A layer that changes `runtime.registry.email.provider` starts from fresh `options` and `module`, so
+ * the deep merge never mixes the settings of two providers.
+ */
+const resetEmailOnProviderChange = (layers: Partial<Config>[]): Partial<Config>[] => {
+  let provider: string | undefined;
+  let start = 0;
+  layers.forEach((layer, index) => {
+    const next = layer.runtime?.registry?.email?.provider;
+    if (next !== undefined && next !== provider) {
+      provider = next;
+      start = index;
+    }
+  });
+  return layers.map((layer, index) => {
+    const email = layer.runtime?.registry?.email;
+    if (index >= start || !email) return layer;
+    return { ...layer, runtime: { ...layer.runtime, registry: { ...layer.runtime!.registry, email: omit(email, ['options', 'module']) as HandoffEmailConfig } } };
+  });
+};
+
+/**
+ * Loads the handoff configuration for the given working directory and returns metadata.
+ */
+export const initConfigWithMetadata = (configOverride?: Partial<Config>, context?: ConfigLoadContext): ConfigLoadResult => {
+  const workingPath = context?.workingPath ?? resolveWorkingPath();
+  const { selected: configPath, ignored } = resolveConfigFilePath(workingPath, context?.configPath);
+  warnIgnored(configPath, ignored);
+
+  const profileSelection = resolveProfileSelection(context?.profile);
+  const profileConfigPath = profileSelection ? resolveProfileFilePath(workingPath, configPath, profileSelection, context ?? {}) : undefined;
+
+  // Profile environment values must be present before the merged references resolve.
+  loadProfileEnv(profileSelection?.name);
+
+  const layers: Partial<Config>[] = [defaultConfig()];
+  if (configPath) {
+    layers.push(loadConfigLayer(configPath));
+  }
+  if (profileConfigPath) {
+    layers.push(loadConfigLayer(profileConfigPath));
+  }
+  if (configOverride) {
+    layers.push(normalizeConfig(configOverride as Config));
+  }
+
+  const profileLabel = profileSelection
+    ? `"${profileSelection.name}" (from ${profileSelection.source})${profileConfigPath ? '' : ' - no config file, the base config is used unchanged'}`
+    : 'none selected';
+  Logger.debug(`Config profile: ${profileLabel}`);
+  Logger.debug(`Config files loaded: ${[configPath, profileConfigPath].filter(Boolean).join(', ') || 'none, using defaults'}`);
+
+  const merged = mergeWith({}, ...resetEmailOnProviderChange(layers), replaceValues) as Config;
+  const config = resolveConfigEnv(merged, profileSelection?.name, layers[0]);
+
+  // Guards run on the resolved config so a profile cannot slip a removed setting past them.
+  const entries = config.entries as Record<string, unknown> | undefined;
+  if (entries && ('components' in entries || 'patterns' in entries)) {
+    throw new HandoffConfigError(
+      'entries.components and entries.patterns were removed. Use catalog.include. See UPGRADE.md#catalog-items.'
+    );
+  }
+  const format = config.runtime?.workspace?.declarationFormat;
+  if (format !== undefined && !['ts', 'js', 'cjs'].includes(format)) {
+    throw new HandoffConfigError(
+      'Item declarations support ts, js, and cjs. Convert JSON declarations to defineCatalogItem. See UPGRADE.md#catalog-items.'
+    );
+  }
+
+  return { config, configPath, profile: profileSelection?.name, profileConfigPath };
+};
+
+/**
+ * Loads the handoff configuration for the given working directory.
  *
- * Searches for config files in order: handoff.config.ts, handoff.config.js, handoff.config.cjs, handoff.config.json.
- * Merges file config with any provided overrides, then applies defaults for missing values.
+ * Searches for config files in order: handoff.config.ts, handoff.config.js, handoff.config.cjs, handoff.config.json,
+ * unless `context.configPath` names one explicitly. A selected profile adds a `handoff.config.<profile>.*` sidecar,
+ * which only `context.knownProfiles` makes optional.
+ * Layers resolve as defaults, base config, profile, then the given overrides, merging plain objects recursively.
  *
  * @param configOverride - Optional partial config to override file-loaded values.
+ * @param context - Optional working directory, explicit config file, and profile to load.
  * @returns The fully resolved Config object.
  */
-export const initConfig = (configOverride?: Partial<Config>): Config => {
-  return initConfigWithMetadata(configOverride).config;
+export const initConfig = (configOverride?: Partial<Config>, context?: ConfigLoadContext): ResolvedConfig => {
+  return initConfigWithMetadata(configOverride, context).config;
 };

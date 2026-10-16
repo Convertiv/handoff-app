@@ -16,8 +16,9 @@ import {
 } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../../components/ui/collapsible';
 
+import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Sidebar,
   SidebarContent,
@@ -30,8 +31,8 @@ import {
   SidebarMenuSub,
   SidebarSeparator,
 } from '../../components/ui/sidebar';
-import { normalizePathForMatch, toAbsolutePath } from '../../lib/utils';
-import { SectionLink } from '../util';
+import { normalizePathForMatch, stripBasePath } from '../../lib/utils';
+import { useNav } from '../context/NavProvider';
 
 const NormalMenuItem = ({ title, icon, path }) => {
   const router = useRouter();
@@ -39,10 +40,13 @@ const NormalMenuItem = ({ title, icon, path }) => {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={isActive}>
-        <a href={toAbsolutePath(path)} className="gap-3">
+        {/* Soft (client-side) navigation so moving between entity pages reuses the already-loaded
+            cached nav with no reload/flash. Prefetch is off: each prefetch would invoke the
+            fallback:'blocking' lambda data route, so fetch the target's data on click instead. */}
+        <Link href={stripBasePath(path)} prefetch={false} className="gap-3">
           <MenuIcon icon={icon} isActive={isActive} />
           <span>{title}</span>
-        </a>
+        </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>
   );
@@ -53,8 +57,15 @@ const CollapsibleMenuItem = ({ title, icon, path, menu }) => {
   const isActive = menu.some(
     (item) => normalizePathForMatch(router.asPath).startsWith(normalizePathForMatch(item.path))
   );
+  // Controlled so the active group auto-opens on soft navigation (an uncontrolled `defaultOpen` is
+  // only read on mount and would not re-open the active group when the route changes client-side),
+  // while still letting the user collapse/expand groups manually.
+  const [open, setOpen] = useState(isActive);
+  useEffect(() => {
+    if (isActive) setOpen(true);
+  }, [isActive]);
   return (
-    <Collapsible defaultOpen={isActive} className="group/collapsible">
+    <Collapsible open={open} onOpenChange={setOpen} className="group/collapsible">
       <SidebarMenuItem>
         <CollapsibleTrigger asChild>
           <SidebarMenuButton className="h-9 gap-3">
@@ -118,13 +129,23 @@ const MenuIcon = ({ icon, isActive = false }) => {
   }
 };
 
-const SideNav = ({ menu }: { menu: SectionLink }) => {
+const SideNav = () => {
+  const { current } = useNav();
+  const sections = current?.subSections ?? [];
+
+  // Collapse the sidebar entirely (render nothing, reserve no gutter) when the resolved section has
+  // no renderable content, so the page content goes full width. A `dynamic` slot counts as
+  // renderable even before its entities load, to avoid a full-width → gutter flash in registry mode.
+  const hasContent = sections.some((section) => (section.menu && section.menu.length > 0) || !!section.dynamic);
+  if (!hasContent) {
+    return null;
+  }
+
   return (
     <Sidebar className="sticky left-auto">
       <SidebarContent className="px-4 pt-5">
-        {menu.subSections &&
-          menu.subSections.length > 0 &&
-          menu.subSections.map((section, index) => (
+        {sections.length > 0 &&
+          sections.map((section, index) => (
             <React.Fragment key={index}>
               <SidebarGroup>
                 {!section.path && <SidebarGroupLabel>{section.title}</SidebarGroupLabel>}
@@ -138,7 +159,7 @@ const SideNav = ({ menu }: { menu: SectionLink }) => {
                   </SidebarGroupContent>
                 )}
               </SidebarGroup>
-              {index < menu.subSections.length && <SidebarSeparator className="mx-4" />}
+              {index < sections.length && <SidebarSeparator className="mx-4" />}
             </React.Fragment>
           ))}
       </SidebarContent>

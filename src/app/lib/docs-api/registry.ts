@@ -1,0 +1,210 @@
+import { and, eq, inArray } from 'drizzle-orm';
+import type { ArtifactBuildStatus } from '@handoff/artifacts/types';
+import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
+import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
+import type { RegistryDatabase } from '@handoff/registry/db/client';
+import type { PageListObject } from '@handoff/transformers/preview/types';
+import { buildMetadata, docsArtifacts, pageFiles, pages } from '@handoff/registry/db/schema';
+import { createRegistryStore, filterPublishedPageIds, searchPageCandidates } from '@handoff/store/registry';
+import { contentTypeForArtifactPath } from './artifacts';
+import type { DocsBackend, ResolvedArtifactBody } from './backend';
+import {
+  isPageEnabled,
+  isPageInGroup,
+  pageMatches,
+  rankPages,
+  toSearchablePage,
+  type PageSearchRequest,
+  type PageSearchResult,
+  type SearchablePage,
+} from './page-search';
+import { defaultPageDetail, type BakedDefaultPage } from './page-rendering';
+import { MAX_SEARCH_BODY_LENGTH, MAX_SEARCH_CANDIDATES, truncateSearchBody, type SearchResponse } from './search';
+import { getRegistryConnection } from '../registry-connection';
+import { getStorageProvider } from '../asset-storage';
+// A static import includes package defaults in each registry serverless bundle. A deployed function
+// cannot read the build machine's `config/docs` directory.
+import defaultPages from '../../generated/default-pages.json';
+
+/**
+ * Registry-mode backing for the docs read API.
+ *
+ * Everything here resolves from the registry database: normalized records through the DB-backed
+ * store, build state from the `build_metadata` table, and content artifacts from
+ * the `docs_artifacts` table. No read path materializes source files or runs the build pipeline.
+ * The database connection is created once per server process and reused across requests.
+ *
+ * Server-only: dynamically imported by {@link resolveDocsBackend} only when `runtime.mode` is
+ * `registry`, so the Drizzle/Postgres driver code never loads in workspace dev/build.
+ */
+
+/**
+ * Resolve a content artifact from the registry by logical path. Returns `null` (→ `artifact_not_found`)
+ * when the artifact is absent, when its content is stored externally (a future object-storage
+ * reference with no inline content), or when a **required** structured reference it depends on is
+ * not present — an HTML artifact must never be served with a missing required dependency.
+ */
+const resolveRegistryArtifact = async (db: RegistryDatabase, segments: string[]): Promise<ResolvedArtifactBody | null> => {
+  const artifactPath = segments.join('/');
+  const rows = await db.select().from(docsArtifacts).where(eq(docsArtifacts.path, artifactPath)).limit(1);
+  const artifact = rows[0];
+  if (!artifact || artifact.content == null) {
+    return null;
+  }
+
+  const requiredPaths = Array.from(
+    new Set((artifact.references ?? []).filter((reference) => reference.required).map((reference) => reference.path))
+  );
+  if (requiredPaths.length > 0) {
+    const rows = await db
+      .select({ path: docsArtifacts.path, content: docsArtifacts.content })
+      .from(docsArtifacts)
+      .where(inArray(docsArtifacts.path, requiredPaths));
+    if (rows.filter(({ content }) => content != null).length !== requiredPaths.length) {
+      return null;
+    }
+  }
+
+  const contentType = artifact.contentType || contentTypeForArtifactPath(artifactPath);
+  return { contentType, body: artifact.content };
+};
+
+/** Build state for an entity: the stored status, or `missing` for a metadata-only record. */
+const buildStatusFor = async (
+  db: RegistryDatabase,
+  entityKind: 'component' | 'pattern',
+  entityId: string
+): Promise<ArtifactBuildStatus> => {
+  const rows = await db
+    .select({ status: buildMetadata.status })
+    .from(buildMetadata)
+    .where(and(eq(buildMetadata.entityKind, entityKind), eq(buildMetadata.entityId, entityId)))
+    .limit(1);
+  return rows[0]?.status ?? 'missing';
+};
+
+/**
+ * Search published pages together with the packaged defaults.
+ *
+ * SQL filters published candidates before they reach the server. A separate ID-only query identifies
+ * the package defaults that published pages replace. The published page takes precedence even when it
+ * does not match the terms. This prevents stale default content from appearing in results.
+ *
+ * The published pages and the remaining defaults are one effective page set. The candidate cap applies
+ * to that merged set in ID order, as it does in workspace mode, so both runtime modes rank the same
+ * candidates. The query reads one row beyond the cap to detect a cut.
+ * Ranking compares a published body against a packaged default, so both are cut to {@link MAX_SEARCH_BODY_LENGTH}.
+ */
+const searchRegistryPages = async (db: RegistryDatabase, request: PageSearchRequest): Promise<SearchResponse<PageSearchResult>> => {
+  const defaults = Object.entries(defaultPages as Record<string, BakedDefaultPage>);
+  const [rows, replacedDefaultIds] = await Promise.all([
+    searchPageCandidates(db, {
+      terms: request.terms,
+      group: request.group,
+      limit: MAX_SEARCH_CANDIDATES + 1,
+      bodyLength: MAX_SEARCH_BODY_LENGTH,
+    }),
+    filterPublishedPageIds(
+      db,
+      defaults.map(([id]) => id)
+    ).then((ids) => new Set(ids)),
+  ]);
+
+  const candidates: SearchablePage[] = [];
+  const seen = new Set<string>();
+  const addCandidate = (record: PageListObject, markdown: string): void => {
+    if (seen.has(record.id) || !isPageEnabled(record) || !isPageInGroup(record, request.group)) {
+      return;
+    }
+    seen.add(record.id);
+    const candidate = toSearchablePage(record, markdown);
+    // SQL does not filter the packaged defaults, so this test must run here. Without this test, a default that no
+    // term matches takes a candidate slot. For a SQL row the test is a no-op unless the two filters ever disagree.
+    if (pageMatches(candidate, request)) {
+      candidates.push(candidate);
+    }
+  };
+
+  for (const row of rows) {
+    addCandidate(row.record, row.body);
+  }
+  for (const [id, page] of defaults) {
+    if (replacedDefaultIds.has(id)) {
+      continue;
+    }
+    const routePath = id === HOME_PAGE_ID ? HOME_PAGE_PATH : `/${id}`;
+    addCandidate(normalizePageDeclaration(page.metadata, { id, routePath }), truncateSearchBody(page.content));
+  }
+  candidates.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+
+  // SQL caps the published pages before the merge adds the defaults, so the merged count alone cannot show that a
+  // published match was cut. The extra row the query asks for is the only evidence of that cut.
+  const capped = candidates.length > MAX_SEARCH_CANDIDATES || rows.length > MAX_SEARCH_CANDIDATES;
+  const { results, truncated } = rankPages(candidates.slice(0, MAX_SEARCH_CANDIDATES), request);
+  return { query: request.query, results, truncated: truncated || capped };
+};
+
+/** Construct the registry-mode docs backend over a live database connection. */
+export const createRegistryDocsBackend = async (): Promise<DocsBackend> => {
+  const connection = await getRegistryConnection();
+  const { db } = connection;
+  const store = createRegistryStore({ db, resolveStorageProvider: getStorageProvider });
+
+  return {
+    async listComponents() {
+      return store.components.list();
+    },
+    async listPatterns() {
+      return store.patterns.list();
+    },
+    async listPages() {
+      return store.pages.list();
+    },
+    async getComponentDetail(id: string) {
+      const record = await store.components.get(id);
+      if (!record) {
+        return null;
+      }
+      return { ...record, build: { status: await buildStatusFor(db, 'component', id) } };
+    },
+    async getPatternDetail(id: string) {
+      const record = await store.patterns.get(id);
+      if (!record) {
+        return null;
+      }
+      return { ...record, build: { status: await buildStatusFor(db, 'pattern', id) } };
+    },
+    async getPageDetail(id: string) {
+      const [row] = await db
+        .select({ record: pages.record, body: pageFiles.body })
+        .from(pages)
+        .leftJoin(pageFiles, eq(pageFiles.pageId, pages.id))
+        .where(eq(pages.id, id));
+      // A package default the project never published is still served at its route, so it resolves
+      // here too. Publishing the same id replaces it, as it does in search.
+      return row ? { ...row.record, content: row.body ?? '' } : defaultPageDetail(id);
+    },
+    async searchPages(request: PageSearchRequest) {
+      return searchRegistryPages(db, request);
+    },
+    async resolveArtifact(segments: string[]) {
+      return resolveRegistryArtifact(db, segments);
+    },
+    async listTokenSets() {
+      return (await store.tokens.listSets()).map(({ id, kind }) => ({ id, kind }));
+    },
+    async getTokenSetDetail(id: string) {
+      const set = await store.tokens.getSet(id);
+      if (!set) {
+        return null;
+      }
+      return { id: set.id, kind: set.kind, record: set.record, artifacts: await store.tokens.getArtifacts(id) };
+    },
+    async listAssets(collection: string) {
+      return store.assets.listAssets(collection);
+    },
+    async getAssetContent(collection: string, assetPath: string) {
+      return store.assets.getAssetContent(collection, assetPath);
+    },
+  };
+};

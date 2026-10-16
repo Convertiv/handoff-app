@@ -1,6 +1,6 @@
 {
   "name": "handoff-app",
-  "version": "1.2.2",
+  "version": "2.0.0",
   "description": "Automated documentation toolchain for building client side documentation from figma",
   "author ": {
     "name": "Convertiv",
@@ -23,12 +23,52 @@
   "homepage": "https://www.handoff.com/",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "default": "./dist/react.js"
+    },
+    "./handlebars": {
+      "types": "./dist/handlebars.d.ts",
+      "default": "./dist/handlebars.js"
+    },
+    "./pattern": {
+      "types": "./dist/pattern.d.ts",
+      "default": "./dist/pattern.js"
+    },
+    "./providers": {
+      "types": "./dist/providers.d.ts",
+      "default": "./dist/providers.js"
+    },
+    "./package.json": "./package.json",
+    "./*": "./*"
+  },
+  "typesVersions": {
+    "*": {
+      "react": [
+        "./dist/react.d.ts"
+      ],
+      "handlebars": [
+        "./dist/handlebars.d.ts"
+      ],
+      "pattern": [
+        "./dist/pattern.d.ts"
+      ],
+      "providers": [
+        "./dist/providers.d.ts"
+      ]
+    }
+  },
   "bin": {
     "handoff-app": "./dist/cli.js"
   },
   "engines": {
-    "npm": ">=8.0.0",
-    "node": ">=16.0.0"
+    "npm": ">=10",
+    "node": ">=22"
   },
   "scripts": {
     "start": "node ./dist/cli.js start",
@@ -49,10 +89,14 @@
     "plugins": [
       "prettier-plugin-tailwindcss"
     ],
-    "tailwindConfig": "./tailwind.config.ts"
+    "tailwindStylesheet": "./src/app/css/index.css"
   },
   "dependencies": {
+    "@ai-sdk/openai-compatible": "^3.0.53",
+    "@ai-sdk/react": "^4.0.110",
     "@clack/prompts": "^0.7.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@neondatabase/serverless": "^1.1.0",
     "@radix-ui/react-accordion": "^1.2.8",
     "@radix-ui/react-collapsible": "^1.1.2",
     "@radix-ui/react-dialog": "^1.1.4",
@@ -72,13 +116,16 @@
     "@tailwindcss/postcss": "^4.1.14",
     "@tailwindcss/typography": "^0.5.16",
     "@types/lodash": "^4.14.185",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "@types/react-scroll": "^1.8.6",
     "@types/react-syntax-highlighter": "^15.5.7",
     "@types/refractor": "^3.0.2",
     "@types/ws": "^8.18.1",
+    "@vercel/nft": "^1.11.0",
     "@vitejs/plugin-react": "^4.5.2",
+    "ai": "^7.0.107",
     "archiver": "^5.3.1",
     "chalk": "^4.1.2",
     "chokidar": "^3.5.3",
@@ -86,10 +133,8 @@
     "clsx": "^2.1.1",
     "cross-spawn": "^7.0.3",
     "dotenv": "^16.0.3",
+    "drizzle-orm": "^0.45.2",
     "esbuild": "^0.25.0",
-    "eslint": "^8.23.1",
-    "eslint-config-next": "^15.3.4",
-    "eslint-config-prettier": "^10.0.2",
     "fs-extra": "^11.3.0",
     "gray-matter": "^4.0.3",
     "handlebars": "^4.7.8",
@@ -99,8 +144,11 @@
     "lodash": "^4.17.21",
     "lucide-react": "^0.518.0",
     "next": "^15.3.4",
+    "next-auth": "^4.24.15",
     "next-themes": "^0.4.4",
     "node-html-parser": "^6.1.4",
+    "nodemailer": "^7.0.13",
+    "pg": "^8.22.0",
     "postcss": "^8.4.16",
     "prettier": "^3.4.2",
     "react": "^19.1.0",
@@ -121,13 +169,21 @@
     "ws": "^8.18.3",
     "yargs": "^17.7.2"
   },
+  "peerDependencies": {
+    "typescript": ">=5.6 <7"
+  },
   "devDependencies": {
     "@types/archiver": "^5.3.1",
     "@types/cross-spawn": "^6.0.2",
     "@types/fs-extra": "^11.0.4",
     "@types/handlebars": "^4.1.0",
-    "@types/node": "^20.11.18",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.20.0",
     "@types/yargs": "^17.0.33",
+    "drizzle-kit": "^0.31.10",
+    "eslint": "^8.23.1",
+    "eslint-config-next": "^15.3.4",
+    "eslint-config-prettier": "^10.0.2",
     "np": "^10.2.0",
     "prettier-plugin-tailwindcss": "^0.7.0",
     "sass-embedded": "^1.89.0",

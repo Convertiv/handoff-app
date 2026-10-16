@@ -3,10 +3,13 @@ import { Menu, Monitor, Moon, Sun, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { AiAssistantMobileTrigger } from '../../components/AiAssistant/AiAssistantProvider';
 import { Button } from '../../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet';
 import { cn } from '../../lib/utils';
 import { useConfigContext } from '../context/ConfigContext';
+import { useNav } from '../context/NavProvider';
+import { AuthControls } from '../Auth/AuthControls';
 
 const trimSlashes = (input: string): string => {
   return input.replace(/^\/+|\/+$/g, '');
@@ -16,6 +19,7 @@ export function MobileNav() {
   const context = useConfigContext();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const { menu } = useNav();
 
   const toggleTheme = () => {
     if (theme === 'light') {
@@ -34,7 +38,7 @@ export function MobileNav() {
           <Menu />
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="w-full max-w-[300px] [&>button:first-of-type]:hidden">
+      <SheetContent side="right" className="w-full max-w-[300px] overflow-y-auto [&>button:first-of-type]:hidden">
         <SheetHeader className="flex flex-row items-center justify-between">
           <SheetTitle>
             <Link href="/">
@@ -48,8 +52,9 @@ export function MobileNav() {
           </SheetTrigger>
         </SheetHeader>
         <div className="mt-8 flex flex-col space-y-4">
-          {context.menu &&
-            context.menu.map((section) => {
+          <AiAssistantMobileTrigger />
+          {menu &&
+            menu.map((section) => {
               const isActive = trimSlashes(router.asPath).startsWith(trimSlashes(section.path));
               return (
                 <Link
@@ -88,6 +93,7 @@ export function MobileNav() {
               )}
             </Button>
           </div>
+          {context.config?.runtime?.mode === 'registry' ? <AuthControls mobile /> : null}
         </div>
       </SheetContent>
     </Sheet>

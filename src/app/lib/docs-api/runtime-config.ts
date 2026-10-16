@@ -1,0 +1,190 @@
+import fs from 'fs-extra';
+import path from 'path';
+import type { RuntimeMode } from '@handoff/types/config';
+import { DEFAULT_DATABASE_URL_ENV, DEFAULT_REGISTRY_DRIVER, type RegistryDatabaseDriver } from '@handoff/registry/db/driver';
+import { DEFAULT_ASSET_STORAGE_PROVIDER, type AssetStorageSettings } from '@handoff/registry/asset-storage/resolve';
+import { mergeAiConnections, parseAiConnections, type AiSettings } from '@handoff/ai/connections';
+import { parseEmailSettings, type EmailSettings } from '@handoff/registry/email/resolve';
+
+/**
+ * Server-side runtime resolution for the docs read API.
+ *
+ * The docs read API is mode-aware: workspace mode resolves artifacts from generated filesystem
+ * files, registry mode resolves them from the database. The browser-facing `client.config.json`
+ * carries only the resolved {@link RuntimeMode} (no connection details), so the server needs its
+ * own non-secret source for the registry connection *inputs* — the selected driver and the *name*
+ * of the env var holding the database URL. The build persists these to `runtime.server.json`
+ * alongside `client.config.json`; this module reads them back, never crossing secrets to the
+ * browser (the connection-string value is resolved from the env var at request time, not here).
+ *
+ * Server-only: imported exclusively by API route handlers and their helpers.
+ */
+
+/** Non-secret registry connection inputs resolved on the server. */
+export interface ServerRegistryRuntimeConfig {
+  /** Selected built-in database driver. */
+  driver: RegistryDatabaseDriver;
+  /** Name of the env var holding the database connection string (value resolved at request time). */
+  databaseUrlEnv: string;
+}
+
+/** Resolved server-side runtime configuration for the docs read API. */
+export interface ServerRuntimeConfig {
+  mode: RuntimeMode;
+  /** Whether this build serves `/api/mcp/`. Config-only, baked at build time. */
+  mcp: boolean;
+  /**
+   * The AI assistant: whether this build serves it, and the connections it can reach. `enabled` is
+   * baked; the connection list is resolved per request so a deployment can change it without a
+   * rebuild.
+   */
+  ai: AiSettings;
+  registry: ServerRegistryRuntimeConfig;
+  /**
+   * Asset storage provider, module, and options for registry mode. Options hold `{ $env }` references,
+   * never secret values.
+   */
+  assetStorage: AssetStorageSettings;
+  /** Registry email provider, sender, and options. Options hold `{ $env }` references, never secret values. */
+  email: EmailSettings;
+}
+
+let cached: ServerRuntimeConfig | null = null;
+
+/** Safe defaults: workspace mode with the default Postgres driver + `DATABASE_URL` env var. */
+const defaults = (): ServerRuntimeConfig => ({
+  mode: 'workspace',
+  mcp: true,
+  ai: { enabled: false, connections: [] },
+  registry: {
+    driver: DEFAULT_REGISTRY_DRIVER,
+    databaseUrlEnv: DEFAULT_DATABASE_URL_ENV,
+  },
+  assetStorage: { provider: DEFAULT_ASSET_STORAGE_PROVIDER },
+  email: { options: {} },
+});
+
+/** Parse the baked asset-storage selection from env (names/selectors only; JSON options tolerated). */
+const assetStorageFromEnv = (): AssetStorageSettings => {
+  const provider = process.env.HANDOFF_ASSET_STORAGE_PROVIDER?.trim();
+  let options: Record<string, unknown> | undefined;
+  const rawOptions = process.env.HANDOFF_ASSET_STORAGE_OPTIONS?.trim();
+  if (rawOptions) {
+    try {
+      const parsed = JSON.parse(rawOptions);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) options = parsed as Record<string, unknown>;
+    } catch {
+      // Ignore malformed baked options rather than crash the server.
+    }
+  }
+  const maxInline = Number(process.env.HANDOFF_ASSET_STORAGE_MAX_INLINE_BYTES);
+  return {
+    provider: provider === 'custom' ? provider : DEFAULT_ASSET_STORAGE_PROVIDER,
+    module: process.env.HANDOFF_ASSET_STORAGE_MODULE?.trim() || undefined,
+    maxInlineBytes: Number.isFinite(maxInline) && maxInline > 0 ? maxInline : undefined,
+    options,
+  };
+};
+
+/**
+ * Resolve the AI settings from the baked flag and connection list, then merge the
+ * deployment-supplied `HANDOFF_AI_CONNECTIONS` over it by id.
+ *
+ * `HANDOFF_AI_CONNECTIONS` is read dynamically rather than as a literal `process.env` reference: the
+ * baked values in `next.config.mjs` are inlined at build time, so a name in that block can never
+ * carry a deploy-time value. That is why the baked list uses its own `HANDOFF_AI_BAKED_CONNECTIONS`.
+ */
+const aiFromEnv = (): AiSettings => ({
+  enabled: process.env.HANDOFF_AI_ENABLED?.trim() === 'true',
+  connections: mergeAiConnections(
+    parseAiConnections(process.env.HANDOFF_AI_BAKED_CONNECTIONS),
+    parseAiConnections(process.env['HANDOFF_AI_CONNECTIONS'])
+  ),
+  defaultModel: process.env.HANDOFF_AI_DEFAULT_MODEL?.trim() || undefined,
+});
+
+/** Absolute path of the server-only runtime config persisted next to `client.config.json`. */
+const serverRuntimeConfigPath = (): string =>
+  path.resolve(process.env.HANDOFF_MODULE_PATH ?? '', '.handoff', process.env.HANDOFF_PROJECT_ID ?? '', 'runtime.server.json');
+
+/**
+ * Resolve the server-side runtime config from the values baked into the bundle at build time
+ * (`HANDOFF_RUNTIME_MODE` + registry connection inputs). Returns `null` when no mode was baked, so
+ * the file-based path can take over for apps built before env baking existed.
+ *
+ * This is the resolution path for the packaged registry app: its deploy host has none of
+ * the build-machine paths `runtime.server.json` is keyed on, so mode + the DB env-var *name* are
+ * carried in the bundle instead. Mode stays config-only — these were derived from `runtime.*` at
+ * build, never inferred from the deploy environment.
+ */
+const fromEnv = (): ServerRuntimeConfig | null => {
+  const mode = process.env.HANDOFF_RUNTIME_MODE?.trim();
+  if (!mode) {
+    return null;
+  }
+  const databaseUrlEnv = process.env.HANDOFF_REGISTRY_DATABASE_URL_ENV?.trim() || DEFAULT_DATABASE_URL_ENV;
+  return {
+    mode: mode === 'registry' ? 'registry' : 'workspace',
+    mcp: process.env.HANDOFF_MCP_ENABLED?.trim() !== 'false',
+    ai: aiFromEnv(),
+    registry: {
+      driver: process.env.HANDOFF_REGISTRY_DRIVER?.trim() === 'neon' ? 'neon' : 'pg',
+      databaseUrlEnv,
+    },
+    assetStorage: assetStorageFromEnv(),
+    email: parseEmailSettings({
+      from: process.env.HANDOFF_EMAIL_FROM,
+      provider: process.env.HANDOFF_EMAIL_PROVIDER?.trim(),
+      module: process.env.HANDOFF_EMAIL_MODULE,
+      options: process.env.HANDOFF_EMAIL_OPTIONS,
+    }),
+  };
+};
+
+/**
+ * Resolve the server-side runtime config, preferring the values baked into the bundle, then reading
+ * `runtime.server.json` when present, and falling back to safe workspace defaults otherwise (so an
+ * app built before either source existed keeps behaving as a workspace). The result is cached for
+ * the lifetime of the server process.
+ */
+export const getServerRuntimeConfig = (): ServerRuntimeConfig => {
+  if (cached) {
+    return cached;
+  }
+
+  const envConfig = fromEnv();
+  if (envConfig) {
+    cached = envConfig;
+    return cached;
+  }
+
+  try {
+    const file = serverRuntimeConfigPath();
+    if (fs.existsSync(file)) {
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf8')) as Partial<ServerRuntimeConfig>;
+      const databaseUrlEnv =
+        typeof parsed?.registry?.databaseUrlEnv === 'string' && parsed.registry.databaseUrlEnv.trim()
+          ? parsed.registry.databaseUrlEnv.trim()
+          : DEFAULT_DATABASE_URL_ENV;
+      const assetStorage: AssetStorageSettings =
+        parsed?.assetStorage && typeof parsed.assetStorage === 'object' ? parsed.assetStorage : { provider: DEFAULT_ASSET_STORAGE_PROVIDER };
+      cached = {
+        mode: parsed?.mode === 'registry' ? 'registry' : 'workspace',
+        mcp: parsed?.mcp !== false,
+        ai: aiFromEnv(),
+        registry: {
+          driver: parsed?.registry?.driver === 'neon' ? 'neon' : 'pg',
+          databaseUrlEnv,
+        },
+        assetStorage,
+        email: parseEmailSettings(parsed?.email ?? {}),
+      };
+      return cached;
+    }
+  } catch {
+    // Fall through to defaults on any read/parse failure.
+  }
+
+  cached = defaults();
+  return cached;
+};

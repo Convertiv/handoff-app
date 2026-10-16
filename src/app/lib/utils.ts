@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import type { SectionLink } from '../components/util';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -13,6 +14,19 @@ export const toAbsolutePath = (input: string): string => {
   return `/${trimSlashes(input)}`;
 };
 
+/**
+ * A server-built path with the app's base path removed, so `next/link` does not re-apply it. Menu
+ * items and tool sources already carry the prefix; with no base path this returns the route as is.
+ */
+export const stripBasePath = (input: string): string => {
+  const base = trimSlashes(process.env.HANDOFF_APP_BASE_PATH ?? '');
+  let rel = input.replace(/^\/+/, '');
+  if (base && (rel === base || rel.startsWith(`${base}/`))) {
+    rel = rel.slice(base.length).replace(/^\/+/, '');
+  }
+  return `/${rel}`;
+};
+
 export const normalizePathForMatch = (input: string): string => {
   const [pathname] = input.split(/[?#]/);
   return trimSlashes(pathname);
@@ -24,3 +38,23 @@ export const normalizePathForMatch = (input: string): string => {
  * @returns
  */
 export const filterOutNull = <T>(value: T): value is NonNullable<T> => value !== null;
+
+/**
+ * Whether a section has any side-nav content worth reserving the left column for. Mirrors what
+ * `SideNav` actually renders: a subsection contributes only if it has a non-empty `menu` or is a
+ * `dynamic` registry slot (filled client-side from the live entity lists). A section whose
+ * subsections are all empty (e.g. a standalone page with no children) renders nothing, so the
+ * caller drops the sidebar gutter and lets the content go full width.
+ *
+ * Lives here (not in `components/util`) so it is importable as a runtime value by client modules —
+ * `components/util` pulls in server-only deps (`fs`, the docs backend) and must stay type-only there.
+ */
+export const hasRenderableNav = (section?: SectionLink | null): boolean =>
+  !!section?.subSections?.some((sub) => (sub.menu && sub.menu.length > 0) || !!sub.dynamic);
+
+/**
+ * The browser title: a page's own `metaTitle` as written, otherwise its title followed by the
+ * site title from `app.title`.
+ */
+export const pageTitle = (metadata: { title?: string; metaTitle?: string }, siteTitle?: string): string =>
+  metadata.metaTitle || [metadata.title, siteTitle].filter(Boolean).join(' | ');

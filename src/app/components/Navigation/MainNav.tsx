@@ -10,6 +10,7 @@ import {
 } from '../../components/ui/navigation-menu';
 import { cn } from '../../lib/utils';
 import { useConfigContext } from '../context/ConfigContext';
+import { useNav } from '../context/NavProvider';
 
 const trimSlashes = (input: string): string => {
   return input.replace(/^\/+|\/+$/g, '');
@@ -18,11 +19,12 @@ const trimSlashes = (input: string): string => {
 export function MainNav() {
   const context = useConfigContext();
   const router = useRouter();
+  const { menu } = useNav();
   return (
     <NavigationMenu>
       <NavigationMenuList>
-        {context.menu &&
-          context.menu.map((section) => {
+        {menu &&
+          menu.map((section) => {
             const isActive = trimSlashes(router.asPath).startsWith(trimSlashes(section.path));
             return (
               <NavigationMenuItem key={section.title}>

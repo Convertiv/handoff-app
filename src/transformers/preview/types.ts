@@ -1,6 +1,6 @@
 import type { GeneratedDocs } from 'handoff-docgen';
 import { Card } from '../../app/components/Component/Cards';
-import type { RendererKind } from '../../declarations/types';
+import type { RendererKind, SourceFormat } from '../../catalog/renderers';
 import { ValidationResult } from '../../types/preview';
 import { Filter } from '../../utils/filter';
 import { SlotMetadata } from './component';
@@ -18,6 +18,9 @@ export interface BasePageSlice {
   type: PageSliceType;
 }
 
+/** A fluid preview renders at the width the reader's stage has, so it is never scaled down. */
+export type PreviewWidth = 'fluid' | number;
+
 export interface BestPracticesPageSlice extends BasePageSlice {
   type: 'BEST_PRACTICES';
 }
@@ -27,6 +30,8 @@ export interface ComponentDisplayPageSlice extends BasePageSlice {
   showPreview?: boolean;
   showCodeHighlight?: boolean;
   defaultHeight?: string;
+  /** Viewport width for the preview, in pixels. Defaults to 'fluid'. */
+  defaultWidth?: PreviewWidth;
   filterBy?: Filter;
 }
 
@@ -115,15 +120,26 @@ export type ComponentObject = {
     story?: string;
     /** Optional path to schema file (if available) */
     schema?: string;
+    /** Declaration file path; a preview `render` is read from it at build and hydration time. */
+    declaration?: string;
     /** Optional path to templates directory */
     templates?: string;
   };
   /** Optional explicit renderer id */
   renderer?: RendererKind;
+  /**
+   * Implementation source format, such as CSF. The separate `format` field describes the preview code language.
+   * These names must differ because the build spreads this record over the preview.
+   */
+  sourceFormat?: SourceFormat;
+  /** Export of `entries.component` that holds the implementation. Defaults to the default export. */
+  componentExport?: string;
   /** Schema describing the expected properties (props/slots) for the component */
   properties: { [key: string]: SlotMetadata };
   /** Mapping of preview variations with values and titles for each (used to render sample states) */
   previews: { [key: string]: OptionalPreviewRender };
+  /** Source export order retained when publishing previews through jsonb storage. */
+  previewOrder?: string[];
   /** Internal previews generated only for pattern composition, not public docs */
   internalPatternPreviews?: { [key: string]: OptionalPreviewRender };
   /** Optional array of high-level categories for search/filtering */
@@ -183,8 +199,13 @@ export type TransformComponentTokensResult = {
     story?: string;
     schema?: string;
     templates?: string;
+    /** See `ComponentObject.entries.declaration`. */
+    declaration?: string;
   };
   renderer?: RendererKind;
+  /** See `ComponentObject.sourceFormat`. Distinct from `format`, the preview's code language. */
+  sourceFormat?: SourceFormat;
+  componentExport?: string;
   options?: {
     preview?: {
       groupBy?: string;
@@ -200,6 +221,11 @@ export type OptionalPreviewRender = {
   values: { [key: string]: string | string[] | any };
   url: string;
   usage?: string;
+  /**
+   * Build-time only: the server renders it and the client re-reads it from the declaration module.
+   * `JSON.stringify` drops it from published artifacts.
+   */
+  render?: (args: Record<string, any>) => unknown;
   /** Optional source preview/story key used to derive this preview */
   sourcePreview?: string;
 };
@@ -223,6 +249,8 @@ export type PatternComponentEntry = {
   resolvedPreview?: string;
   /** Whether the pattern entry resolved to a usable component preview */
   resolved?: boolean;
+  /** Why discovery could not resolve this entry as authored. The pattern build reports it. */
+  unresolvedReason?: string;
 };
 
 export type PatternObject = {
@@ -238,3 +266,45 @@ export type PatternListObject = {
   id: string;
   path: string;
 } & PatternObject;
+
+// ---------------------------------------------------------------------------
+// Page types
+// ---------------------------------------------------------------------------
+
+/**
+ * A documentation page authored as markdown. The frontmatter is parsed into these fields and the
+ * markdown body is the rendered content. Pages are workspace-authored under `<workingPath>/pages/`
+ * and are first-class registry entities (publish/checkout) alongside components and patterns. Unlike
+ * components/patterns there is no rendered-artifact pipeline: the raw markdown is stored and rendered
+ * at runtime.
+ */
+export type PageObject = {
+  title: string;
+  description?: string;
+  group?: string;
+  /** Sort weight within the nav section (lower first). */
+  weight?: number;
+  /** Alternative title used in navigation. */
+  menuTitle?: string;
+  /** SEO overrides. */
+  metaTitle?: string;
+  metaDescription?: string;
+  /** When `false`, the page is hidden from navigation. */
+  enabled?: boolean;
+  /** External link target — a URL/path string, or `true` to flag the section as external. */
+  external?: string | boolean;
+  /** Optional declarative submenu structure (mirrors the markdown frontmatter `menu`). */
+  menu?: { [key: string]: any };
+};
+
+export type PageListObject = {
+  /** Stable page id derived from the file location; `index` identifies the root home page. */
+  id: string;
+  /** Logical route the page is served at (e.g. `/guides/setup`, or `/` for `index`). */
+  path: string;
+  /**
+   * Absolute filesystem path of the source `.md` (workspace store only). Workspace-only and stripped
+   * from the published transfer item — never persisted to or served from the registry.
+   */
+  sourcePath?: string;
+} & PageObject;

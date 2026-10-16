@@ -51,8 +51,22 @@ yarn-error.log*
 
 ### END .gitignore ###
 
+# agent tooling and documentation
+/*.local
+/*.local.*
+/.agents/
+/.claude/
+/.codex/
+/.cursor/
+
 # git
 .git
 
 # github
 .github
+
+# editor and lint tooling
+.editorconfig
+.eslintrc.json
+.prettierignore
+.vscode

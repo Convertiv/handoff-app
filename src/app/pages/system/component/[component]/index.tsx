@@ -1,4 +1,5 @@
 'use client';
+import { buildArtifactUrl } from '@handoff/artifacts/url';
 import { OptionalPreviewRender } from '@handoff/transformers/preview/types';
 import { PreviewObject } from '@handoff/types/preview';
 import { evaluateFilter, type Filter } from '@handoff/utils/filter';
@@ -8,6 +9,7 @@ import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
 import { ComponentPreview } from '../../../../components/Component/Preview';
+import { RegistryActions } from '../../../../components/Component/RegistryActions';
 import { HotReloadProvider } from '../../../../components/context/HotReloadProvider';
 import { PreviewContextProvider } from '../../../../components/context/PreviewContext';
 import Layout from '../../../../components/Layout/Main';
@@ -18,15 +20,21 @@ import HeadersType from '../../../../components/Typography/Headers';
 import { Button } from '../../../../components/ui/button';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerTrigger } from '../../../../components/ui/drawer';
 import { JsonTreeView } from '../../../../components/ui/json-tree-view';
-import { fetchComponents, fetchDocPageMetadataAndContent, getClientRuntimeConfig, getCurrentSection, IParams, staticBuildMenu } from '../../../../components/util';
+import { fetchComponents, fetchDocPageMetadataAndContent, getClientRuntimeConfig, getNavProps, IParams, isRegistryRuntime } from '../../../../components/util';
 
 /**
  * Render all index pages
  * @returns
  */
 export async function getStaticPaths() {
+  // Registry content is mutable at runtime and may be empty/unreachable at build time, so resolve
+  // component pages on demand against the live DB instead of freezing the path list to the build
+  // snapshot. The static-export target stays fully prerendered (`fallback: false`).
+  if (isRegistryRuntime()) {
+    return { paths: [], fallback: 'blocking' as const };
+  }
   return {
-    paths: fetchComponents()?.map((exportable) => ({ params: { component: exportable.id } })) ?? [],
+    paths: (await fetchComponents()).map((exportable) => ({ params: { component: exportable.id } })),
     fallback: false, // can also be true or 'blocking'
   };
 }
@@ -72,10 +80,15 @@ export const getStaticProps = async (context) => {
 
   // const componentObject = getTokens().components[reduceSlugToString(component)] ?? null;
   // const isFigmaComponent = false;
-  const components = fetchComponents()!;
-  const menu = staticBuildMenu();
-  const config = getClientRuntimeConfig();
+  const components = await fetchComponents();
   const componentData = components.find((c) => c.id === component);
+  // Under `fallback: 'blocking'` this runs on demand for arbitrary ids; surface a real 404 for ids
+  // that do not exist in the active mode instead of dereferencing an undefined record below.
+  if (!componentData) {
+    return { notFound: true };
+  }
+  const navProps = await getNavProps('/system');
+  const config = getClientRuntimeConfig();
   const docs = fetchDocPageMetadataAndContent('docs/system/', component as string);
   const componentHotReloadIsAvailable = process.env.NODE_ENV === 'development';
   const sameGroupComponents = components.filter((c) => c.group === componentData?.group);
@@ -83,22 +96,18 @@ export const getStaticProps = async (context) => {
   const previousComponent = sameGroupComponents[groupIndex - 1] ?? null;
   const nextComponent = sameGroupComponents[groupIndex + 1] ?? null;
 
-  const fallbackTitle = componentData.name || startCase(component as string);
-  const fallbackMetaTitle = `${fallbackTitle}${config?.app?.client ? ` | ${config.app.client} Design System` : ''}`;
-
   return {
     props: {
       id: component,
       // isFigmaComponent: true,
       previews: { components: {} },
-      menu,
+      ...navProps,
       config,
-      current: getCurrentSection(menu, '/system') ?? [],
       metadata: {
         ...componentData,
-        title: componentData.name || docs.metadata.title || startCase(component as string),
+        title: componentData.title || docs.metadata.title || startCase(component as string),
         description: componentData.description,
-        metaTitle: docs.metadata.metaTitle || fallbackMetaTitle,
+        metaTitle: docs.metadata.metaTitle ?? '',
         metaDescription: docs.metadata.metaDescription || componentData.description,
         image: docs.metadata.image || 'hero-brand-assets',
       },
@@ -117,28 +126,46 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
   const [component, setComponent] = useState<PreviewObject>(undefined);
   const ref = React.useRef<HTMLDivElement>(null);
   const [componentPreviews, setComponentPreviews] = useState<PreviewObject | [string, PreviewObject][]>();
+  const [previewsUnavailable, setPreviewsUnavailable] = useState(false);
 
   const appBasePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
   const normalizedBasePath = appBasePath ? `/${appBasePath.replace(/^\/+|\/+$/g, '')}` : '';
   const componentRoute = (componentId: string) => `${normalizedBasePath}/system/component/${componentId}`;
 
-  const fetchComponents = async () => {
-    const data = await fetch(`${normalizedBasePath}/api/component/${id}.json`).then((res) => res.json());
-    setComponent(data as PreviewObject);
+  const componentDataUrl = buildArtifactUrl(`component/${id}.json`, appBasePath);
+
+  const fetchComponents = async (signal: AbortSignal) => {
+    try {
+      const res = await fetch(componentDataUrl, { signal });
+      if (!res.ok) {
+        setPreviewsUnavailable(true);
+        setComponent(undefined);
+        return;
+      }
+      const data = await res.json();
+      setComponent(data as PreviewObject);
+    } catch (err) {
+      // A superseded fetch (the user navigated to another component before this one resolved) is
+      // aborted on effect cleanup; ignore it so a slow response can't overwrite the current one.
+      if ((err as Error)?.name !== 'AbortError') throw err;
+    }
   };
 
   const previousLink = previousComponent ? {
     href: previousComponent ? componentRoute(previousComponent.id) : null,
-    title: previousComponent ? previousComponent.name : null,
+    title: previousComponent ? previousComponent.title : null,
   } : null;
   const nextLink = nextComponent ? {
     href: componentRoute(nextComponent.id),
-    title: nextComponent.name,
+    title: nextComponent.title,
   } : null;
 
   useEffect(() => {
+    const controller = new AbortController();
     setComponent(undefined);
-    fetchComponents();
+    setPreviewsUnavailable(false);
+    fetchComponents(controller.signal);
+    return () => controller.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
@@ -163,8 +190,47 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
     }
   }, [component, id]);
 
-  if (!component) return <p>Loading...</p>;
-  const apiUrl = (window.location.origin && window.location.origin) + `${normalizedBasePath}/api/component/${id}.json`;
+  if (previewsUnavailable) {
+    return (
+      <Layout config={config} menu={menu} current={current} metadata={metadata}>
+        <div className="flex flex-col gap-3 pb-14">
+          <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Components</small>
+          <HeadersType.H1>{metadata.title}</HeadersType.H1>
+          {metadata.description && (
+            <div className="prose max-w-[800px] text-xl font-light leading-relaxed text-gray-600 dark:text-gray-300">
+              <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
+                {metadata.description}
+              </ReactMarkdown>
+            </div>
+          )}
+          <div className="mt-4 max-w-[800px] rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-200">
+            This component has no published artifacts yet, so previews and code samples are unavailable. Publish it to the
+            registry to populate its documentation.
+          </div>
+          <hr className="mt-8" />
+          <PrevNextNav previous={previousLink} next={nextLink} />
+        </div>
+      </Layout>
+    );
+  }
+  if (!component) {
+    return (
+      <Layout config={config} menu={menu} current={current} metadata={metadata}>
+        <div className="flex flex-col gap-3 pb-14" aria-busy="true" aria-live="polite">
+          <small className="text-sm font-medium text-sky-600 dark:text-gray-300">Components</small>
+          <HeadersType.H1>{metadata.title}</HeadersType.H1>
+          {metadata.description && (
+            <div className="prose max-w-[800px] text-xl font-light leading-relaxed text-gray-600 dark:text-gray-300">
+              <ReactMarkdown components={MarkdownComponents} remarkPlugins={[remarkGfm, remarkCodeMeta]} rehypePlugins={[rehypeRaw]}>
+                {metadata.description}
+              </ReactMarkdown>
+            </div>
+          )}
+        </div>
+      </Layout>
+    );
+  }
+  const apiUrl = (window.location.origin && window.location.origin) + componentDataUrl;
   return (
     <Layout config={config} menu={menu} current={current} metadata={metadata}>
       <div className="flex flex-col gap-3 pb-14">
@@ -178,6 +244,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
             </ReactMarkdown>
           </div>
           <div className="flex flex-row gap-3">
+            <RegistryActions mode={config.runtime.mode} connected={config.runtime.connected} entityType="component" id={id} />
             {component.figma && (
               <Button asChild variant={'outline'} size={'sm'} className="font-normal [&_svg]:size-3!">
                 <a href={component.figma} target="_blank">
@@ -186,7 +253,7 @@ const GenericComponentPage = ({ menu, metadata, current, id, config, componentHo
               </Button>
             )}
             <Drawer direction="right">
-              <DrawerTrigger>
+              <DrawerTrigger asChild>
                 <Button variant="outline" size={'sm'} className="font-normal [&_svg]:size-3!">
                   API Reference
                 </Button>

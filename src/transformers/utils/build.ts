@@ -1,6 +1,21 @@
 import esbuild from 'esbuild';
 import path from 'path';
 
+const STYLE_EXTENSIONS = ['.css', '.scss', '.sass'];
+
+/**
+ * Keeps co-located stylesheet imports out of the JavaScript graph; the CSS pipeline compiles them.
+ *
+ * esbuild has no `.scss` loader, and a `.css` import fails too because these builds run with
+ * `write: false` and no output path. `empty` rather than a plugin: `esbuild.buildSync` rejects
+ * plugins, and the declaration and config loaders are synchronous.
+ *
+ * CSS Modules are not covered — the empty module leaves the class map undefined.
+ */
+export const STYLE_IMPORT_LOADERS: Record<string, esbuild.Loader> = Object.fromEntries(
+  STYLE_EXTENSIONS.map((extension) => [extension, 'empty' as esbuild.Loader])
+);
+
 /**
  * Default esbuild configuration for SSR builds
  */
@@ -11,6 +26,7 @@ export const DEFAULT_SSR_BUILD_CONFIG: esbuild.BuildOptions = {
   platform: 'node',
   jsx: 'automatic',
   external: ['react', 'react-dom', '@opentelemetry/api'],
+  loader: STYLE_IMPORT_LOADERS,
 };
 
 /**
@@ -24,7 +40,84 @@ export const DEFAULT_CLIENT_BUILD_CONFIG: esbuild.BuildOptions = {
   jsx: 'automatic',
   sourcemap: false,
   minify: false,
+  loader: STYLE_IMPORT_LOADERS,
 };
+
+/** Apply after a consumer hook: a hook that replaces `loader` would otherwise drop these. */
+export function withStyleLoaders<T extends esbuild.BuildOptions>(config: T): T {
+  return { ...config, loader: { ...config.loader, ...STYLE_IMPORT_LOADERS } };
+}
+
+/**
+ * Stylesheets of the module graph in cascade order: every import of a module before the module
+ * itself, siblings in source order.
+ *
+ * This is the order a bundler emits CSS in, and the cascade depends on it. A component that
+ * overrides a rule of a component it imports ties that rule on specificity, so the later of the
+ * two wins. esbuild's `onLoad` callbacks do not give this order: they fire roughly breadth-first,
+ * which puts a component's own stylesheet ahead of the ones it imports and reverses every such
+ * override.
+ */
+function orderStyleImports(metafile: esbuild.Metafile, entryPath: string): string[] {
+  const entryKey = Object.keys(metafile.inputs).find((key) => path.resolve(key) === entryPath);
+  if (!entryKey) return [];
+
+  const ordered: string[] = [];
+  const visited = new Set<string>();
+
+  const visit = (key: string) => {
+    if (visited.has(key)) return;
+    visited.add(key);
+
+    for (const imported of metafile.inputs[key]?.imports ?? []) {
+      if (!imported.external && metafile.inputs[imported.path]) visit(imported.path);
+    }
+
+    if (STYLE_EXTENSIONS.includes(path.extname(key))) ordered.push(path.resolve(key));
+  };
+
+  visit(entryKey);
+
+  return ordered;
+}
+
+/**
+ * Stylesheet paths imported anywhere in a component's module graph, in cascade order.
+ *
+ * An unbuildable graph yields an empty list rather than throwing, leaving the CSS step with the
+ * declared entry.
+ */
+export async function collectStyleImports(entryPath: string, handoff: any): Promise<string[]> {
+  const metafile = await buildModuleGraph(entryPath, handoff);
+  return metafile ? orderStyleImports(metafile, entryPath) : [];
+}
+
+/**
+ * Every file in the module graph of an entry, stylesheets included, or `null` when the graph does
+ * not build.
+ */
+export async function collectModuleInputs(entryPath: string, handoff: any): Promise<string[] | null> {
+  const metafile = await buildModuleGraph(entryPath, handoff);
+  return metafile ? Object.keys(metafile.inputs).map((input) => path.resolve(input)) : null;
+}
+
+async function buildModuleGraph(entryPath: string, handoff: any): Promise<esbuild.Metafile | null> {
+  const baseConfig: esbuild.BuildOptions = {
+    ...DEFAULT_SSR_BUILD_CONFIG,
+    entryPoints: [entryPath],
+    logLevel: 'silent',
+  };
+  const hookedConfig = handoff?.config?.hooks?.ssrBuildConfig ? handoff.config.hooks.ssrBuildConfig(baseConfig) : baseConfig;
+
+  try {
+    // The `empty` loader keeps stylesheets out of the JavaScript, and the metafile still records
+    // them as inputs, so the graph carries the order.
+    const result = await esbuild.build({ ...withStyleLoaders(hookedConfig), metafile: true });
+    return result.metafile ?? null;
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Resolves a module from multiple search directories

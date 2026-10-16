@@ -1,17 +1,7 @@
 /** outerKey -> Map<innerKey, serializedValue> */
 export type MapSnapshot = Map<string, Map<string, string>>;
 
-/**
- * Deterministic JSON serializer that sorts object keys at every nesting level.
- * Prevents false-positive diffs when identical values are constructed with
- * different key insertion order across reloads.
- */
-export const stableStringify = (value: unknown): string =>
-  JSON.stringify(value, (_, v) =>
-    v && typeof v === 'object' && !Array.isArray(v)
-      ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b)))
-      : v
-  );
+export { stableStringify } from '../../utils/stable-stringify';
 
 /**
  * Compares two MapSnapshots and returns the outer keys where the inner maps

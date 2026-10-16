@@ -5,12 +5,15 @@ import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import rehypeRaw from 'rehype-raw';
 import remarkGfm from 'remark-gfm';
+import { HOME_PAGE_ID, HOME_PAGE_PATH } from '@handoff/registry/content-kinds';
 import Footer from '../components/Footer';
 import Layout from '../components/Layout/Main';
 import { MarkdownComponents, remarkCodeMeta } from '../components/Markdown/MarkdownComponents';
 import HeadersType from '../components/Typography/Headers';
 import { Button } from '../components/ui/button';
-import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from '../components/util';
+import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig, getNavProps, isRegistryRuntime } from '../components/util';
+import { resolveDocsBackend } from '../lib/docs-api/backend';
+import { defaultPageDetail, documentationMetadata, REGISTRY_PAGE_REVALIDATE_SECONDS } from '../lib/docs-api/page-rendering';
 
 /**
  * This statically renders the menu mixing markdown file links with the
@@ -20,22 +23,45 @@ import { DocumentationProps, fetchDocPageMarkdown, getClientRuntimeConfig } from
  * @param context GetStaticProps
  * @returns
  */
-export const getStaticProps: GetStaticProps = async () => {
+export const getStaticProps: GetStaticProps = async (context) => {
+  const config = getClientRuntimeConfig();
+
+  if (isRegistryRuntime()) {
+    // The registry build must have no database dependency, so it resolves the packaged home page
+    // directly. On-demand and stale regenerations read the backing, which falls back to the same
+    // page when nothing has been published.
+    const detail =
+      context.revalidateReason === 'build'
+        ? defaultPageDetail(HOME_PAGE_ID)
+        : await (await resolveDocsBackend()).getPageDetail(HOME_PAGE_ID);
+    const navProps = await getNavProps(HOME_PAGE_PATH);
+
+    return {
+      props: {
+        metadata: documentationMetadata((detail ?? {}) as unknown as Record<string, unknown>),
+        content: detail?.content ?? '',
+        ...navProps,
+        config,
+      },
+      revalidate: REGISTRY_PAGE_REVALIDATE_SECONDS,
+    };
+  }
+
   return {
     props: {
-      ...fetchDocPageMarkdown('docs/', 'index', `/`).props,
-      config: getClientRuntimeConfig(),
+      ...(await fetchDocPageMarkdown('docs/', HOME_PAGE_ID, HOME_PAGE_PATH)).props,
+      config,
     },
   };
 };
 
-const Home = ({ content, menu, metadata, config, current }: DocumentationProps) => {
+export const Home = ({ content, menu, metadata, config, current }: DocumentationProps) => {
   return (
-    <Layout config={config} menu={menu} current={current} metadata={metadata} fullWidthHero={true}>
+    <Layout config={config} menu={menu} current={current} metadata={{ ...metadata, metaTitle: metadata.metaTitle || config?.app?.title }} fullWidthHero={true}>
       <div className="w-full bg-linear-to-r py-12 dark:from-gray-900 dark:to-gray-800 sm:py-20">
         <div className="container mx-auto px-8">
           <HeadersType.H1 className="max-w-4xl text-3xl font-semibold leading-[-0.05px]  sm:text-4xl">
-            {config?.app?.client} Design System
+            {config?.app?.title}
           </HeadersType.H1>
           {content && (
             <div className="text-lg max-w-4xl empty:hidden [&>*]:mt-6 [&>p]:font-light [&>h2:first-child]:mt-0 [&>h2:first-child]:font-normal sm:text-xl">

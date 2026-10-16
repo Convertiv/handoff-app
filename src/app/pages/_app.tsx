@@ -1,14 +1,27 @@
 import type { AppProps } from 'next/app';
 
+import { AiAssistantProvider } from '../components/AiAssistant/AiAssistantProvider';
+import { RegistrySessionProvider } from '../components/Auth/RegistrySessionProvider';
+import { RegistryInstallGate } from '../components/Auth/RegistryInstallGate';
+import { NavProvider } from '../components/context/NavProvider';
 import '../css/index.css';
 import '../css/theme.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <>
-      {/* @ts-ignore */}
-      <Component {...pageProps} />
-    </>
+    // NavProvider lives above the page tree so the registry nav (shell + entities) is fetched once
+    // and cached across soft navigations, resetting only on hard refresh.
+    <RegistrySessionProvider>
+      <RegistryInstallGate>
+        <NavProvider initialNav={pageProps.navData} currentSectionId={pageProps.currentSectionId}>
+          {/* Above the page tree: every page builds its own Layout, which a soft navigation replaces. */}
+          <AiAssistantProvider>
+            {/* @ts-ignore */}
+            <Component {...pageProps} />
+          </AiAssistantProvider>
+        </NavProvider>
+      </RegistryInstallGate>
+    </RegistrySessionProvider>
   );
 }
 

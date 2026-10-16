@@ -10,10 +10,13 @@ import { MAIN_COMPONENT_JS_FILE } from './javascript';
 const COMPONENT_JS_RESERVED_FILES = new Set([MAIN_COMPONENT_JS_FILE]);
 const COMPONENT_CSS_RESERVED_FILES = new Set([MAIN_COMPONENT_CSS_FILE, SHARED_COMPONENT_CSS_FILE]);
 
+/** Suffix of a component-owned client/hydration artifact (`<id>.client.js`), see ssr-render plugin. */
+const CLIENT_ARTIFACT_SUFFIX = '.client.js';
+
 export const getComponentApiPath = (handoff: Handoff) => path.resolve(getAPIPath(handoff), 'component');
 
 const getComponentPreviewKeys = async (handoff: Handoff, componentId: string): Promise<Set<string>> => {
-  const runtimeComponent = handoff.runtimeConfig?.entries?.components?.[componentId];
+  const runtimeComponent = handoff.runtimeConfig?.entities.components[componentId];
   const previewKeys = new Set<string>();
 
   const outputFilePath = path.resolve(getComponentApiPath(handoff), `${componentId}.json`);
@@ -64,20 +67,26 @@ export const removeComponentApi = async (handoff: Handoff, id: string): Promise<
   }
 };
 
-export const syncComponentArtifacts = async (handoff: Handoff): Promise<void> => {
+export const syncComponentArtifacts = async (handoff: Handoff, removedIds: readonly string[] = []): Promise<void> => {
   const componentPath = getComponentApiPath(handoff);
   await fs.ensureDir(componentPath);
 
-  const runtimeComponents = handoff.runtimeConfig?.entries?.components ?? {};
+  const runtimeComponents = handoff.runtimeConfig?.entities.components ?? {};
   const runtimeIds = Object.keys(runtimeComponents);
   const entries = await fs.readdir(componentPath);
 
-  const discoveredArtifactIds = new Set<string>(runtimeIds);
+  // `getArtifactComponentId` prunes a preview file only when it can name the owner. A deleted
+  // component is gone from the runtime config, and its `.json` is already removed, so nothing can
+  // match it. Naming it here restores the match without making its files valid. Every artifact it
+  // owns is then pruned, including the `__pattern_*` previews that the `.json` does not list.
+  const discoveredArtifactIds = new Set<string>([...runtimeIds, ...removedIds]);
   for (const entry of entries) {
     const parsed = path.parse(entry);
     if (parsed.ext === '.json' || parsed.ext === '.js' || parsed.ext === '.css') {
       if (!COMPONENT_JS_RESERVED_FILES.has(entry) && !COMPONENT_CSS_RESERVED_FILES.has(entry)) {
-        discoveredArtifactIds.add(parsed.name);
+        // `<id>.client.js` is owned by `<id>`, not by a phantom `<id>.client` component — strip the
+        // compound suffix so the owner id matches the real component (path.parse would yield `<id>.client`).
+        discoveredArtifactIds.add(entry.endsWith(CLIENT_ARTIFACT_SUFFIX) ? entry.slice(0, -CLIENT_ARTIFACT_SUFFIX.length) : parsed.name);
       }
     }
   }
@@ -88,6 +97,10 @@ export const syncComponentArtifacts = async (handoff: Handoff): Promise<void> =>
 
     if (await fs.pathExists(path.resolve(componentPath, `${componentId}.js`))) {
       validFiles.add(`${componentId}.js`);
+    }
+
+    if (await fs.pathExists(path.resolve(componentPath, `${componentId}${CLIENT_ARTIFACT_SUFFIX}`))) {
+      validFiles.add(`${componentId}${CLIENT_ARTIFACT_SUFFIX}`);
     }
 
     if (await fs.pathExists(path.resolve(componentPath, `${componentId}.css`))) {

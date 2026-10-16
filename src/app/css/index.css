@@ -159,6 +159,70 @@
 	}
 }
 
+/*
+  The docked assistant and the column the page leaves for it.
+
+  `--ai-dock-width` is the single source for both, so the panel and the page can never disagree and
+  one transition moves both. It is `0px` with the dock closed, or on a viewport too narrow to carry
+  a column. An inline script in `_document` sets it before the first paint, so a reader who left the
+  dock open does not watch the page reflow after hydration.
+
+  A resize drag writes the variable on every pointer move, so the transition is dropped for the drag
+  or the page eases along behind the pointer.
+*/
+.ai-dock-inset {
+	padding-right: var(--ai-dock-width, 0px);
+}
+
+/* The app header keeps the full width, and the dock starts below it. */
+.ai-dock-bleed {
+	margin-right: calc(-1 * var(--ai-dock-width, 0px));
+}
+
+.ai-dock-inset,
+.ai-dock-bleed,
+.ai-dock {
+	transition:
+		width 0.2s ease-out,
+		padding-right 0.2s ease-out,
+		margin-right 0.2s ease-out;
+}
+
+.ai-assistant-trigger {
+	display: inline-flex;
+	flex-shrink: 0;
+	max-width: 9rem;
+	overflow: hidden;
+	opacity: 1;
+	transition:
+		max-width 0.2s ease-out,
+		margin-right 0.2s ease-out,
+		opacity 0.2s ease-out;
+}
+
+.ai-assistant-trigger[data-open='true'],
+[data-ai-dock-open='true'] .ai-assistant-trigger {
+	pointer-events: none;
+	margin-right: -1rem;
+	max-width: 0;
+	opacity: 0;
+}
+
+[data-ai-dock-resizing] .ai-dock-inset,
+[data-ai-dock-resizing] .ai-dock-bleed,
+[data-ai-dock-resizing] .ai-dock {
+	transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ai-dock-inset,
+	.ai-dock-bleed,
+	.ai-dock,
+	.ai-assistant-trigger {
+		transition: none;
+	}
+}
+
 @layer base {
 	* {
 		@apply border-border;

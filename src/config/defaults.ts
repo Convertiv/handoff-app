@@ -1,4 +1,6 @@
-import { ClientConfig, Config } from '../types/config';
+import { fromEnv } from './from-env';
+import { resolveRegistryConnection } from '../registry/connection';
+import { ClientConfig, Config, ResolvedConfig } from '../types/config';
 
 export interface ImageStyle {
   name: string;
@@ -8,20 +10,38 @@ export interface ImageStyle {
   description: string;
 }
 
+/** Whether the MCP endpoint is served. On unless `runtime.mcp` is explicitly `false`. */
+export const isMcpEnabled = (config: Pick<Config, 'runtime'> | Pick<ResolvedConfig, 'runtime'> | null | undefined): boolean =>
+  config?.runtime?.mcp !== false;
+
 export const defaultConfig = (): Config => ({
-  dev_access_token: process.env.HANDOFF_DEV_ACCESS_TOKEN ?? null,
-  figma_project_id: process.env.HANDOFF_FIGMA_PROJECT_ID ?? null,
-  exportsOutputDirectory: process.env.HANDOFF_OUTPUT_DIR ?? 'exported',
-  sitesOutputDirectory: process.env.HANDOFF_SITES_DIR ?? 'out',
-  useVariables: process.env.HANDOFF_USE_VARIABLES === 'true',
+  integrations: {
+    figma: {
+      projectId: fromEnv('HANDOFF_FIGMA_PROJECT_ID', { default: null }),
+      accessToken: fromEnv('HANDOFF_DEV_ACCESS_TOKEN', { default: null }),
+    },
+  },
+  runtime: {
+    mode: 'workspace',
+    registryConnection: {
+      url: fromEnv('HANDOFF_REGISTRY_URL', { default: '' }),
+      accessToken: fromEnv('HANDOFF_REGISTRY_ACCESS_TOKEN', { default: '' }),
+    },
+    registry: {
+      database: { url: fromEnv('DATABASE_URL') },
+    },
+  },
+  exportsOutputDirectory: fromEnv('HANDOFF_OUTPUT_DIR', { default: 'exported' }),
+  sitesOutputDirectory: fromEnv('HANDOFF_SITES_DIR', { default: 'out' }),
+  useVariables: fromEnv('HANDOFF_USE_VARIABLES', { default: false }),
   reactDocgen: {
     maxDepth: 7,
     excludeDirectories: ['dist', 'build', '.next'],
   },
   app: {
     theme: 'default',
-    title: 'Convertiv Design System',
-    client: 'Convertiv',
+    title: 'Handoff Design System',
+    client: 'Handoff',
     google_tag_manager: null,
     attribution: true,
     type_copy: 'Almost before we knew it, we had left the ground.',
@@ -47,9 +67,9 @@ export const defaultConfig = (): Config => ({
       desktop: { size: 1100, name: 'Large' },
     },
     ports: {
-      app: Number(process.env.HANDOFF_APP_PORT) || 3000,
-      websocket: Number(process.env.HANDOFF_WEBSOCKET_PORT) || 3001
-    }
+      app: fromEnv('HANDOFF_APP_PORT', { default: 3000 }),
+      websocket: fromEnv('HANDOFF_WEBSOCKET_PORT', { default: 3001 }),
+    },
   },
 });
 
@@ -59,14 +79,21 @@ export const defaultConfig = (): Config => ({
  * @param config - The full handoff Config object.
  * @returns The client configuration object.
  */
-export const getClientConfig = (config: Config): ClientConfig => {
+export const getClientConfig = (config: ResolvedConfig): ClientConfig => {
   const {
     app,
     exportsOutputDirectory,
     sitesOutputDirectory,
     assets_zip_links = { icons: null, logos: null },
     useVariables,
-  } = { ...defaultConfig(), ...config };
+    runtime,
+  } = config;
+
+  const mode = runtime?.mode ?? 'workspace';
+  // Connected-workspace affordance: only a workspace with a resolvable registry URL is "connected".
+  // URL-only threshold (no token required) so the publish hint surfaces before the access token is
+  // set. Never project the URL/token value itself — only this boolean crosses to the browser.
+  const connected = mode === 'workspace' && Boolean(resolveRegistryConnection(config).url);
 
   return {
     app,
@@ -74,5 +101,9 @@ export const getClientConfig = (config: Config): ClientConfig => {
     sitesOutputDirectory,
     assets_zip_links,
     useVariables,
+    runtime: {
+      mode,
+      connected,
+    },
   };
 };
