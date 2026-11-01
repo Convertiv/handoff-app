@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[2.0.1] - 2026-11-01
+
+This release makes catalog items smaller to publish and reports packages that
+are too large for the registry.
+
+### Changed
+
+* Client bundles of interactive React previews use the minified production
+  build of React. This reduces each bundle by about 1 MB, so components and
+  patterns publish within the registry request limit more often. In the local
+  workspace, previews no longer show React development warnings. To get them
+  back, set `minify: false` and a development `process.env.NODE_ENV` in
+  `hooks.clientBuildConfig`, then rebuild with `--force`.
+
+### Fixed
+
+* `publish` stops before the upload when a package is larger than the 4.5 MB
+  registry limit and names the largest files.
+* A `413` response from the registry now shows a clear "too large" message.
+
 ## \[2.0.0] - 2026-10-16
 
 Handoff 2.0 adds a shared registry to the local workspace. You write content in
