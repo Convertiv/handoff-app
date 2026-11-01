@@ -938,6 +938,11 @@ npm run publish -- all --dry-run
 npm run publish -- catalog --no-build
 ```
 
+A publish sends each catalog item or page in one request of at most 4.5 MB.
+An item's package contains its rendered previews, its client bundle, and the
+shared stylesheet and script. A pattern also contains the artifacts of the
+components it uses.
+
 After a publish, reload the registry to see the published items and
 foundations.
 
