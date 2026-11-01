@@ -1,8 +1,7 @@
 import type { RendererKind } from '@handoff/catalog/renderers';
 import { PreviewObject } from '@handoff/types/preview';
-// @ts-ignore
-import { CollapsibleTrigger } from '@radix-ui/react-collapsible';
 import { Select } from '@radix-ui/react-select';
+import { useTheme } from 'next-themes';
 import { useEffect, useMemo, useState } from 'react';
 import handlebars from 'react-syntax-highlighter/dist/esm/languages/prism/handlebars';
 import js from 'react-syntax-highlighter/dist/esm/languages/prism/javascript';
@@ -14,11 +13,25 @@ import tsx from 'react-syntax-highlighter/dist/esm/languages/prism/tsx';
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript';
 import html from 'react-syntax-highlighter/dist/esm/languages/prism/xml-doc';
 import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/prism-light';
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { githubDark, githubLight } from '../../lib/code-theme';
+import { codeTagPropsFor, codeWindowStyle } from '../../lib/code-window';
 import CopyCode from '../CopyCode';
 import { Button } from '../ui/button';
-import { Collapsible } from '../ui/collapsible';
 import { SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+
+/** Lines a collapsed sample shows under its "View Code" button. */
+const COLLAPSED_LINES = 3;
+
+/**
+ * The code window's background and line-number colours, modelled on the shadcn docs' code blocks.
+ * They replace the theme's background; token colours still come from the theme. Dark mode uses the
+ * site's gray scale.
+ */
+const SURFACE = {
+  light: { background: '#f8f8f8', lineNumber: '#737373' },
+  dark: { background: '#111827', lineNumber: '#9ca3af' },
+};
+const LINE_HEIGHT = 'calc(1.75em + 2px)';
 
 // Register all supported languages
 SyntaxHighlighter.registerLanguage('javascript', js);
@@ -90,21 +103,30 @@ const CODE_VIEWS: Record<string, CodeView> = {
 const RECORD_VIEWS = Object.keys(CODE_VIEWS).filter((key) => key !== 'usage');
 
 /**
- * Highlight code for preview elements
- * @param param0
- * @returns ReactElement
+ * Highlight code for preview elements.
+ *
+ * `collapsible` starts it closed: the first {@link COLLAPSED_LINES} lines under a fade, with a
+ * "View Code" button over them. Opening it shows the whole sample, scrolling past `height`, with the
+ * format dropdown and the copy button in its top-right corner. A short sample starts closed too,
+ * because opening is also what reveals the other formats.
+ *
+ * `attached` drops its own border and corners, for when it sits inside the preview card above it.
+ *
+ * It follows the site's light/dark theme; `dark` forces one or the other.
  */
 export const CodeHighlight: React.FC<{
   data: PreviewObject | string | undefined;
   collapsible?: boolean;
+  attached?: boolean;
   type?: string;
   dark?: boolean;
-  title?: string;
   language?: string;
   height?: string;
   currentPreviewUrl?: string;
-}> = ({ data, collapsible, type, title, dark, height, currentPreviewUrl }) => {
-  const [isOpen, setIsOpen] = useState<boolean>(true);
+}> = ({ data, collapsible, attached, type, dark, height, currentPreviewUrl }) => {
+  const [expanded, setExpanded] = useState<boolean>(false);
+  const { resolvedTheme } = useTheme();
+  const isDark = dark ?? resolvedTheme === 'dark';
 
   if (!data) {
     data = {
@@ -159,10 +181,10 @@ export const CodeHighlight: React.FC<{
     }
     return `${data.id || ''}|${data.title || ''}|${data.format || ''}|${Object.keys(data.previews || {}).join('|')}`;
   }, [data, type]);
-  const theme = dark ? oneDark : oneLight;
-  theme['pre[class*="language-"]'].overflow = 'auto';
-  theme['pre[class*="language-"]'].maxHeight = height ?? '450px';
-  theme['pre[class*="language-"]'].margin = '0';
+  // Read, never written: the theme object is shared with every other highlighter in the app, so the
+  // per-window overrides go in `customStyle` / `codeTagProps` below.
+  const theme = isDark ? githubDark : githubLight;
+  const surface = isDark ? SURFACE.dark : SURFACE.light;
 
   const getLabel = (state: string): string => {
     if (state === 'code' && typeof data === 'object') {
@@ -239,8 +261,10 @@ export const CodeHighlight: React.FC<{
 
   // Always default to usage for newly viewed component/code payloads.
   // Users can still manually switch tabs after this initial selection.
+  // A different component closes the sample again.
   useEffect(() => {
     setActiveState(preferredState);
+    setExpanded(false);
   }, [preferredState, stateResetKey]);
 
   useEffect(() => {
@@ -264,14 +288,28 @@ export const CodeHighlight: React.FC<{
     }
   }, [activeState, currentPreviewUrl, data]);
 
+  const source = typeof code === 'string' ? code : '';
+  const lines = source.replace(/\s+$/, '').split('\n');
+  const showAll = expanded || !collapsible;
+  const lang = language(activeState);
+  const codeTag = codeTagPropsFor(theme, lang, 'scroll');
+  // Line numbers carry the `comment` class, and the library spreads stylesheet entries over
+  // `lineNumberStyle`, so their colour has to come from a `linenumber` entry, on a local copy.
+  const highlighterStyle = { ...theme, linenumber: { color: surface.lineNumber } };
+
   return (
-    <Collapsible id="code-samples" className="mt-4 space-y-2" style={{ maxWidth: '71vw' }} open={isOpen} onOpenChange={setIsOpen}>
-      <div
-        className="flex w-full items-center justify-between rounded-t-lg bg-gray-50 px-6 py-2 pr-3 align-middle dark:bg-gray-800"
-        data-language={activeState === 'html' ? type : activeState}
-      >
-        {title && <div>{title}</div>}
-        <div className="flex items-center gap-2">
+    <div
+      id="code-samples"
+      data-language={activeState === 'html' ? type : activeState}
+      className={
+        attached
+          ? 'relative w-full min-w-0'
+          : 'relative mt-4 w-full min-w-0 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-900'
+      }
+      style={attached ? undefined : { maxWidth: '71vw' }}
+    >
+      {showAll && (
+        <div className="absolute right-4 top-3 z-10 flex items-center gap-1.5 rounded-md" style={{ background: surface.background }}>
           {selectableStates.length > 1 && (
             <Select
               value={activeState}
@@ -288,7 +326,7 @@ export const CodeHighlight: React.FC<{
                 }
               }}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="h-7 w-[150px] bg-background text-xs shadow-none">
                 <SelectValue placeholder="Code View" />
               </SelectTrigger>
               <SelectContent>
@@ -301,29 +339,50 @@ export const CodeHighlight: React.FC<{
             </Select>
           )}
 
-          <CopyCode code={code} />
+          <CopyCode code={source} />
         </div>
-      </div>
+      )}
 
       <SyntaxHighlighter
-        style={theme}
-        language={language(activeState)}
+        style={highlighterStyle}
+        language={lang}
         PreTag="div"
         showLineNumbers={true}
         wrapLines={true}
-        wrapLongLines={true}
         useInlineStyles={true}
+        customStyle={{
+          ...codeWindowStyle,
+          margin: 0,
+          borderRadius: 0,
+          background: surface.background,
+          padding: '16px 16px 16px 0',
+          lineHeight: LINE_HEIGHT,
+          overflow: showAll ? 'auto' : 'hidden',
+          maxHeight: showAll ? (height ?? '288px') : undefined,
+          // A sample shorter than the collapsed view still leaves the button room to sit over it.
+          minHeight: showAll ? undefined : `calc(${COLLAPSED_LINES} * (${LINE_HEIGHT}) + 32px)`,
+        }}
+        // The theme paints its own background and 1.5 line height on the code tag, over the window's.
+        codeTagProps={{ ...codeTag, style: { ...codeTag.style, background: 'transparent', lineHeight: LINE_HEIGHT } }}
+        lineNumberStyle={{ minWidth: '64px', paddingRight: '24px' }}
       >
-        {code}
+        {showAll ? source : lines.slice(0, COLLAPSED_LINES).join('\n')}
       </SyntaxHighlighter>
 
-      {collapsible && (
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" size="sm" className="w-9 p-0">
-            <span className="sr-only">Toggle</span>
+      {!showAll && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to top, ${surface.background}, color-mix(in srgb, ${surface.background} 60%, transparent), transparent)`,
+            }}
+          />
+          {/* `relative` only lifts the button above the fade. */}
+          <Button variant="outline" size="sm" className="relative font-normal" onClick={() => setExpanded(true)}>
+            View Code
           </Button>
-        </CollapsibleTrigger>
+        </div>
       )}
-    </Collapsible>
+    </div>
   );
 };

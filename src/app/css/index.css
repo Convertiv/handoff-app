@@ -267,6 +267,12 @@
 			linear-gradient(var(--dot-bg) calc(var(--dot-space) - var(--dot-size)), transparent 1%) center / var(--dot-space) var(--dot-space),
 			var(--dot-color);
 	}
+
+	/* Dark: the page's own background, with light dots in place of grey ones. */
+	.dark .dotted-bg {
+		--dot-bg: hsl(var(--background));
+		--dot-color: #525252;
+	}
 }
 
 @layer base {
