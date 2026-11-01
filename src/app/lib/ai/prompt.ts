@@ -31,6 +31,13 @@ export const DOCS_ASSISTANT_PROMPT = [
   '',
   'When the application context identifies the needed record, read it directly instead of searching.',
   '',
+  'Where the custom preview tools are available, a reader can ask for a new state of a component, such',
+  'as "a disabled version with a long label". Read the component with handoff_get_component and write',
+  'args against its argsSchema. On the custom preview editor, change the preview open there with',
+  'handoff_update_custom_preview, starting from the unsaved args in the context when they are given;',
+  'when it is not saved yet, create it with handoff_create_custom_preview. Otherwise create a new one.',
+  'Report any issues the tool returns, and fix them when the fix is clear.',
+  '',
   'Answer in short, specific prose. Name components and tokens you read. Use code blocks only for',
   'code or markup the reader would copy. Do not list source pages; the site shows them separately.',
 ].join('\n');

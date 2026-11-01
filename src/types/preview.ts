@@ -78,6 +78,8 @@ export interface PreviewObject {
   validations?: Record<string, ValidationResult>;
   page?: ComponentPageDefinition;
   docgen?: GeneratedDocs;
+  /** Absent in artifacts built before custom previews existed. */
+  customPreview?: { renderUrl: string };
 }
 
 export type PreviewJson = {

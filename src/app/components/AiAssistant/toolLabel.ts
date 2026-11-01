@@ -16,6 +16,16 @@ export const toolCallLabel = (toolName: string, input: unknown): string => {
       return value('set') ? `Read tokens for ${value('set')}` : 'Read design tokens';
     case 'handoff_search_pages':
       return value('query') ? `Searched pages for “${value('query')}”` : 'Listed pages';
+    case 'handoff_list_custom_previews':
+      return `Listed custom previews of ${value('componentId') ?? 'component'}`;
+    case 'handoff_get_custom_preview':
+      return 'Read custom preview';
+    case 'handoff_create_custom_preview':
+      return value('title') ? `Saved custom preview “${value('title')}”` : 'Saved custom preview';
+    case 'handoff_update_custom_preview':
+      return 'Updated custom preview';
+    case 'handoff_delete_custom_preview':
+      return 'Deleted custom preview';
     case 'handoff_get_page':
       return `Read page ${value('url') ?? ''}`.trim();
     default:

@@ -15,6 +15,8 @@ import { AiConnectionError, createAiLanguageModel } from '@/lib/ai/model';
 import { DOCS_ASSISTANT_PROMPT } from '@/lib/ai/prompt';
 import { describeAiConnections, findAiConnection, selectAiModel } from '@/lib/ai/resolve';
 import { createAiToolSession, type AiSource } from '@/lib/ai/tools';
+// Not the auth barrel: it loads the registry database.
+import { scopesForRegistryRole } from '@handoff/registry/auth/types';
 import { resolveDocsBackend } from '@/lib/docs-api';
 
 /**
@@ -86,7 +88,9 @@ export default async function aiChatHandler(req: NextApiRequest, res: NextApiRes
         }
       };
 
-      const session = await createAiToolSession(writeSources);
+      const principal =
+        reader.userId && reader.role ? { userId: reader.userId, role: reader.role, scopes: scopesForRegistryRole(reader.role) } : null;
+      const session = await createAiToolSession(writeSources, principal);
       // Torn down with the response, the way `/api/mcp/` does it: the merged stream outlives this
       // function, and a reader who closes the modal mid-answer must not leave the session open.
       res.on('close', () => void session.close());

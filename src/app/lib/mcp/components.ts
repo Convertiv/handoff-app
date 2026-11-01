@@ -1,7 +1,11 @@
 import { buildArtifactUrl } from '@handoff/artifacts/url';
+import { toArgsSchema } from '@handoff/custom-previews';
 import type { SlotMetadata } from '@handoff/transformers/preview/component';
 import type { ComponentListObject, OptionalPreviewRender, TransformComponentTokensResult } from '@handoff/transformers/preview/types';
 import type { DocsBackend } from '../docs-api/backend';
+import { readComponentArtifact } from '../docs-api/component-artifact';
+import type { ComponentDetail } from '../docs-api/records';
+import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 import { basePath, fail, ok, read } from './result';
 import { defineTool, type McpTool } from './tool';
 
@@ -58,7 +62,9 @@ export const componentTools: McpTool[] = [
         'handoff_get_component_source. `variants` lists the values the previews show; ' +
         '`properties[].type` has all allowed values. To see another state, pass a `previews[].id` to ' +
         'handoff_get_component_preview. `tokens.set`, when present, is the id to pass to ' +
-        'handoff_get_tokens. Do not derive a token set id from the component id.',
+        'handoff_get_tokens. Do not derive a token set id from the component id. In a registry, ' +
+        '`argsSchema` is the contract to write custom preview args against, and `customPreviews` lists ' +
+        'the ones already saved.',
       annotations: { readOnlyHint: true, openWorldHint: false },
       inputSchema: { type: 'object', properties: { id: componentId }, required: ['id'] },
     },
@@ -69,14 +75,20 @@ export const componentTools: McpTool[] = [
           return componentNotFound(id);
         }
         const [artifact, tokenSets] = await Promise.all([readComponentArtifact(backend, id), backend.listTokenSets()]);
-        return ok(
-          toComponentResult(
-            record,
-            artifact,
-            basePath(),
-            tokenSets.map((set) => set.id)
-          )
+        const result = toComponentResult(
+          record,
+          artifact,
+          basePath(),
+          tokenSets.map((set) => set.id)
         );
+        if (getServerRuntimeConfig().mode !== 'registry') {
+          return ok(result);
+        }
+        return ok({
+          ...result,
+          argsSchema: toArgsSchema(artifact?.properties ?? record.properties),
+          customPreviews: await customPreviewIndex(record, artifact),
+        });
       })
   ),
 
@@ -138,6 +150,26 @@ export const componentTools: McpTool[] = [
   ),
 ];
 
+// A database failure costs the list, not the component.
+const customPreviewIndex = async (
+  record: ComponentDetail,
+  artifact: TransformComponentTokensResult | null
+): Promise<{ id: string; title: string; status: string }[] | undefined> => {
+  try {
+    // Lazy, so a workspace never loads the registry database packages.
+    const [{ getRegistryConnection }, { componentContractInfo, listCustomPreviewsOf }] = await Promise.all([
+      import('../registry-connection'),
+      import('../custom-previews/service'),
+    ]);
+    const { db } = await getRegistryConnection();
+    const previews = await listCustomPreviewsOf(db, componentContractInfo(record, artifact));
+    return previews.length ? previews.map(({ id, title, status }) => ({ id, title, status })) : undefined;
+  } catch (error) {
+    console.error(`MCP could not list custom previews of component "${record.id}".`, error);
+    return undefined;
+  }
+};
+
 const componentNotFound = (id: string) =>
   fail(`Component "${id}" was not found. Use handoff_search_components to list the components that exist.`);
 
@@ -145,20 +177,6 @@ const componentNotFound = (id: string) =>
 const readPreviewDocument = async (backend: DocsBackend, id: string, previewId: string): Promise<string | undefined> => {
   const artifact = await backend.resolveArtifact(['component', `${id}-${previewId}.html`]);
   return artifact?.body.toString() || undefined;
-};
-
-/** Read and parse a component's build artifact, or `null` when the component has not been built. */
-const readComponentArtifact = async (backend: DocsBackend, id: string): Promise<TransformComponentTokensResult | null> => {
-  const artifact = await backend.resolveArtifact(['component', `${id}.json`]);
-  if (!artifact) {
-    return null;
-  }
-  try {
-    return JSON.parse(artifact.body.toString()) as TransformComponentTokensResult;
-  } catch {
-    // A corrupt artifact should not sink the metadata the agent can still use.
-    return null;
-  }
 };
 
 /**
