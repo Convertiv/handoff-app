@@ -86,7 +86,9 @@ export const ComponentDisplay: React.FC<{
   defaultWidth?: PreviewWidth | undefined;
   title?: string;
   onPreviewChange?: (previewUrl: string) => void;
-}> = ({ component, defaultHeight, defaultWidth, title, onPreviewChange }) => {
+  /** Rendered inside the card under the canvas, so the preview and its code sample read as one block. Folded away while expanded. */
+  footer?: React.ReactNode;
+}> = ({ component, defaultHeight, defaultWidth, title, onPreviewChange, footer }) => {
   const context = usePreviewContext();
   const ref = React.useRef<HTMLIFrameElement>(null);
   const cardRef = React.useRef<HTMLDivElement>(null);
@@ -297,6 +299,11 @@ export const ComponentDisplay: React.FC<{
     transform: 'translateY(-50%)',
   };
 
+  // Open in every phase but `full`. The footer folds away while the card grows and unfolds while it
+  // shrinks, so the first expanding frame matches the card's rect and the card returns to the flow at
+  // the height its placeholder kept.
+  const footerOpen = phase !== 'full';
+
   const card = (
     <div
       ref={cardRef}
@@ -320,7 +327,7 @@ export const ComponentDisplay: React.FC<{
                     <>
                       <div className="flex h-8 shrink-0 items-center gap-2">
                         <p className="font-monospace text-[11px] text-accent-foreground">{title ?? 'Variant'}</p>
-                        <Separator orientation="vertical" className="h-3" />
+                        <Separator orientation="vertical" className="h-3 dark:bg-gray-600" />
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {Object.keys(localVariants)
@@ -357,7 +364,7 @@ export const ComponentDisplay: React.FC<{
               ) : (
                 <>
                   <Select value={previewKey ?? ''} onValueChange={setPreviewKey}>
-                    <SelectTrigger className="h-8 w-[180px] border-none border-gray-200 bg-white text-xs shadow-none dark:border-gray-900">
+                    <SelectTrigger className="h-8 w-[180px] border-none border-gray-200 bg-white text-xs shadow-none dark:border-gray-900 dark:bg-transparent">
                       <SelectValue placeholder="Preview" />
                     </SelectTrigger>
                     <SelectContent>
@@ -371,7 +378,7 @@ export const ComponentDisplay: React.FC<{
                 </>
               )}
             </div>
-            <div className="hidden items-center gap-0 @xl:flex">
+            <div className="hidden items-center gap-1 @xl:flex">
               {scale < 1 && (
                 <>
                   <TooltipProvider delayDuration={0}>
@@ -379,38 +386,55 @@ export const ComponentDisplay: React.FC<{
                       <TooltipTrigger asChild>
                         <span className="px-3 font-mono text-[11px] text-gray-500">{Math.round(scale * 100)}%</span>
                       </TooltipTrigger>
-                      <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">
+                      <TooltipContent sideOffset={8} className="rounded-sm px-2 py-1 text-[11px]">
                         Too wide for this column. Expand to see it at full size.
                       </TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
-                  <Separator orientation="vertical" className="mx-3 h-6" />
+                  <Separator orientation="vertical" className="mx-2 h-6 dark:bg-gray-600" />
                 </>
               )}
-              <RadioGroup
-                className="flex items-center gap-0"
-                value={String(previewWidth)}
-                onValueChange={(value) => setPreviewWidth(value === 'fluid' ? 'fluid' : Number(value))}
-              >
-                <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl ring-inset transition-colors hover:bg-gray-300 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-blue-50 has-data-disabled:opacity-50 has-data-[state=checked]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-focus-visible:outline-solid has-focus-visible:outline-2 has-focus-visible:outline-ring/70 has-data-[state=checked]:ring-1 has-data-[state=checked]:ring-blue-500/20 [&_svg]:size-3">
-                  <RadioGroupItem value="fluid" aria-label="Fill the available width" className="sr-only after:absolute after:inset-0" />
-                  <Monitor />
-                </label>
-                <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl transition-colors hover:bg-gray-300 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-blue-50 has-data-disabled:opacity-50 has-data-[state=checked]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-focus-visible:outline-solid has-focus-visible:outline-2 has-focus-visible:outline-ring/70 has-data-[state=checked]:ring-1 has-data-[state=checked]:ring-blue-500/20 [&_svg]:size-3">
-                  <RadioGroupItem value="800" aria-label="Tablet width, 800px" className="sr-only after:absolute after:inset-0" />
-                  <Tablet />
-                </label>
-                <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-3 text-center text-xl transition-colors hover:bg-gray-300 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-blue-50 has-data-disabled:opacity-50 has-data-[state=checked]:shadow-[inset_0_1px_1px_0_rgba(0,0,0,0.05)] has-focus-visible:outline-solid has-focus-visible:outline-2 has-focus-visible:outline-ring/70 has-data-[state=checked]:ring-1 has-data-[state=checked]:ring-blue-500/20 [&_svg]:size-2.5">
-                  <RadioGroupItem value="400" aria-label="Mobile width, 400px" className="sr-only after:absolute after:inset-0" />
-                  <Smartphone />
-                </label>
-              </RadioGroup>
-              <Separator orientation="vertical" className="mx-3 h-6" />
+              <TooltipProvider delayDuration={0}>
+                <RadioGroup
+                  className="flex items-center gap-1"
+                  value={String(previewWidth)}
+                  onValueChange={(value) => setPreviewWidth(value === 'fluid' ? 'fluid' : Number(value))}
+                >
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-2.5 text-center text-xl ring-inset transition-colors hover:bg-white hover:shadow-xs dark:hover:bg-gray-700 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-blue-50 dark:has-data-[state=checked]:bg-blue-500/15 has-data-disabled:opacity-50 has-focus-visible:outline-solid has-focus-visible:outline-2 has-focus-visible:outline-ring/70 has-data-[state=checked]:ring-1 has-data-[state=checked]:ring-blue-500/20 dark:has-data-[state=checked]:ring-blue-400/30 [&_svg]:size-3">
+                        <RadioGroupItem value="fluid" aria-label="Fill the available width" className="sr-only after:absolute after:inset-0" />
+                        <Monitor />
+                      </label>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8} className="rounded-sm px-2 py-1 text-[11px]">Full width</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-2.5 text-center text-xl transition-colors hover:bg-white hover:shadow-xs dark:hover:bg-gray-700 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-blue-50 dark:has-data-[state=checked]:bg-blue-500/15 has-data-disabled:opacity-50 has-focus-visible:outline-solid has-focus-visible:outline-2 has-focus-visible:outline-ring/70 has-data-[state=checked]:ring-1 has-data-[state=checked]:ring-blue-500/20 dark:has-data-[state=checked]:ring-blue-400/30 [&_svg]:size-3">
+                        <RadioGroupItem value="800" aria-label="Tablet width, 800px" className="sr-only after:absolute after:inset-0" />
+                        <Tablet />
+                      </label>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8} className="rounded-sm px-2 py-1 text-[11px]">Tablet (800px)</TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <label className="relative flex h-7 cursor-pointer flex-col items-center justify-center rounded-md px-2.5 text-center text-xl transition-colors hover:bg-white hover:shadow-xs dark:hover:bg-gray-700 has-data-disabled:cursor-not-allowed has-data-[state=checked]:bg-blue-50 dark:has-data-[state=checked]:bg-blue-500/15 has-data-disabled:opacity-50 has-focus-visible:outline-solid has-focus-visible:outline-2 has-focus-visible:outline-ring/70 has-data-[state=checked]:ring-1 has-data-[state=checked]:ring-blue-500/20 dark:has-data-[state=checked]:ring-blue-400/30 [&_svg]:size-2.5">
+                        <RadioGroupItem value="400" aria-label="Mobile width, 400px" className="sr-only after:absolute after:inset-0" />
+                        <Smartphone />
+                      </label>
+                    </TooltipTrigger>
+                    <TooltipContent sideOffset={8} className="rounded-sm px-2 py-1 text-[11px]">Mobile (400px)</TooltipContent>
+                  </Tooltip>
+                </RadioGroup>
+              </TooltipProvider>
+              <Separator orientation="vertical" className="mx-2 h-6 dark:bg-gray-600" />
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
+                      className="h-7 px-2.5 hover:bg-white hover:shadow-xs dark:hover:bg-gray-700 [&_svg]:size-3"
                       onClick={() => {
                         if (ref.current) {
                           ref.current.contentWindow.location.reload();
@@ -421,14 +445,14 @@ export const ComponentDisplay: React.FC<{
                       <RefreshCcw />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Refresh Preview</TooltipContent>
+                  <TooltipContent sideOffset={8} className="rounded-sm px-2 py-1 text-[11px]">Refresh Preview</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
               <TooltipProvider delayDuration={0}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-4"
+                      className={`h-7 px-2.5 [&_svg]:size-4 ${inspect ? '' : 'hover:bg-white hover:shadow-xs dark:hover:bg-gray-700'}`}
                       onClick={() => {
                         setInspect(!inspect);
                       }}
@@ -437,7 +461,7 @@ export const ComponentDisplay: React.FC<{
                       <MousePointerClick strokeWidth={1.5} />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Inspect Component</TooltipContent>
+                  <TooltipContent sideOffset={8} className="rounded-sm px-2 py-1 text-[11px]">Inspect Component</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
               <TooltipProvider delayDuration={0}>
@@ -445,14 +469,14 @@ export const ComponentDisplay: React.FC<{
                   <TooltipTrigger asChild>
                     <Button
                       aria-label={expanded ? 'Collapse preview' : 'Expand preview'}
-                      className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
+                      className="h-7 px-2.5 hover:bg-white hover:shadow-xs dark:hover:bg-gray-700 [&_svg]:size-3"
                       onClick={() => (expanded ? collapse() : expand())}
                       variant="ghost"
                     >
                       {expanded ? <Minimize2 /> : <Maximize2 />}
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">
+                  <TooltipContent sideOffset={8} className="rounded-sm px-2 py-1 text-[11px]">
                     {expanded ? 'Collapse Preview' : 'Expand Preview'}
                   </TooltipContent>
                 </Tooltip>
@@ -461,7 +485,7 @@ export const ComponentDisplay: React.FC<{
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      className="h-7 px-3 hover:bg-gray-300 [&_svg]:size-3"
+                      className="h-7 px-2.5 hover:bg-white hover:shadow-xs dark:hover:bg-gray-700 [&_svg]:size-3"
                       onClick={() => {
                         // open in new tab
                         window.open(buildArtifactUrl(`component/${artifactPath}`, process.env.HANDOFF_APP_BASE_PATH ?? ''), '_blank');
@@ -471,13 +495,13 @@ export const ComponentDisplay: React.FC<{
                       <SquareArrowOutUpRight />
                     </Button>
                   </TooltipTrigger>
-                  <TooltipContent className="rounded-sm px-2 py-1 text-[11px]">Open in New Tab</TooltipContent>
+                  <TooltipContent sideOffset={8} className="rounded-sm px-2 py-1 text-[11px]">Open in New Tab</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             </div>
           </div>
 
-          <div className={`dotted-bg w-full p-4 ${expanded ? 'min-h-0' : ''}`}>
+          <div className={`dotted-bg w-full p-4 ${expanded ? 'min-h-0' : ''} ${footer ? '' : 'rounded-b-lg'}`}>
             {artifactPath ? (
               // The outer div measures the width available to the preview. The inner one carries
               // the scaled size, because a transform does not shrink the layout box: without it
@@ -518,6 +542,18 @@ export const ComponentDisplay: React.FC<{
           </div>
         </>
       )}
+      {/* Folded, not unmounted, while expanded, so the code sample keeps its open state and format.
+          The border sits inside the animated grid row so it folds away too. */}
+      {footer ? (
+        <div
+          inert={!footerOpen}
+          className={`grid w-full min-w-0 transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-none ${
+            footerOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+          }`}
+        >
+          <div className="min-h-0 overflow-hidden rounded-b-lg border-t border-gray-200 dark:border-gray-900">{footer}</div>
+        </div>
+      ) : null}
     </div>
   );
 
