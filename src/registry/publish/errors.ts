@@ -8,6 +8,10 @@ export const describeUploadFailure = (
   registryUrl: string,
   rejectedPayload: RejectedPublishPayload
 ): string => {
+  // An oversized body is rejected by the platform or body parser, so the response has no error envelope.
+  if (error.status === 413) {
+    return `The registry at ${registryUrl} rejected the ${rejectedPayload} as too large (413). Reduce the size of its largest files and publish again.`;
+  }
   switch (error.code) {
     case 'runtime_mode_conflict':
       return `The registry at ${registryUrl} is not running in registry mode, so it cannot accept publishes: ${error.message}`;

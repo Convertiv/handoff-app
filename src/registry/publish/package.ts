@@ -285,6 +285,30 @@ export const assertRequiredArtifactsPresent = (pkg: TransferPackage): void => {
   }
 };
 
+/**
+ * The largest publish request body the registry accepts. Vercel rejects a larger function body with
+ * `413 FUNCTION_PAYLOAD_TOO_LARGE`, and the transfer route's `bodyParser.sizeLimit` matches it.
+ */
+export const MAX_PUBLISH_BODY_BYTES = 4_500_000;
+
+const formatMegabytes = (bytes: number): string => `${(bytes / 1_000_000).toFixed(1)} MB`;
+
+export const assertPackageWithinUploadLimit = (kind: TransferEntityKind, id: string, pkg: TransferPackage): void => {
+  const size = Buffer.byteLength(JSON.stringify(pkg));
+  if (size <= MAX_PUBLISH_BODY_BYTES) return;
+
+  const largest = [...pkg.artifacts, ...pkg.files]
+    .map((entry) => ({ path: entry.path, size: Buffer.byteLength(entry.content) }))
+    .sort((a, b) => b.size - a.size)
+    .slice(0, 3)
+    .map((entry) => `  - ${entry.path} (${formatMegabytes(entry.size)})`)
+    .join('\n');
+  throw new PublishPackageError(
+    `The ${kind} "${id}" package is ${formatMegabytes(size)}; the registry accepts at most ` +
+      `${formatMegabytes(MAX_PUBLISH_BODY_BYTES)} per publish. Largest entries:\n${largest}`
+  );
+};
+
 /** Assemble the publish package for an entity from the generated `public/api` artifacts. */
 export const buildPublishPackage = (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<TransferPackage> =>
   kind === 'component'

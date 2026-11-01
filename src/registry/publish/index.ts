@@ -21,7 +21,7 @@ import { loginCommandHint, resolveAuthenticatedRegistryConnection, unusedLoginNo
 import type { EntitySummary, TransferEntityKind } from '../transfer';
 import { quoteIds, selectIds, splitCatalogIds } from '../selection';
 import { describePublishError, describeUploadFailure } from './errors';
-import { assertRequiredArtifactsPresent, buildPublishPackage, PublishPackageError } from './package';
+import { assertPackageWithinUploadLimit, assertRequiredArtifactsPresent, buildPublishPackage, PublishPackageError } from './package';
 
 /** A connected-workspace configuration or precondition failure surfaced to the CLI. */
 export class PublishError extends Error {
@@ -173,6 +173,7 @@ export const publishEntity = async (handoff: Handoff, kind: TransferEntityKind, 
 
   const pkg = await buildPublishPackage(handoff, kind, id);
   assertRequiredArtifactsPresent(pkg);
+  assertPackageWithinUploadLimit(kind, id, pkg);
 
   const contents = `${pkg.artifacts.length} artifact(s), ${pkg.files.length} source file(s)`;
   if (!client) {
@@ -274,6 +275,7 @@ const uploadEntities = async (handoff: Handoff, transport: PublishTransport, kin
     try {
       const pkg = await buildPublishPackage(handoff, kind, id);
       assertRequiredArtifactsPresent(pkg);
+      assertPackageWithinUploadLimit(kind, id, pkg);
 
       const remoteHash = remoteHashById.get(id);
       const localHash = entityHash(pkg.build);
