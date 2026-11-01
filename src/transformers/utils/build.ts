@@ -31,6 +31,10 @@ export const DEFAULT_SSR_BUILD_CONFIG: esbuild.BuildOptions = {
 
 /**
  * Default esbuild configuration for client builds
+ *
+ * Production React, minified: each client bundle carries its own React copy, and a publish uploads it
+ * with the component and with every pattern that uses it. A development build quickly pushes a pattern
+ * past serverless request body limits.
  */
 export const DEFAULT_CLIENT_BUILD_CONFIG: esbuild.BuildOptions = {
   bundle: true,
@@ -39,7 +43,8 @@ export const DEFAULT_CLIENT_BUILD_CONFIG: esbuild.BuildOptions = {
   platform: 'browser',
   jsx: 'automatic',
   sourcemap: false,
-  minify: false,
+  minify: true,
+  define: { 'process.env.NODE_ENV': '"production"' },
   loader: STYLE_IMPORT_LOADERS,
 };
 
