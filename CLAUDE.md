@@ -65,14 +65,14 @@ Most `src/<module>/` directories have a `README.md` describing their files and f
 ## Conventions
 
 - **Breaking changes** get migration steps in [UPGRADE.md](UPGRADE.md), per major version.
-- **Changelog**: [CHANGELOG.md](CHANGELOG.md) follows Keep a Changelog + SemVer. User-visible changes get an entry.
+- **Changelog**: [CHANGELOG.md](CHANGELOG.md) follows Keep a Changelog + SemVer. Entries are written during release prep on the release branch. Do not add or edit entries in feature or fix work unless asked.
 - **Docs style**: README/RECIPES/CHANGELOG use short, plain, imperative sentences (Simplified Technical English style).
 
 ### Branches and releases
 
 - **Branch names**: `<category>/<kebab-case-topic>`, e.g. `feature/config-profiles`, `bugfix/code-toc-md`, `docs/readme-rewrite`, `chore/remove-mdx`. Categories in use: `feature/`, `bugfix/`, `docs/`, `chore/`, `release/`.
 - **Release branches**: each release has a `release/X.Y.Z` branch. Feature and fix branches start from it and merge back into it through a PR, not into `main`. A major release can first collect work in a long-running `integration/X.Y.Z` branch, from which `release/X.Y.Z` is cut (as for 2.0.0).
-- **Prereleases and final version**: `np` (`npm run release`) runs on the release branch. It publishes prereleases (`X.Y.Z-N`) and then the final `X.Y.Z`; each creates a commit whose message is the bare version and a `vX.Y.Z[-N]` tag. Do not write these commits by hand. Release prep (changelog date, last fixes) is committed directly on the release branch.
+- **Prereleases and final version**: `np` (`npm run release`) runs on the release branch. It publishes prereleases (`X.Y.Z-N`) and then the final `X.Y.Z`; each creates a commit whose message is the bare version and a `vX.Y.Z[-N]` tag. Do not write these commits by hand. Release prep (changelog entries and date, last fixes) is committed directly on the release branch.
 - **`main`** receives only release merges: a PR from `release/X.Y.Z` into `main` ships the release.
 
 ### Commit messages
