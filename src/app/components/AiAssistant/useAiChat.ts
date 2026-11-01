@@ -4,6 +4,8 @@ import { Chat, useChat, type UseChatHelpers } from '@ai-sdk/react';
 import { DefaultChatTransport, isDynamicToolUIPart, isToolUIPart, type UIMessage, type UIMessagePart } from 'ai';
 import * as React from 'react';
 
+import { announceCustomPreviewChange, customPreviewChangeOf } from '../CustomPreview/events';
+
 const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
 
 const TRANSCRIPT_KEY = 'handoff:ai:transcript';
@@ -91,10 +93,19 @@ const writeModel = (model: string): void => {
 let chat: Chat<UIMessage> | null = null;
 const listeners = new Set<() => void>();
 
+const announceChanges = (message: UIMessage): void => {
+  for (const part of message.parts) {
+    if (!isDynamicToolUIPart(part) || part.state !== 'output-available') continue;
+    const change = customPreviewChangeOf(part.toolName, part.output);
+    if (change) announceCustomPreviewChange(change);
+  }
+};
+
 const createChat = (messages: UIMessage[]): Chat<UIMessage> =>
   new Chat<UIMessage>({
     messages,
     transport: new DefaultChatTransport({ api: `${basePath}/api/ai/chat`, credentials: 'include' }),
+    onFinish: ({ message }) => announceChanges(message),
   });
 
 const getChat = (): Chat<UIMessage> => (chat ??= createChat(readTranscript()));

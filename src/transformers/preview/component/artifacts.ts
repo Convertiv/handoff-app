@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { CLIENT_ARTIFACT_SUFFIX, RENDER_SHELL_SUFFIX } from '../../../custom-previews/shell';
 import Handoff from '../../../index';
 import { TransformComponentTokensResult } from '../types';
 import { getDocumentedPreviews } from './previews';
@@ -9,9 +10,6 @@ import { MAIN_COMPONENT_JS_FILE } from './javascript';
 
 const COMPONENT_JS_RESERVED_FILES = new Set([MAIN_COMPONENT_JS_FILE]);
 const COMPONENT_CSS_RESERVED_FILES = new Set([MAIN_COMPONENT_CSS_FILE, SHARED_COMPONENT_CSS_FILE]);
-
-/** Suffix of a component-owned client/hydration artifact (`<id>.client.js`), see ssr-render plugin. */
-const CLIENT_ARTIFACT_SUFFIX = '.client.js';
 
 export const getComponentApiPath = (handoff: Handoff) => path.resolve(getAPIPath(handoff), 'component');
 
@@ -107,6 +105,10 @@ export const syncComponentArtifacts = async (handoff: Handoff, removedIds: reado
       validFiles.add(`${componentId}.css`);
     }
 
+    if (await fs.pathExists(path.resolve(componentPath, `${componentId}${RENDER_SHELL_SUFFIX}`))) {
+      validFiles.add(`${componentId}${RENDER_SHELL_SUFFIX}`);
+    }
+
     const previewKeys = await getComponentPreviewKeys(handoff, componentId);
     for (const previewKey of Array.from(previewKeys)) {
       validFiles.add(`${componentId}-${previewKey}.html`);
@@ -129,6 +131,12 @@ export const syncComponentArtifacts = async (handoff: Handoff, removedIds: reado
     }
 
     if (parsed.ext !== '.html') {
+      continue;
+    }
+
+    // `<id>.render.html` has no `-` after the id, so the preview prefix match below misses it.
+    if (entry.endsWith(RENDER_SHELL_SUFFIX)) {
+      if (!validFiles.has(entry)) await fs.remove(path.resolve(componentPath, entry));
       continue;
     }
 

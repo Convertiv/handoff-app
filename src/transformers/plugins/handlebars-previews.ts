@@ -2,7 +2,7 @@ import fs from 'fs-extra';
 import Handlebars from 'handlebars';
 import { Types as CoreTypes } from 'handoff-core';
 import path from 'path';
-import { Plugin } from 'vite';
+import { Plugin, normalizePath } from 'vite';
 import Handoff from '../..';
 import { Logger } from '../../utils/logger';
 import { TransformComponentTokensResult } from '../preview/types';
@@ -15,6 +15,15 @@ import {
 import { createHandlebarsContext, registerHandlebarsHelpers } from '../utils/handlebars';
 import { formatHtmlWithWrapper, trimPreview } from '../utils/html';
 import { slugify } from '../utils/string';
+import { resolveModule } from '../utils/build';
+import {
+  bundleClientSource,
+  clientArtifactFileName,
+  CLIENT_RENDER_RUNTIME_SOURCE,
+  generateRenderShellDocument,
+  renderShellArtifactPath,
+  renderShellFileName,
+} from '../utils/render-shell';
 import { createViteLogger } from '../utils/vite-logger';
 
 /**
@@ -129,6 +138,55 @@ function emitPreviewFiles(
   });
 }
 
+// Helpers from `hooks.registerHandlebarsHelpers` exist only in the build, so a template that uses one fails in the browser.
+function generateHandlebarsClientSource(
+  runtimePath: string,
+  templateSpec: string,
+  context: { style: string; script: string; fields: unknown; title: string }
+): string {
+  return `
+    import Handlebars from '${normalizePath(runtimePath)}';
+    ${CLIENT_RENDER_RUNTIME_SOURCE}
+
+    Handlebars.registerHelper('field', function (_field, options) {
+      return options.fn(this);
+    });
+    Handlebars.registerHelper('eq', (a, b) => a === b);
+
+    const template = Handlebars.template(${templateSpec});
+    const context = ${JSON.stringify(context)};
+    const loadedScripts = new Set();
+
+    // Nodes parsed by DOMParser are inert; a script runs only when created in this document.
+    const activate = (node) => {
+      if (node.nodeName !== 'SCRIPT') return document.importNode(node, true);
+      const script = document.createElement('script');
+      for (const attribute of node.attributes) script.setAttribute(attribute.name, attribute.value);
+      script.textContent = node.textContent;
+      return script;
+    };
+    const keep = (node) => !(node.nodeName === 'SCRIPT' && node.src && loadedScripts.has(node.src));
+    const remember = (node) => node.nodeName === 'SCRIPT' && node.src && loadedScripts.add(node.src);
+
+    let headApplied = false;
+    startClientRender((args) => {
+      const parsed = new DOMParser().parseFromString(template({ ...context, properties: args }), 'text/html');
+      if (!headApplied) {
+        for (const node of Array.from(parsed.head.childNodes)) {
+          if (node.nodeName === 'TITLE') continue;
+          remember(node);
+          document.head.appendChild(activate(node));
+        }
+        headApplied = true;
+      }
+      const root = document.getElementById('root');
+      const nodes = Array.from(parsed.body.childNodes).filter(keep);
+      nodes.forEach(remember);
+      root.replaceChildren(...nodes.map(activate));
+    });
+  `;
+}
+
 /**
  * Handlebars previews plugin factory
  * @param componentData - Component transformation data
@@ -230,6 +288,38 @@ export function handlebarsPreviewsPlugin(
         } catch (err) {
           Logger.error(`Failed to generate Handlebars preview for ${componentId}-${previewKey}`, err);
         }
+      }
+
+      try {
+        const context = createHandlebarsContext(
+          { id: componentId, properties: componentData.properties || {}, title: componentData.title },
+          { values: {} },
+          { includeSharedStyles: Boolean(componentData.sharedStyles), sharedArtifacts, componentArtifacts }
+        );
+        const clientBundle = await bundleClientSource(
+          generateHandlebarsClientSource(resolveModule('handlebars/runtime', [handoff.modulePath, handoff.workingPath]), Handlebars.precompile(templateContent) as string, {
+            style: context.style,
+            script: context.script,
+            fields: context.fields,
+            title: context.title,
+          }),
+          handoff,
+          componentId
+        );
+        if (clientBundle) {
+          this.emitFile({ type: 'asset', fileName: clientArtifactFileName(componentId), source: clientBundle });
+          this.emitFile({
+            type: 'asset',
+            fileName: renderShellFileName(componentId),
+            source: generateRenderShellDocument({ componentId, title: componentData.title || componentId, head: '' }),
+          });
+          componentData.customPreview = { renderUrl: renderShellArtifactPath(componentId) };
+        } else {
+          delete componentData.customPreview;
+        }
+      } catch (err) {
+        delete componentData.customPreview;
+        Logger.error(`Failed to build the custom preview shell for ${componentId}`, err);
       }
 
       // Update component data with results

@@ -1,8 +1,11 @@
 'use client';
 
-import { ArrowRight, Layers } from 'lucide-react';
+import { ArrowRight, Layers, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import * as React from 'react';
+
+import { followWithDepth } from '../../lib/depth-transition';
+import { stripBasePath } from '../../lib/utils';
 
 /**
  * Tool results the reader can act on, drawn as cards under the step that produced them. Every other
@@ -83,6 +86,28 @@ const PreviewFrame: React.FC<{ preview: PreviewCard }> = ({ preview }) => (
   </div>
 );
 
+type CustomPreviewCard = { id: string; title: string; url: string; status?: string; issues?: unknown[] };
+
+// The tool's `url` includes the base path, which `Link` adds again.
+const CustomPreviewLink: React.FC<{ preview: CustomPreviewCard }> = ({ preview }) => (
+  <Link
+    href={stripBasePath(preview.url)}
+    onClick={followWithDepth}
+    className="flex w-full items-center gap-3 rounded-xl border bg-card px-3 py-2.5 text-left no-underline transition-colors hover:bg-muted/60 active:bg-muted"
+  >
+    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <Pencil className="h-4 w-4" />
+    </span>
+    <span className="min-w-0 flex-1">
+      <span className="block truncate text-sm font-medium leading-tight text-foreground">{preview.title}</span>
+      <span className="block truncate text-xs text-muted-foreground">
+        {preview.issues?.length ? `Open in editor · ${preview.issues.length} issue${preview.issues.length === 1 ? '' : 's'}` : 'Open in editor'}
+      </span>
+    </span>
+    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+  </Link>
+);
+
 /** The card for one finished tool call, or `null` when the result has none. */
 export const toolResultCard = (toolName: string, output: unknown): React.ReactNode => {
   const payload = payloadOf(output);
@@ -91,6 +116,13 @@ export const toolResultCard = (toolName: string, output: unknown): React.ReactNo
   if (toolName === 'handoff_search_components' && Array.isArray(payload.components) && payload.components.length > 0) {
     const total = typeof payload.total === 'number' ? payload.total : payload.components.length;
     return <ComponentCards components={payload.components as ComponentCard[]} total={total} />;
+  }
+  if (
+    (toolName === 'handoff_create_custom_preview' || toolName === 'handoff_update_custom_preview') &&
+    typeof payload.url === 'string' &&
+    typeof payload.title === 'string'
+  ) {
+    return <CustomPreviewLink preview={payload as unknown as CustomPreviewCard} />;
   }
   if (toolName === 'handoff_get_component_preview' && typeof payload.url === 'string' && payload.component) {
     return <PreviewFrame preview={payload as unknown as PreviewCard} />;

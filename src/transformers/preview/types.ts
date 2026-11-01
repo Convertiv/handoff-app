@@ -190,6 +190,7 @@ export type TransformComponentTokensResult = {
   previews?: { [key: string]: OptionalPreviewRender };
   internalPatternPreviews?: { [key: string]: OptionalPreviewRender };
   properties?: { [key: string]: SlotMetadata };
+  customPreview?: { renderUrl: string };
   variant?: Record<string, string>;
   entries?: {
     js?: string;

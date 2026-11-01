@@ -3,6 +3,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { dynamicTool, jsonSchema, type ToolSet } from 'ai';
 import { createMcpServer } from '../mcp';
+import type { McpPrincipal } from '../mcp/tool';
 
 /**
  * The assistant's tools: the MCP server's own tools, reached in process.
@@ -12,7 +13,8 @@ import { createMcpServer } from '../mcp';
  * `registry:read` bearer token while the browser holds a session cookie, so the server would have
  * to mint a token to call itself, and the HTTP hop is needless inside one function either way.
  *
- * A tool added to the MCP server therefore reaches the assistant with no further work here.
+ * A tool added to the MCP server therefore reaches the assistant with no further work here. The
+ * tools act as the signed-in reader, so the assistant can do only what the reader can do.
  */
 
 /** A page or component a tool read, surfaced to the reader as a link under the answer. */
@@ -53,7 +55,12 @@ const sourcesOf = (toolName: string, payload: unknown): AiSource[] => {
     const id = component && text(component.id);
     return id ? [{ url: componentUrl(id), title: text(component.title) ?? id }] : [];
   }
-  if (toolName === 'handoff_get_page') {
+  if (
+    toolName === 'handoff_get_page' ||
+    toolName === 'handoff_create_custom_preview' ||
+    toolName === 'handoff_update_custom_preview' ||
+    toolName === 'handoff_get_custom_preview'
+  ) {
     const url = text(record.url);
     return url ? [{ url, title: text(record.title) ?? url }] : [];
   }
@@ -85,8 +92,8 @@ const parseToolPayload = (result: CallToolResult): unknown => {
  *
  * @param onSources - Called with the pages and components each tool read, as they are read.
  */
-export const createAiToolSession = async (onSources: (sources: AiSource[]) => void): Promise<AiToolSession> => {
-  const server = createMcpServer();
+export const createAiToolSession = async (onSources: (sources: AiSource[]) => void, principal: McpPrincipal): Promise<AiToolSession> => {
+  const server = createMcpServer({ principal });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'handoff-docs-assistant', version: '1.0.0' });
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);

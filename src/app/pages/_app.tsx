@@ -1,13 +1,17 @@
 import type { AppProps } from 'next/app';
+import { useEffect } from 'react';
 
 import { AiAssistantProvider } from '../components/AiAssistant/AiAssistantProvider';
 import { RegistrySessionProvider } from '../components/Auth/RegistrySessionProvider';
 import { RegistryInstallGate } from '../components/Auth/RegistryInstallGate';
 import { NavProvider } from '../components/context/NavProvider';
+import { installDepthPopState } from '../lib/depth-transition';
 import '../css/index.css';
 import '../css/theme.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
+  useEffect(() => installDepthPopState(), []);
+
   return (
     // NavProvider lives above the page tree so the registry nav (shell + entities) is fetched once
     // and cached across soft navigations, resetting only on hard refresh.
