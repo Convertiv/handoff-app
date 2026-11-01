@@ -133,15 +133,18 @@ export const CustomPreviewEditor: React.FC<{ componentId: string; componentTitle
   const parsed = parseArgsText(argsText);
   const args = 'args' in parsed ? parsed.args : null;
   const contract = (component?.properties ?? {}) as ComponentContract;
-  const issues = args ? assessArgs(contract, args).issues : [];
+  const assessment = args ? assessArgs(contract, args) : null;
+  const issues = assessment?.issues ?? [];
   const argsState: ArgsState =
     'error' in parsed ? { kind: 'invalid', error: parsed.error } : issues.length ? { kind: 'issues', issues } : { kind: 'ok' };
   const renderPath = component?.customPreview?.renderUrl;
   const dirty = stored !== null && (stored.title !== title || stored.argsText !== argsText);
   const canEdit = customPreviewId === null ? Boolean(viewer) : canEditCustomPreview(viewer, record?.createdBy ?? null);
 
-  const argsTextRef = React.useRef(argsText);
-  argsTextRef.current = argsText;
+  // The frame renders what the saved preview renders: the args plus defaults for missing required props.
+  const renderKey = assessment ? JSON.stringify(assessment.renderArgs) : null;
+  const renderKeyRef = React.useRef(renderKey);
+  renderKeyRef.current = renderKey;
   const dirtyRef = React.useRef(dirty);
   dirtyRef.current = dirty;
 
@@ -190,10 +193,10 @@ export const CustomPreviewEditor: React.FC<{ componentId: string; componentTitle
 
   const argsKey = args ? JSON.stringify(args) : null;
   React.useEffect(() => {
-    if (!argsKey) return;
-    const timer = window.setTimeout(() => postArgs(JSON.parse(argsKey)), RENDER_DELAY_MS);
+    if (!renderKey) return;
+    const timer = window.setTimeout(() => postArgs(JSON.parse(renderKey)), RENDER_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [argsKey, postArgs]);
+  }, [renderKey, postArgs]);
 
   // The shell's origin is 'null', so `event.source` identifies it. Its messages are trusted only as display text.
   React.useEffect(() => {
@@ -202,8 +205,7 @@ export const CustomPreviewEditor: React.FC<{ componentId: string; componentTitle
       if (event.data?.type === 'handoff:ready') {
         frameReady.current = true;
         setRenderError(null);
-        const current = parseArgsText(argsTextRef.current);
-        if ('args' in current) postArgs(current.args);
+        if (renderKeyRef.current) postArgs(JSON.parse(renderKeyRef.current));
       } else if (event.data?.type === 'handoff:render-error') {
         setRenderError(typeof event.data.message === 'string' ? event.data.message : 'The component could not render.');
       } else if (event.data?.type === 'handoff:rendered') {
