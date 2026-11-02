@@ -1,6 +1,8 @@
+import crypto from 'crypto';
 import type { ArtifactKind, ArtifactOwnerKind, ArtifactReference, ArtifactReferenceKind } from '@handoff/artifacts/types';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
 import {
+  assetBlobs,
   buildMetadata,
   componentFiles,
   components,
@@ -15,10 +17,12 @@ import type { TransferArtifact, TransferBuild, TransferEntityKind, TransferFile,
 import { and, eq, inArray } from 'drizzle-orm';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { singleQueryValue } from '../api/query';
+import { deleteUnusedBlobs, readBlobBytes } from './blobs';
 import { sendRegistryError } from './errors';
 import { validateFileBody } from './files';
 import { handleRegistryRoute, sendRegistryData } from './handler';
 import { buildMeta, resolveBuildMeta } from './meta';
+import { pruneRegistry } from './prune';
 import { revalidateEntityPages } from './revalidate';
 import { getEntity, listEntityFiles, upsertEntityFile } from './store';
 import {
@@ -26,6 +30,7 @@ import {
   asString,
   invalidPackage as invalid,
   isPlainObject,
+  isSha256Hash,
   normalizeSafeRelativePath,
   rejected,
   validateTransferBuild,
@@ -48,6 +53,10 @@ import {
  * - A pattern may carry required component artifacts; those are upserted, not replaced, so unrelated
  *   entities' artifacts are never touched.
  *
+ * An artifact without `content` was uploaded first as an asset blob and is named by its `hash`. The
+ * registry reads and checks the blob before the transaction, stores the text in `docs_artifacts` like
+ * any other artifact, and deletes the blob after the commit. A prune pass follows every publish.
+ *
  * Runs behind {@link handleRegistryRoute}, so the runtime-mode, method, bearer-token, and database
  * guards apply before any of this executes.
  */
@@ -55,6 +64,8 @@ import {
 const VALID_ARTIFACT_KINDS = new Set<ArtifactKind>(['json', 'html', 'css', 'javascript', 'other']);
 const VALID_OWNER_KINDS = new Set<ArtifactOwnerKind>(['component', 'pattern', 'asset']);
 const VALID_REFERENCE_KINDS = new Set<ArtifactReferenceKind>(['client', 'style', 'script', 'shared', 'other']);
+
+const sha256 = (value: string | Buffer): string => crypto.createHash('sha256').update(value).digest('hex');
 
 const asStringArray = (value: unknown): string[] | undefined =>
   Array.isArray(value) && value.every((item) => typeof item === 'string') ? (value as string[]) : undefined;
@@ -170,8 +181,21 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     if (!artifactKind || !VALID_ARTIFACT_KINDS.has(artifactKind)) {
       return invalid(`Artifact "${artifactPath}" has an invalid artifactKind.`, { rejectedFields: [field('artifactKind')] });
     }
-    if (typeof raw.content !== 'string') {
-      return invalid(`Artifact "${artifactPath}" is missing string content.`, { rejectedFields: [field('content')] });
+    const content = typeof raw.content === 'string' ? raw.content : undefined;
+    if (raw.content !== undefined && content === undefined) {
+      return invalid(`Artifact "${artifactPath}" content must be a string.`, { rejectedFields: [field('content')] });
+    }
+    const hash = raw.hash === undefined ? undefined : asString(raw.hash)?.toLowerCase();
+    if (raw.hash !== undefined && !isSha256Hash(hash)) {
+      return invalid(`Artifact "${artifactPath}" hash must be a SHA-256 hex string.`, { rejectedFields: [field('hash')] });
+    }
+    if (content === undefined && !hash) {
+      return invalid(`Artifact "${artifactPath}" must have string content or the hash of an uploaded blob.`, {
+        rejectedFields: [field('content')],
+      });
+    }
+    if (content !== undefined && hash && sha256(content) !== hash) {
+      return invalid(`Artifact "${artifactPath}" content does not match its hash.`, { rejectedFields: [field('hash')] });
     }
     const ownerKind = (asString(raw.ownerKind) as ArtifactOwnerKind | undefined) ?? undefined;
     if (!ownerKind || !VALID_OWNER_KINDS.has(ownerKind)) {
@@ -261,13 +285,13 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
     artifacts.push({
       path: artifactPath,
       artifactKind,
-      content: raw.content as string,
+      content,
       contentType: asString(raw.contentType) || 'text/plain; charset=utf-8',
       ownerKind,
       ownerId,
       references,
       formatVersion: asString(raw.formatVersion),
-      hash: asString(raw.hash),
+      hash,
       size: typeof raw.size === 'number' ? raw.size : undefined,
     });
   }
@@ -284,6 +308,49 @@ const validatePackage = (body: unknown, kind: TransferEntityKind, id: string): P
   }
 
   return { ok: true, value: { item, sourceDir, files, artifacts, build: buildValidation.value } };
+};
+
+/**
+ * Set the content of each artifact sent as a blob, from that blob. Fails with `details.missing` when
+ * a blob is absent, for example after a concurrent publish deleted it, so the client can upload it
+ * again. Checks every blob's hash, because a direct upload to storage is not hash-checked when the
+ * registry records it. Returns the hashes of the blobs used.
+ */
+const resolveArtifactBlobs = async (db: RegistryDatabase, artifacts: TransferArtifact[]): Promise<ApplyResult<string[]>> => {
+  const blobArtifacts = artifacts.filter((artifact) => artifact.content === undefined);
+  const hashes = Array.from(new Set(blobArtifacts.map((artifact) => artifact.hash as string)));
+  if (hashes.length === 0) {
+    return { ok: true, value: [] };
+  }
+
+  const rows = await db
+    .select({
+      hash: assetBlobs.hash,
+      storageProvider: assetBlobs.storageProvider,
+      content: assetBlobs.content,
+      storageRef: assetBlobs.storageRef,
+    })
+    .from(assetBlobs)
+    .where(inArray(assetBlobs.hash, hashes));
+  const rowByHash = new Map(rows.map((row) => [row.hash, row]));
+  const missing = hashes.filter((hash) => !rowByHash.has(hash));
+  if (missing.length > 0) {
+    return applyFailed('bad_request', `The registry does not have ${missing.length} artifact blob(s). Publish again to upload them.`, {
+      rejectedFields: ['artifacts'],
+      missing,
+    });
+  }
+
+  const bytesByHash = new Map(await Promise.all(rows.map(async (row) => [row.hash, await readBlobBytes(row)] as const)));
+  const mismatched = hashes.find((hash) => sha256(bytesByHash.get(hash) as Buffer) !== hash);
+  if (mismatched) {
+    return applyFailed('bad_request', `Blob "${mismatched}" does not match its hash.`, { rejectedFields: ['artifacts'] });
+  }
+
+  for (const artifact of blobArtifacts) {
+    artifact.content = (bytesByHash.get(artifact.hash as string) as Buffer).toString('utf8');
+  }
+  return { ok: true, value: hashes };
 };
 
 /**
@@ -547,6 +614,11 @@ export const applyEntityPackage = async (
   }
   const pkg = validation.value;
 
+  const blobs = await resolveArtifactBlobs(db, pkg.artifacts);
+  if (!blobs.ok) {
+    return { ok: false, code: blobs.code, message: blobs.message, details: blobs.details };
+  }
+
   const missing = await findMissingRequiredReference(db, pkg);
   if (missing) {
     return applyFailed(
@@ -563,6 +635,15 @@ export const applyEntityPackage = async (
     await ingestArtifacts(transactionalDb, kind, id, pkg.artifacts);
     await upsertBuildMetadata(transactionalDb, kind, id, pkg.build);
   });
+
+  // The artifacts are stored, so their blobs only take space. Clean up before the route responds,
+  // because the host can stop a function after its response.
+  try {
+    await deleteUnusedBlobs(db, blobs.value ?? []);
+  } catch (error) {
+    console.warn(`Could not delete the artifact blobs of ${kind} "${id}".`, error);
+  }
+  await pruneRegistry(db);
 
   return { ok: true };
 };

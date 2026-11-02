@@ -30,12 +30,16 @@ export interface TransferFile {
  * A rendered docs read-model artifact in a transfer package. Carries the structured ownership and
  * references the registry stores so it can validate, serve, and dedup the artifact without ever
  * parsing HTML.
+ *
+ * An artifact too large to travel inline is uploaded first as an asset blob and sent without
+ * `content`; the registry then reads the content from the blob named by `hash`.
  */
 export interface TransferArtifact {
   /** Logical artifact path (e.g. `component/badge-primary.html`, `component/main.css`). */
   path: string;
   artifactKind: ArtifactKind;
-  content: string;
+  /** The artifact text. Absent when the content travels as the blob named by {@link hash}. */
+  content?: string;
   contentType: string;
   /** What the artifact belongs to — shared/global artifacts are `asset` with a `null` owner id. */
   ownerKind: ArtifactOwnerKind;
@@ -43,8 +47,15 @@ export interface TransferArtifact {
   /** Structured references this artifact depends on (drives required-reference validation). */
   references?: ArtifactReference[];
   formatVersion?: string;
+  /** SHA-256 hex of the content's UTF-8 bytes. Required when `content` is absent. */
   hash?: string;
   size?: number;
+}
+
+/** Optional registry features a connected workspace reads from `GET /api/registry/health`. */
+export interface RegistryCapabilities {
+  /** The registry accepts artifacts sent as asset blobs, each of at most `maxArtifactBytes`. */
+  artifactBlobs?: { maxArtifactBytes: number };
 }
 
 /** Build metadata for the published entity. */

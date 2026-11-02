@@ -8,7 +8,7 @@
  * and the browser both provide it), so this module stays runtime-agnostic.
  */
 
-import type { CheckoutPayload, EntitySummary, TransferEntityKind, TransferPackage } from './transfer';
+import type { CheckoutPayload, EntitySummary, RegistryCapabilities, TransferEntityKind, TransferPackage } from './transfer';
 import type { TokenSetCheckoutPayload, TokenSetSummary, TokenSetTransferPackage } from './tokens/transfer';
 import type { AssetCollectionCheckoutPayload, AssetCollectionSummary, AssetCollectionTransferPackage } from './assets/transfer';
 import type { AssetUpload } from './asset-storage/types';
@@ -54,6 +54,7 @@ export interface RegistryClientOptions {
 
 /** HTTP operations used by connected workspace publish and checkout workflows. */
 export interface RegistryClient {
+  getCapabilities(): Promise<RegistryCapabilities>;
   publish(kind: TransferEntityKind, id: string, pkg: TransferPackage): Promise<RegistryEnvelope>;
   checkout(kind: TransferEntityKind, id: string): Promise<CheckoutPayload>;
   listEntities(kind: TransferEntityKind): Promise<EntitySummary[]>;
@@ -165,16 +166,27 @@ export const createRegistryClient = ({ baseUrl, accessToken }: RegistryClientOpt
   };
 
   return {
+    /**
+     * Read the optional features the registry advertises on its health probe. A registry that is
+     * older, unreachable, or answers without `capabilities` advertises none.
+     */
+    async getCapabilities(): Promise<RegistryCapabilities> {
+      try {
+        const response = await fetch(`${root}/api/registry/health`, { headers: { Accept: 'application/json' } });
+        if (!response.ok) return {};
+        const body = (await response.json()) as { capabilities?: RegistryCapabilities };
+        return body.capabilities ?? {};
+      } catch {
+        return {};
+      }
+    },
     /** Publish (`PUT`) an entity's package to the registry transfer endpoint. */
     publish(kind: TransferEntityKind, id: string, pkg: TransferPackage): Promise<RegistryEnvelope> {
       return request('PUT', `/api/registry/transfer/${kind}/${encodeURIComponent(id)}`, pkg);
     },
     /** Checkout (`GET`) an entity's normalized record + registry-safe source files. */
     async checkout(kind: TransferEntityKind, id: string): Promise<CheckoutPayload> {
-      const envelope = await request<CheckoutPayload>(
-        'GET',
-        `/api/registry/transfer/${kind}/${encodeURIComponent(id)}`
-      );
+      const envelope = await request<CheckoutPayload>('GET', `/api/registry/transfer/${kind}/${encodeURIComponent(id)}`);
       if (!envelope.data) {
         throw new RegistryClientError(`The registry returned no data for ${kind} "${id}".`);
       }
@@ -270,7 +282,10 @@ export const createRegistryClient = ({ baseUrl, accessToken }: RegistryClientOpt
     },
     /** Checkout (`GET`) one asset collection's manifest. */
     async checkoutAssetCollection(collection: string): Promise<AssetCollectionCheckoutPayload> {
-      const envelope = await request<AssetCollectionCheckoutPayload>('GET', `/api/registry/transfer/assets/${encodeURIComponent(collection)}`);
+      const envelope = await request<AssetCollectionCheckoutPayload>(
+        'GET',
+        `/api/registry/transfer/assets/${encodeURIComponent(collection)}`
+      );
       if (!envelope.data) {
         throw new RegistryClientError(`The registry returned no data for asset collection "${collection}".`);
       }
