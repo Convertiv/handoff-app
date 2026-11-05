@@ -6,6 +6,54 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[2.1.0] - TBD
+
+This release adds custom previews to the registry. Readers, coding agents, and
+the AI assistant save a component with their own args, and every reader sees
+it next to the built previews. The registry does not build anything for them.
+Components and patterns above 4.5 MB now publish.
+
+### Custom previews
+
+* Added custom previews in registry mode. A custom preview is a component
+  rendered with args that a signed-in member saves. The component page lists
+  custom previews in the preview picker, next to the built previews.
+* Added a custom preview editor. **Create** on the component page opens it
+  with the args of the selected built preview. The editor shows a live preview
+  and checks the JSON args against the component properties while you type.
+* A republished component does not break a custom preview. Each read checks
+  the saved args against the current properties and reports unknown
+  properties, missing required properties, and type mismatches. At render
+  time, a missing required property gets its default value.
+* Only the author or an administrator can change or delete a custom preview.
+* Added MCP tools to list, read, create, update, and delete custom previews.
+  In a registry, `handoff_get_component` also returns `argsSchema`, the JSON
+  Schema for the args, and `customPreviews`, the saved custom previews.
+* The AI assistant can create and change custom previews for the signed-in
+  reader, for example "a disabled version with a long label". In the editor,
+  it changes the open preview, and the editor offers to load the change.
+* Added the `previews:write` access token scope. A token with this scope can
+  read and save custom previews, but cannot publish. Any member can create
+  such a token.
+* The registry renders custom previews in a sandboxed frame, from a render
+  shell that the build emits.
+
+### Other changes
+
+* `publish` sends components and patterns above 4.5 MB. It uploads the
+  largest artifacts as blobs first. With an older registry, `publish` still
+  stops at 4.5 MB.
+* The registry deletes blobs and artifact rows that nothing uses.
+* Redesigned the component preview card. It shows the component code behind
+  **View Code**, highlights code in GitHub colors, and supports dark mode.
+
+### Upgrade
+
+* Run `db:migrate` on the registry database. It adds the
+  `component_custom_previews` table.
+* Rebuild the registry, then republish your components. A component published
+  before 2.1.0 has no render shell, so **Create** stays disabled for it.
+
 ## \[2.0.1] - 2026-11-01
 
 This release makes catalog items smaller to publish and reports packages that
