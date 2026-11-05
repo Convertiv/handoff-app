@@ -110,13 +110,16 @@ const toArtifactReference = (referencedPath: string): ArtifactReference => {
   return { path: referencedPath, kind: 'other', required: false };
 };
 
+/** An artifact read from the build output, so its content is always present. */
+export type InlineArtifact = TransferArtifact & { content: string };
+
 /** Read a generated artifact file into a {@link TransferArtifact}, or `null` when it does not exist. */
 export const readArtifact = (
   root: string,
   artifactPath: string,
   ownerKind: TransferArtifact['ownerKind'],
   ownerId: string | null
-): TransferArtifact | null => {
+): InlineArtifact | null => {
   const absolutePath = path.resolve(root, ...artifactPath.split('/'));
   if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
     return null;
@@ -136,7 +139,7 @@ export const readArtifact = (
 };
 
 /** Add a referenced shared/component artifact to the map when present on disk (deduped by path). */
-export const addReferencedArtifact = (root: string, artifactPath: string, byPath: Map<string, TransferArtifact>): void => {
+export const addReferencedArtifact = (root: string, artifactPath: string, byPath: Map<string, InlineArtifact>): void => {
   if (byPath.has(artifactPath)) {
     return;
   }

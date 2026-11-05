@@ -19,8 +19,15 @@ import Handoff from '../../index';
 import { isRegistrySourceFile } from '../../store/source-files';
 import type { ComponentListObject, PatternListObject } from '../../transformers/preview/types';
 import type { TransferArtifact, TransferEntityKind, TransferFile, TransferPackage } from '../transfer';
-import { addReferencedArtifact, getArtifactRoot, isSharedArtifactPath, readArtifact, resolveComponentArtifactOwner } from './artifacts';
-import { createCurrentBuild, hashPathValues } from './publish-build';
+import {
+  addReferencedArtifact,
+  getArtifactRoot,
+  isSharedArtifactPath,
+  readArtifact,
+  resolveComponentArtifactOwner,
+  type InlineArtifact,
+} from './artifacts';
+import { createCurrentBuild, hashPathValues, sha256 } from './publish-build';
 
 /** A publish-time failure that should surface to the CLI as a clean, actionable message. */
 export class PublishPackageError extends Error {
@@ -105,7 +112,7 @@ const collectSourceFiles = async (handoff: Handoff, kind: TransferEntityKind, id
 };
 
 /** Deterministic content hash over the package artifacts, sorted by path. */
-const hashArtifacts = (artifacts: TransferArtifact[]): string => {
+const hashArtifacts = (artifacts: InlineArtifact[]): string => {
   return hashPathValues(artifacts.map((artifact) => ({ path: artifact.path, value: artifact.content })));
 };
 
@@ -140,7 +147,7 @@ const buildComponentPackage = async (handoff: Handoff, id: string): Promise<Tran
     throw new PublishPackageError(`No built record for component "${id}" was found in public/api/components.json after the build.`);
   }
 
-  const byPath = new Map<string, TransferArtifact>();
+  const byPath = new Map<string, InlineArtifact>();
   const entries = fs.existsSync(componentDir) ? fs.readdirSync(componentDir) : [];
   for (const entry of entries) {
     if (resolveComponentArtifactOwner(entry, componentIds) !== id) {
@@ -196,7 +203,7 @@ const buildPatternPackage = async (handoff: Handoff, id: string): Promise<Transf
     throw new PublishPackageError(`No built record for pattern "${id}" was found in public/api/patterns.json after the build.`);
   }
 
-  const byPath = new Map<string, TransferArtifact>();
+  const byPath = new Map<string, InlineArtifact>();
   for (const fileName of [`${id}.html`, `${id}.json`]) {
     const artifact = readArtifact(root, `pattern/${fileName}`, 'pattern', id);
     if (artifact) {
@@ -230,7 +237,7 @@ const buildPatternPackage = async (handoff: Handoff, id: string): Promise<Transf
 };
 
 /** Create current build metadata for a freshly built artifact package. */
-const createArtifactBuild = (artifacts: TransferArtifact[]): TransferPackage['build'] =>
+const createArtifactBuild = (artifacts: InlineArtifact[]): TransferPackage['build'] =>
   createCurrentBuild({ artifactHash: hashArtifacts(artifacts) });
 
 /** Deterministic content hash over the package source files, sorted by path. */
@@ -293,20 +300,88 @@ export const MAX_PUBLISH_BODY_BYTES = 4_500_000;
 
 const formatMegabytes = (bytes: number): string => `${(bytes / 1_000_000).toFixed(1)} MB`;
 
-export const assertPackageWithinUploadLimit = (kind: TransferEntityKind, id: string, pkg: TransferPackage): void => {
-  const size = Buffer.byteLength(JSON.stringify(pkg));
-  if (size <= MAX_PUBLISH_BODY_BYTES) return;
+const jsonBytes = (value: unknown): number => Buffer.byteLength(JSON.stringify(value));
 
-  const largest = [...pkg.artifacts, ...pkg.files]
-    .map((entry) => ({ path: entry.path, size: Buffer.byteLength(entry.content) }))
-    .sort((a, b) => b.size - a.size)
-    .slice(0, 3)
-    .map((entry) => `  - ${entry.path} (${formatMegabytes(entry.size)})`)
-    .join('\n');
-  throw new PublishPackageError(
-    `The ${kind} "${id}" package is ${formatMegabytes(size)}; the registry accepts at most ` +
-      `${formatMegabytes(MAX_PUBLISH_BODY_BYTES)} per publish. Largest entries:\n${largest}`
-  );
+export const fitsUploadLimit = (pkg: TransferPackage): boolean => jsonBytes(pkg) <= MAX_PUBLISH_BODY_BYTES;
+
+/** An artifact's content, uploaded as an asset blob before its package is sent. */
+export interface ArtifactBlob {
+  path: string;
+  hash: string;
+  contentType: string;
+  bytes: Buffer;
+}
+
+export interface SplitPackage {
+  pkg: TransferPackage;
+  blobs: ArtifactBlob[];
+}
+
+/**
+ * Make the package fit in one request by sending its largest artifacts as blobs. Each chosen
+ * artifact keeps its metadata, loses its `content`, and names its blob by `hash`. Artifacts above
+ * `maxArtifactBytes` stay inline. Without `maxArtifactBytes` (the registry does not accept blobs),
+ * nothing is moved.
+ *
+ * Throws, naming the largest entries, when the package cannot fit. Nothing is uploaded by then.
+ */
+export const splitPackageForUpload = (
+  kind: TransferEntityKind,
+  id: string,
+  pkg: TransferPackage,
+  maxArtifactBytes: number | undefined
+): SplitPackage => {
+  const size = jsonBytes(pkg);
+  if (size <= MAX_PUBLISH_BODY_BYTES) return { pkg, blobs: [] };
+
+  // An array element serializes on its own, so the body shrinks by exactly each artifact's saving.
+  const toBlobArtifact = (artifact: TransferArtifact): TransferArtifact => {
+    const { content, ...rest } = artifact;
+    return { ...rest, hash: sha256(content ?? '') };
+  };
+  const candidates = pkg.artifacts
+    .filter((artifact) => artifact.content !== undefined)
+    .map((artifact) => ({ artifact, bytes: Buffer.byteLength(artifact.content ?? '') }))
+    .filter((entry) => maxArtifactBytes !== undefined && entry.bytes <= maxArtifactBytes)
+    .sort((a, b) => b.bytes - a.bytes);
+
+  let remaining = size;
+  const chosen = new Map<string, TransferArtifact>();
+  for (const { artifact } of candidates) {
+    if (remaining <= MAX_PUBLISH_BODY_BYTES) break;
+    const blobArtifact = toBlobArtifact(artifact);
+    remaining -= jsonBytes(artifact) - jsonBytes(blobArtifact);
+    chosen.set(artifact.path, blobArtifact);
+  }
+
+  if (remaining > MAX_PUBLISH_BODY_BYTES) {
+    const largest = [...pkg.artifacts, ...pkg.files]
+      .map((entry) => ({ path: entry.path, size: Buffer.byteLength(entry.content ?? '') }))
+      .sort((a, b) => b.size - a.size)
+      .slice(0, 3)
+      .map((entry) => `  - ${entry.path} (${formatMegabytes(entry.size)})`)
+      .join('\n');
+    const reason =
+      maxArtifactBytes === undefined
+        ? `The registry accepts at most ${formatMegabytes(MAX_PUBLISH_BODY_BYTES)} per publish.`
+        : `It does not fit in ${formatMegabytes(MAX_PUBLISH_BODY_BYTES)}, even with each artifact of up to ` +
+          `${formatMegabytes(maxArtifactBytes)} sent as a blob.`;
+    throw new PublishPackageError(`The ${kind} "${id}" package is ${formatMegabytes(size)}. ${reason} Largest entries:\n${largest}`);
+  }
+
+  const blobs: ArtifactBlob[] = [];
+  const artifacts = pkg.artifacts.map((artifact) => {
+    const blobArtifact = chosen.get(artifact.path);
+    if (!blobArtifact) return artifact;
+    blobs.push({
+      path: artifact.path,
+      hash: blobArtifact.hash as string,
+      contentType: artifact.contentType,
+      bytes: Buffer.from(artifact.content ?? '', 'utf8'),
+    });
+    return blobArtifact;
+  });
+  return { pkg: { ...pkg, artifacts }, blobs };
 };
 
 /** Assemble the publish package for an entity from the generated `public/api` artifacts. */

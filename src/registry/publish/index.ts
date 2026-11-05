@@ -18,10 +18,18 @@ import { processPatterns } from '../../transformers/preview/pattern/builder';
 import { Logger } from '../../utils/logger';
 import { createRegistryClient, RegistryClientError, type RegistryClient } from '../client';
 import { loginCommandHint, resolveAuthenticatedRegistryConnection, unusedLoginNote } from '../connection';
-import type { EntitySummary, TransferEntityKind } from '../transfer';
+import type { EntitySummary, RegistryCapabilities, TransferEntityKind, TransferPackage } from '../transfer';
 import { quoteIds, selectIds, splitCatalogIds } from '../selection';
 import { describePublishError, describeUploadFailure } from './errors';
-import { assertPackageWithinUploadLimit, assertRequiredArtifactsPresent, buildPublishPackage, PublishPackageError } from './package';
+import {
+  assertRequiredArtifactsPresent,
+  buildPublishPackage,
+  fitsUploadLimit,
+  MAX_PUBLISH_BODY_BYTES,
+  PublishPackageError,
+  splitPackageForUpload,
+  type ArtifactBlob,
+} from './package';
 
 /** A connected-workspace configuration or precondition failure surfaced to the CLI. */
 export class PublishError extends Error {
@@ -98,6 +106,8 @@ export interface PublishTransport {
   client: RegistryClient | null;
   /** The registry URL, or a placeholder on a dry run. Used only in log lines and error messages. */
   url: string;
+  /** The registry capabilities, read on the first package that needs them. */
+  capabilities?: Promise<RegistryCapabilities>;
 }
 
 /**
@@ -118,6 +128,57 @@ export const resolveTransport = async (handoff: Handoff): Promise<PublishTranspo
 
 /** Prefix for a per-item progress line: `Published:` normally, `Would publish:` on a dry run. */
 export const publishedLabel = (handoff: Handoff): string => (handoff.dryRun ? 'Would publish' : 'Published');
+
+/** The largest artifact the registry accepts as a blob, or `undefined` when it accepts none. */
+const readMaxArtifactBytes = async (transport: PublishTransport): Promise<number | undefined> => {
+  // A dry run has no registry to ask, so it assumes a registry that accepts blobs up to the request limit.
+  if (!transport.client) return MAX_PUBLISH_BODY_BYTES;
+  if (!transport.capabilities) {
+    transport.capabilities = transport.client.getCapabilities();
+  }
+  return (await transport.capabilities).artifactBlobs?.maxArtifactBytes;
+};
+
+const uploadArtifactBlobs = async (client: RegistryClient, blobs: ArtifactBlob[]): Promise<void> => {
+  for (const blob of blobs) {
+    await client.uploadAssetBlob(blob.hash, blob.contentType, blob.bytes);
+  }
+};
+
+const readMissingBlobs = (error: unknown): string[] => {
+  if (!(error instanceof RegistryClientError) || error.code !== 'bad_request') return [];
+  const missing = error.details?.missing;
+  return Array.isArray(missing) ? missing.filter((hash): hash is string => typeof hash === 'string') : [];
+};
+
+/**
+ * Send one entity package. A package above the request limit first uploads its largest artifacts
+ * as blobs, when the registry accepts them. The registry deletes those blobs once it stores the
+ * artifacts, so a concurrent publish of the same content can remove a blob this one uploaded. The
+ * registry then names the missing blobs, and this uploads them again and sends once more.
+ *
+ * On a dry run nothing is sent. Returns the number of artifacts sent, or that would be sent, as blobs.
+ */
+const sendPackage = async (transport: PublishTransport, kind: TransferEntityKind, id: string, pkg: TransferPackage): Promise<number> => {
+  const { client } = transport;
+  const split = fitsUploadLimit(pkg) ? { pkg, blobs: [] } : splitPackageForUpload(kind, id, pkg, await readMaxArtifactBytes(transport));
+  if (!client) return split.blobs.length;
+
+  await uploadArtifactBlobs(client, split.blobs);
+  try {
+    await client.publish(kind, id, split.pkg);
+  } catch (error) {
+    const missing = new Set(readMissingBlobs(error));
+    const retry = split.blobs.filter((blob) => missing.has(blob.hash));
+    if (retry.length === 0) throw error;
+    await uploadArtifactBlobs(client, retry);
+    await client.publish(kind, id, split.pkg);
+  }
+  return split.blobs.length;
+};
+
+/** The `, n as blob(s)` part of a progress line, empty when every artifact goes inline. */
+const blobNote = (blobs: number): string => (blobs > 0 ? `, ${blobs} as blob(s)` : '');
 
 /** Run the smallest build that guarantees the selected entity's artifacts are current. */
 const runTargetedBuild = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
@@ -164,7 +225,8 @@ const runTargetedBuild = async (handoff: Handoff, kind: TransferEntityKind, id: 
  */
 export const publishEntity = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<void> => {
   if (isCatalogLane(kind)) assertUniqueCatalogIds(handoff);
-  const { client, url } = await resolveTransport(handoff);
+  const transport = await resolveTransport(handoff);
+  const { client, url } = transport;
 
   if (!handoff.skipBuild) {
     Logger.info(kind === 'page' ? `Preparing page "${id}" for publish…` : `Building ${kind} "${id}" for publish…`);
@@ -173,18 +235,19 @@ export const publishEntity = async (handoff: Handoff, kind: TransferEntityKind, 
 
   const pkg = await buildPublishPackage(handoff, kind, id);
   assertRequiredArtifactsPresent(pkg);
-  assertPackageWithinUploadLimit(kind, id, pkg);
 
   const contents = `${pkg.artifacts.length} artifact(s), ${pkg.files.length} source file(s)`;
   if (!client) {
-    Logger.info(`Would publish ${kind} "${id}" (${contents}).`);
+    const blobs = await sendPackage(transport, kind, id, pkg);
+    Logger.info(`Would publish ${kind} "${id}" (${contents}${blobNote(blobs)}).`);
     Logger.success(`Dry run: ${kind} "${id}" would be published.`);
     return;
   }
 
   Logger.info(`Uploading ${kind} "${id}" to ${url} (${contents})…`);
   try {
-    await client.publish(kind, id, pkg);
+    const blobs = await sendPackage(transport, kind, id, pkg);
+    if (blobs > 0) Logger.info(`Sent ${blobs} large artifact(s) as blobs.`);
   } catch (error) {
     if (error instanceof RegistryClientError) {
       throw new PublishError(describeUploadFailure(error, url, 'package'));
@@ -275,7 +338,6 @@ const uploadEntities = async (handoff: Handoff, transport: PublishTransport, kin
     try {
       const pkg = await buildPublishPackage(handoff, kind, id);
       assertRequiredArtifactsPresent(pkg);
-      assertPackageWithinUploadLimit(kind, id, pkg);
 
       const remoteHash = remoteHashById.get(id);
       const localHash = entityHash(pkg.build);
@@ -285,11 +347,11 @@ const uploadEntities = async (handoff: Handoff, transport: PublishTransport, kin
         continue;
       }
 
-      if (client) {
-        await client.publish(kind, id, pkg);
-      }
+      const blobs = await sendPackage(transport, kind, id, pkg);
       published += 1;
-      Logger.info(`${publishedLabel(handoff)}: ${id} (${pkg.artifacts.length} artifact(s), ${pkg.files.length} source file(s))`);
+      Logger.info(
+        `${publishedLabel(handoff)}: ${id} (${pkg.artifacts.length} artifact(s), ${pkg.files.length} source file(s)${blobNote(blobs)})`
+      );
     } catch (error) {
       failed.push({ id, message: describePublishError(error, url, 'package') });
     }
