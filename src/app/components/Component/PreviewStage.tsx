@@ -1,6 +1,6 @@
 import { CUSTOM_PREVIEW_FRAME_SANDBOX } from '@handoff/custom-previews';
 import { PreviewWidth } from '@handoff/transformers/preview/types';
-import { Maximize2, Minimize2, Monitor, RefreshCcw, Smartphone, SquareArrowOutUpRight, Tablet } from 'lucide-react';
+import { Loader2, Maximize2, Minimize2, Monitor, RefreshCcw, Smartphone, SquareArrowOutUpRight, Tablet } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { Button } from '../ui/button';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -71,6 +71,10 @@ export const PreviewStage: React.FC<PreviewStageProps> = ({
   const [phase, setPhase] = React.useState<ExpandPhase>('collapsed');
   // A sandboxed frame cannot be reloaded through its cross-origin `location`, so Refresh remounts it.
   const [reloadCount, setReloadCount] = React.useState(0);
+  const frameId = `${frameKey}-${reloadCount}`;
+  // Derived from the frame id, so a new frame starts loading in the same render that mounts it.
+  const [loadedFrameId, setLoadedFrameId] = React.useState<string | null>(null);
+  const isLoading = loadedFrameId !== frameId;
   // Viewport percentages, like the expanded card: a transition from px to vw does not interpolate.
   const [originRect, setOriginRect] = React.useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
@@ -170,9 +174,19 @@ export const PreviewStage: React.FC<PreviewStageProps> = ({
   }, [sandboxed, defaultHeight, ref, frameKey, reloadCount]);
 
   const onLoad = useCallback(() => {
+    setLoadedFrameId(frameId);
     measure();
     onFrameLoad?.();
-  }, [measure, onFrameLoad]);
+  }, [frameId, measure, onFrameLoad]);
+
+  const refresh = () => {
+    if (sandboxed) {
+      setReloadCount((count) => count + 1);
+      return;
+    }
+    setLoadedFrameId(null);
+    ref.current?.contentWindow?.location.reload();
+  };
 
   React.useEffect(() => {
     measure();
@@ -292,11 +306,7 @@ export const PreviewStage: React.FC<PreviewStageProps> = ({
           <TooltipProvider delayDuration={0}>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  className={TOOLBAR_BUTTON_CLASS}
-                  onClick={() => (sandboxed ? setReloadCount((count) => count + 1) : ref.current?.contentWindow?.location.reload())}
-                  variant="ghost"
-                >
+                <Button className={TOOLBAR_BUTTON_CLASS} onClick={refresh} variant="ghost">
                   <RefreshCcw />
                 </Button>
               </TooltipTrigger>
@@ -340,6 +350,8 @@ export const PreviewStage: React.FC<PreviewStageProps> = ({
           <div ref={observeStage}>
             {renderWidth > 0 && (
               <div
+                className="relative"
+                aria-busy={isLoading}
                 style={{
                   width: renderWidth * scale,
                   height: `calc(${height} * ${scale})`,
@@ -347,8 +359,18 @@ export const PreviewStage: React.FC<PreviewStageProps> = ({
                   transition: boxTransition,
                 }}
               >
+                {/* Fades in after a delay, so a fast load shows no spinner. */}
+                {isLoading && (
+                  <div
+                    role="status"
+                    aria-label="Loading preview"
+                    className="absolute inset-0 flex items-center justify-center duration-200 animate-in [animation-delay:300ms] [animation-fill-mode:both] fade-in"
+                  >
+                    <Loader2 className="size-5 animate-spin text-gray-400 dark:text-gray-500" aria-hidden />
+                  </div>
+                )}
                 <iframe
-                  key={`${frameKey}-${reloadCount}`}
+                  key={frameId}
                   onLoad={onLoad}
                   ref={ref}
                   title={title}
@@ -358,7 +380,8 @@ export const PreviewStage: React.FC<PreviewStageProps> = ({
                     height: height,
                     transform: `scale(${scale})`,
                     transformOrigin: 'left top',
-                    transition: animates ? 'none' : 'transform 0.2s ease-in-out',
+                    transition: animates ? 'none' : 'transform 0.2s ease-in-out, opacity 0.2s ease-in-out',
+                    opacity: isLoading ? 0 : 1,
                     display: 'block',
                   }}
                   src={src}
