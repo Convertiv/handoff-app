@@ -13,7 +13,8 @@ Pure code, with no database or Node imports. The docs app editor, the registry s
 | File | Purpose |
 |------|---------|
 | `types.ts` | `CustomPreview`, `CustomPreviewIssue`, `CustomPreviewStatus`, `CustomPreviewAssessment`, and the size limits |
-| `contract.ts` | `toArgsSchema()` turns a component's `properties` into JSON Schema for agents; `contractFingerprint()` hashes the contract so a read can tell it changed since the save |
+| `contract.ts` | `toArgsSchema()` turns a component's `properties` into JSON Schema for agents; `contractFingerprint()` hashes the contract so a read can tell it changed since the save; `literalNodeValue()` reads a docgen literal |
+| `fields.ts` | `contractFields()` and `resolveField()` map the contract to the editor's form fields (text, number, boolean, enum, object, array, image, button, function, JSON); `getAt`/`setAt`/`unsetAt` read and write args by path without mutation; `fieldPaths()` lists the paths that have a form row |
 | `assess.ts` | `assessArgs()` checks args against the current contract and fills new required props from their defaults at render time; `parseArgs`/`parseTitle`/`parseDescription` validate request input |
 | `sandbox.ts` | The frame sandbox and CSP that every render shell runs under |
 | `shell.ts` | The render shell contract that build, publish and the registry share: the shell and client bundle file suffixes, the props script id, and `scriptSafeJson()` |

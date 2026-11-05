@@ -19,17 +19,24 @@ export const literalValue = (display: string): unknown => {
   }
 };
 
+/** The value of a literal type node, or `undefined` when the node is not a literal. */
+export const literalNodeValue = (node: TypeNode): unknown => {
+  if (node.kind === 'literal') return literalValue(node.display);
+  // Docgen reports a union's literal members as primitives.
+  if (node.kind === 'primitive' && /^(["'].*["']|true|false|-?\d+(\.\d+)?)$/.test(node.display.trim())) return literalValue(node.display);
+  return undefined;
+};
+
 const typeNodeSchema = (node: TypeNode): JsonSchema => {
   switch (node.kind) {
     case 'primitive': {
       if (node.display === 'string' || node.display === 'number' || node.display === 'boolean') return { type: node.display };
       if (node.display === 'null') return { type: 'null' };
-      // Docgen reports a union's literal members as primitives.
-      const value = /^(["'].*["']|true|false|-?\d+(\.\d+)?)$/.test(node.display.trim()) ? literalValue(node.display) : undefined;
+      const value = literalNodeValue(node);
       return value === undefined ? {} : { const: value };
     }
     case 'literal': {
-      const value = literalValue(node.display);
+      const value = literalNodeValue(node);
       return value === undefined ? {} : { const: value };
     }
     case 'enum':
