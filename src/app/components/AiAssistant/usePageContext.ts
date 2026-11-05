@@ -4,9 +4,10 @@ import type { NavMenuItem, SectionLink } from '@handoff/nav';
 import { useRouter } from 'next/router';
 import * as React from 'react';
 
-import { pageRefFromPath, type AiPageKind } from '../../lib/ai/context';
+import { pageRefFromPath, type AiPageKind } from '../../lib/ai/page-ref';
 import { normalizePathForMatch, stripBasePath } from '../../lib/utils';
 import { useNav } from '../context/NavProvider';
+import { componentRoute } from '../CustomPreview/api';
 
 /** The page a question can be asked about: its route as the server reads it, and its nav title. */
 export interface AiPage {
@@ -51,6 +52,10 @@ export const useNavTitles = (): Map<string, string> => {
 /** The page at a route, or `null` when the route gives no context or is not in the nav. */
 export const pageAt = (path: string, titles: Map<string, string>): AiPage | null => {
   const ref = pageRefFromPath(path);
+  if (ref?.kind === 'custom-preview') {
+    const component = titles.get(componentRoute(ref.id));
+    return component ? { path, kind: ref.kind, title: `${component} · custom preview` } : null;
+  }
   const title = titles.get(path);
   return ref && title ? { path, kind: ref.kind, title } : null;
 };

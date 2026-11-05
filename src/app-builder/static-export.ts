@@ -3,6 +3,7 @@ import path from 'path';
 import Handoff from '..';
 import { ARTIFACTS_ROUTE_SEGMENT } from '../artifacts/url';
 import type { ArtifactBuildStatus } from '../artifacts/types';
+import { CLIENT_ARTIFACT_SUFFIX } from '../custom-previews/shell';
 import type { ComponentListObject, PatternListObject } from '../transformers/preview/types';
 import { Logger } from '../utils/logger';
 import { getAppPath } from './paths';
@@ -56,15 +57,9 @@ const deriveBuildStatus = (artifactRoot: string, detailRelativePath: string): Ar
   detailArtifactExists(artifactRoot, detailRelativePath) ? 'current' : 'missing';
 
 /**
- * Suffix of a component-owned React client/hydration bundle (`<id>.client.js`). Interactive React
- * previews treat this artifact as a *required* reference: the
- * preview cannot hydrate without it, so a missing one is a genuine build failure.
- */
-const CLIENT_ARTIFACT_SUFFIX = '.client.js';
-
-/**
  * Whether a referenced artifact is *required* — i.e. the referencing HTML cannot render correctly
- * without it. Only the React client bundle qualifies. Component-owned styles/scripts
+ * without it. Only the client bundle (`<id>.client.js`) qualifies: an interactive React preview
+ * cannot hydrate without it, so a missing one is a genuine build failure. Component-owned styles/scripts
  * (`<id>.css`/`<id>.js`) and shared/global artifacts (`main.css`/`main.js`/`shared.css`) are
  * optional: the renderers emit `<id>.css`/`<id>.js` optimistically and a component that produces no
  * stylesheet/script simply has none, so an absent optional artifact must not fail the build.

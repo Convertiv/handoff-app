@@ -5,7 +5,7 @@ import path from 'path';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import reactElementToJSXString from 'react-element-to-jsx-string';
-import { Plugin } from 'vite';
+import { Plugin, normalizePath } from 'vite';
 import Handoff from '../..';
 import { orderPreviews, readExportOrderFromSource } from '../../catalog';
 import { Logger } from '../../utils/logger';
@@ -26,6 +26,16 @@ import { buildAndEvaluateModule } from '../utils/module';
 import { ensureIds } from '../utils/schema';
 import { extractComponentName, generateUsageSnippet } from '../utils/usage';
 import { createCsfStoryPreviews, CsfMeta, getCsfStoryEntries, StoryObject } from '../utils/csf';
+import {
+  bundleClientSource,
+  clientArtifactFileName,
+  CLIENT_RENDER_RUNTIME_SOURCE,
+  generateRenderShellDocument,
+  REACT_CLIENT_RENDER_SOURCE,
+  renderShellArtifactPath,
+  renderShellFileName,
+  renderShellHead,
+} from '../utils/render-shell';
 import { createViteLogger } from '../utils/vite-logger';
 
 type ComponentImportInfo = {
@@ -275,6 +285,33 @@ function buildUsageSnippet(
   });
 }
 
+// Custom previews render the meta-level component with args, never a story.
+function generateCsfClientSource(templatePath: string): string {
+  return `
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import * as stories from '${normalizePath(templatePath)}';
+    ${CLIENT_RENDER_RUNTIME_SOURCE}
+    ${REACT_CLIENT_RENDER_SOURCE}
+
+    const meta = stories.default || {};
+
+    // Storybook's order without a story: meta render, then meta component, then the args as JSON.
+    const elementFor = (args) => {
+      const merged = { ...(meta.args || {}), ...args };
+      if (typeof meta.render === 'function') {
+        const result = meta.render(merged, { args: merged });
+        if (React.isValidElement(result)) return result;
+        return React.createElement(React.Fragment, null, ...(Array.isArray(result) ? result : [result]));
+      }
+      if (meta.component) return React.createElement(meta.component, merged);
+      return React.createElement('pre', null, JSON.stringify(merged, null, 2));
+    };
+
+    mountClientRender(elementFor);
+  `;
+}
+
 function createHtmlDocument(
   componentId: string,
   previewTitle: string,
@@ -491,6 +528,23 @@ export function csfRenderPlugin(
 
         preview.url = fileName;
         lastHtml = html;
+      }
+
+      const clientBundle = await bundleClientSource(generateCsfClientSource(templatePath), handoff, componentId);
+      if (clientBundle) {
+        this.emitFile({ type: 'asset', fileName: clientArtifactFileName(componentId), source: clientBundle });
+        this.emitFile({
+          type: 'asset',
+          fileName: renderShellFileName(componentId),
+          source: generateRenderShellDocument({
+            componentId,
+            title: componentData.title || componentId,
+            head: renderShellHead(sharedArtifacts, componentArtifacts, componentId),
+          }),
+        });
+        componentData.customPreview = { renderUrl: renderShellArtifactPath(componentId) };
+      } else {
+        delete componentData.customPreview;
       }
 
       componentData.format = 'react';

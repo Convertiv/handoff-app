@@ -3,7 +3,7 @@ import type { RegistryDatabase } from '../db/client';
 import { registryAccessTokens, registryUsers, type RegistryAccessScope } from '../db/schema';
 import { createOpaqueSecret, hashSecret, secretHashMatches } from './crypto';
 import { withRegistryTransaction } from './database';
-import { REGISTRY_READ_SCOPE, REGISTRY_WRITE_SCOPE, type RegistryTokenPrincipal, type RegistryUserRole } from './types';
+import { PREVIEWS_WRITE_SCOPE, REGISTRY_READ_SCOPE, REGISTRY_WRITE_SCOPE, type RegistryTokenPrincipal, type RegistryUserRole } from './types';
 
 const ACCESS_TOKEN_PREFIX = 'hnd';
 const DEFAULT_ACCESS_TOKEN_LIFETIME_MS = 365 * 24 * 60 * 60 * 1000;
@@ -33,24 +33,22 @@ const SCOPE_ALIASES: Record<string, RegistryAccessScope> = {
 
 /** Resolve one canonical scope or documented alias; anything else is not a scope we grant. */
 export const resolveRegistryScope = (value: unknown): RegistryAccessScope | null => {
-  if (value === REGISTRY_READ_SCOPE || value === REGISTRY_WRITE_SCOPE) return value;
+  if (value === REGISTRY_READ_SCOPE || value === REGISTRY_WRITE_SCOPE || value === PREVIEWS_WRITE_SCOPE) return value;
   return typeof value === 'string' ? (SCOPE_ALIASES[value] ?? null) : null;
 };
 
 /** Resolve, dedupe and canonically order a scope list, dropping anything unrecognized. */
 export const normalizeRegistryScopes = (scopes: readonly unknown[]): RegistryAccessScope[] => {
   const unique = new Set(scopes.map(resolveRegistryScope).filter((scope): scope is RegistryAccessScope => scope !== null));
-  return [REGISTRY_READ_SCOPE, REGISTRY_WRITE_SCOPE].filter((scope) => unique.has(scope));
+  return [REGISTRY_READ_SCOPE, REGISTRY_WRITE_SCOPE, PREVIEWS_WRITE_SCOPE].filter((scope) => unique.has(scope));
 };
 
 /**
- * Normalize a requested scope list into what a token is issued with: write implies read (a write-only
- * token would be rejected by every read endpoint), and an empty request means read.
+ * Normalize a requested scope list into what a token is issued with: every write implies read (a
+ * write-only token would be rejected by every read endpoint), and an empty request means read.
  */
-export const expandRegistryScopes = (scopes: readonly unknown[]): RegistryAccessScope[] => {
-  const normalized = normalizeRegistryScopes(scopes);
-  return normalized.includes(REGISTRY_WRITE_SCOPE) ? [REGISTRY_READ_SCOPE, REGISTRY_WRITE_SCOPE] : [REGISTRY_READ_SCOPE];
-};
+export const expandRegistryScopes = (scopes: readonly unknown[]): RegistryAccessScope[] =>
+  normalizeRegistryScopes([REGISTRY_READ_SCOPE, ...scopes]);
 
 export const registryRoleAllowsScopes = (role: RegistryUserRole, scopes: readonly RegistryAccessScope[]): boolean =>
   role === 'admin' || !scopes.includes(REGISTRY_WRITE_SCOPE);

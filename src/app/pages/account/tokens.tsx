@@ -47,7 +47,7 @@ function RegistryTokensPage({ config }: { config: ClientConfig }) {
   const { data: session } = useSession();
   const role = (session?.user as { role?: string } | undefined)?.role;
   const [tokens, setTokens] = useState<AccessToken[]>([]);
-  const [scope, setScope] = useState<'registry:read' | 'registry:write'>('registry:read');
+  const [scope, setScope] = useState<'registry:read' | 'previews:write' | 'registry:write'>('registry:read');
   const [createdToken, setCreatedToken] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [pending, setPending] = useState(false);
@@ -169,6 +169,7 @@ function RegistryTokensPage({ config }: { config: ClientConfig }) {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="registry:read">Read only</SelectItem>
+                      <SelectItem value="previews:write">Read and save custom previews</SelectItem>
                       {role === 'admin' ? <SelectItem value="registry:write">Read and write</SelectItem> : null}
                     </SelectContent>
                   </Select>
@@ -211,7 +212,7 @@ function RegistryTokensPage({ config }: { config: ClientConfig }) {
                       <TableCell className="space-x-1">
                         {token.scopes.map((item) => (
                           <Badge key={item} variant="secondary">
-                            {item === 'registry:write' ? 'Read/write' : 'Read'}
+                            {item === 'registry:write' ? 'Read/write' : item === 'previews:write' ? 'Custom previews' : 'Read'}
                           </Badge>
                         ))}
                         {token.revokedAt ? <Badge variant="destructive">Revoked</Badge> : null}

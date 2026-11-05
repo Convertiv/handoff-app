@@ -64,6 +64,13 @@
       "when": 1790876591116,
       "tag": "0008_add_source_dir",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1792311973418,
+      "tag": "0009_component_custom_previews",
+      "breakpoints": true
     }
   ]
 }

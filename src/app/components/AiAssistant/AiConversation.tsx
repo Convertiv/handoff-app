@@ -13,6 +13,7 @@ import {
   Lightbulb,
   Loader2,
   MessageSquareText,
+  Pencil,
   Plus,
   Square,
   SquarePen,
@@ -24,7 +25,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { cn, stripBasePath } from '../../lib/utils';
-import type { AiPageKind } from '../../lib/ai/context';
+import type { AiPageKind } from '../../lib/ai/page-ref';
 import { MarkdownComponents } from '../Markdown/MarkdownComponents';
 import { Attachment, AttachmentAction, AttachmentContent, AttachmentMedia, AttachmentTitle } from '../ui/attachment';
 import { Bubble, BubbleContent } from '../ui/bubble';
@@ -32,6 +33,7 @@ import { Button } from '../ui/button';
 import { Marker, MarkerContent, MarkerIcon } from '../ui/marker';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '../ui/select';
 import { toolResultCard } from './AiToolResult';
+import { getCustomPreviewDraft } from '../CustomPreview/events';
 import { toolCallLabel } from './toolLabel';
 import { useAiChat } from './useAiChat';
 import { useAiConnections, type AiModelOption } from './useAiConnections';
@@ -439,7 +441,12 @@ const ModelPicker: React.FC<{ models: AiModelOption[]; value: string | null; onC
   );
 };
 
-const PAGE_ICONS: Record<AiPageKind, React.ElementType> = { component: Layers, pattern: LayoutTemplate, page: FileText };
+const PAGE_ICONS: Record<AiPageKind, React.ElementType> = {
+  component: Layers,
+  pattern: LayoutTemplate,
+  page: FileText,
+  'custom-preview': Pencil,
+};
 
 /**
  * The page the next question is asked about.
@@ -548,7 +555,14 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
     setInput('');
     following.current = true;
     void sendMessage(
-      { text: text.trim(), metadata: { sentAt: Date.now(), ...(context && { path: context.path }) } },
+      {
+        text: text.trim(),
+        metadata: {
+          sentAt: Date.now(),
+          ...(context && { path: context.path }),
+          ...(context?.kind === 'custom-preview' && getCustomPreviewDraft() && { draft: getCustomPreviewDraft() }),
+        },
+      },
       { body: { model: selectedModel } }
     );
     composerRef.current?.focus();

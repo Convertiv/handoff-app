@@ -7,12 +7,11 @@ import {
   SHARED_STYLES_CSS_ARTIFACT_PATH,
 } from '../../artifacts';
 import type { ArtifactKind, ArtifactReference } from '../../artifacts/types';
+import { CLIENT_ARTIFACT_SUFFIX, RENDER_SHELL_SUFFIX } from '../../custom-previews/shell';
 import Handoff from '../../index';
 import type { TransferArtifact } from '../transfer';
 
 const SHARED_ARTIFACT_PATHS = new Set([SHARED_MAIN_CSS_ARTIFACT_PATH, SHARED_MAIN_JS_ARTIFACT_PATH, SHARED_STYLES_CSS_ARTIFACT_PATH]);
-
-const CLIENT_ARTIFACT_SUFFIX = '.client.js';
 
 const ARTIFACT_KIND_BY_EXT: Record<string, ArtifactKind> = {
   '.json': 'json',
@@ -52,6 +51,10 @@ export const resolveComponentArtifactOwner = (fileName: string, componentIds: Se
   if (fileName.endsWith(CLIENT_ARTIFACT_SUFFIX)) {
     const id = fileName.slice(0, -CLIENT_ARTIFACT_SUFFIX.length);
     return componentIds.has(id) ? id : null;
+  }
+  if (fileName.endsWith(RENDER_SHELL_SUFFIX)) {
+    const id = fileName.slice(0, -RENDER_SHELL_SUFFIX.length);
+    if (componentIds.has(id)) return id;
   }
   const ext = path.extname(fileName).toLowerCase();
   if (ext === '.css' || ext === '.js' || ext === '.json') {

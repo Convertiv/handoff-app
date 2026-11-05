@@ -29,6 +29,7 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
   // standalone page with no children) and let the content go full width.
   const isRegistry = config?.runtime?.mode === 'registry';
   const showSidebar = isRegistry || hasRenderableNav(current as SectionLink);
+  // `.page-content` names the column that moves in a depth transition (see index.css).
   return (
     <div>
       <ConfigContextProvider defaultConfig={config} defaultMenu={menu}>
@@ -53,7 +54,7 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
             {fullWidthHero ? (
               <div className="w-full">
                 <div className="relative bg-transparent px-0 lg:gap-10 xl:grid">
-                  <div className="mx-auto w-full">{children}</div>
+                  <div className="page-content mx-auto w-full">{children}</div>
                 </div>
               </div>
             ) : showSidebar ? (
@@ -61,14 +62,14 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
                 <div className="flex w-full">
                   <SideNav />
                   <SidebarInset className="relative bg-transparent py-8 pl-8 pr-8 md:pl-8 lg:gap-10 lg:py-16 lg:pl-16">
-                    <div className="mx-auto w-full">{children}</div>
+                    <div className="page-content mx-auto w-full">{children}</div>
                   </SidebarInset>
                 </div>
               </SidebarProvider>
             ) : (
               <div className="flex w-full">
                 <div className="relative w-full bg-transparent px-16 py-8 lg:gap-10 lg:py-16">
-                  <div className="mx-auto w-full">{children}</div>
+                  <div className="page-content mx-auto w-full">{children}</div>
                 </div>
               </div>
             )}

@@ -308,3 +308,71 @@
 		--sidebar-ring: 217.2 91.2% 59.8%;
 	}
 }
+
+/* Depth transitions (`lib/depth-transition`). They never start under reduced motion. */
+.page-content {
+  view-transition-name: page-content;
+}
+
+/* view-transition-name creates a stacking context, so the header and AI dock would paint over an expanded card. */
+html[data-preview-expanded] .page-content {
+  view-transition-name: none;
+}
+
+html[data-depth]::view-transition-old(root),
+html[data-depth]::view-transition-new(root) {
+  animation: none;
+}
+
+html[data-depth]::view-transition-group(preview-stage) {
+  animation-duration: 320ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
+html[data-depth]::view-transition-group(page-content) {
+  animation-duration: 0s;
+}
+
+html[data-depth='deeper']::view-transition-old(page-content) {
+  animation: depth-forward-out 150ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+html[data-depth='deeper']::view-transition-new(page-content) {
+  animation: depth-forward-in 260ms cubic-bezier(0, 0, 0.2, 1) 60ms both;
+}
+
+html[data-depth='shallower']::view-transition-old(page-content) {
+  animation: depth-back-out 150ms cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+html[data-depth='shallower']::view-transition-new(page-content) {
+  animation: depth-back-in 260ms cubic-bezier(0, 0, 0.2, 1) 60ms both;
+}
+
+@keyframes depth-forward-out {
+  to {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes depth-forward-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes depth-back-out {
+  to {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+@keyframes depth-back-in {
+  from {
+    opacity: 0;
+    transform: scale(1.03);
+  }
+}
