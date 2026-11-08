@@ -3,9 +3,9 @@
 import {
   emptyFieldValue,
   getAt,
+  jsonEqual,
   pathKey,
   setAt,
-  toArrayItems,
   unsetAt,
   type CustomPreviewArgs,
   type CustomPreviewIssue,
@@ -43,6 +43,8 @@ const useForm = () => {
 
 const fieldId = (path: FieldPath) => `custom-preview-field-${pathKey(path)}`;
 
+const isUnset = (value: unknown): value is null | undefined => value === undefined || value === null;
+
 const KIND_LABELS: Record<Field['kind'], string> = {
   text: 'text',
   number: 'number',
@@ -50,8 +52,6 @@ const KIND_LABELS: Record<Field['kind'], string> = {
   enum: 'enum',
   object: 'object',
   array: 'list',
-  image: 'image',
-  button: 'button',
   function: 'function',
   json: 'JSON',
 };
@@ -68,19 +68,18 @@ const IssueList: React.FC<{ issues: CustomPreviewIssue[] }> = ({ issues }) =>
     </ul>
   ) : null;
 
-/** `clearable` is false for array items, which are removed instead of unset. */
 type ControlProps = { field: Field; path: FieldPath; clearable: boolean };
 
 const TextControl: React.FC<ControlProps> = ({ field, path, clearable }) => {
   const { value, set, unset, disabled } = useForm();
   const current = value(path);
-  // A text prop can hold an object, for example a docgen `text` that is really an element. Editing it as text would lose it.
+  // A `text` prop can hold an object, such as an element. Editing it as text would lose it.
   if (current !== null && typeof current === 'object') return <JsonControl field={field} path={path} clearable={clearable} />;
   return (
     <Input
       id={fieldId(path)}
       className="h-8"
-      value={current === undefined || current === null ? '' : String(current)}
+      value={isUnset(current) ? '' : String(current)}
       disabled={disabled}
       onChange={(event) => {
         const next = event.target.value;
@@ -94,7 +93,7 @@ const TextControl: React.FC<ControlProps> = ({ field, path, clearable }) => {
 const NumberControl: React.FC<ControlProps> = ({ path, clearable }) => {
   const { value, set, unset, disabled } = useForm();
   const current = value(path);
-  const shown = current === undefined || current === null ? '' : String(current);
+  const shown = isUnset(current) ? '' : String(current);
   const [draft, setDraft] = React.useState(shown);
 
   // Keep a partial entry such as `1.` while it still means the stored number.
@@ -137,20 +136,20 @@ const BooleanControl: React.FC<ControlProps> = ({ path }) => {
       disabled={disabled}
       onPressedChange={(pressed) => set(path, pressed)}
     >
-      {current === undefined ? 'Not set' : String(current)}
+      {isUnset(current) ? 'Not set' : String(current)}
     </Toggle>
   );
 };
 
 const UNSET_OPTION = '__unset';
 
-const optionLabel = (option: unknown) => (typeof option === 'string' ? option : JSON.stringify(option));
-
 const EnumControl: React.FC<ControlProps & { options: unknown[] }> = ({ path, clearable, options }) => {
   const { value, set, unset, disabled } = useForm();
   const current = value(path);
-  const index = options.findIndex((option) => JSON.stringify(option) === JSON.stringify(current));
-  const selected = index >= 0 ? String(index) : current === undefined && clearable ? UNSET_OPTION : '';
+  const quoteStrings = options.some((option) => typeof option !== 'string');
+  const optionLabel = (option: unknown) => (typeof option === 'string' && !quoteStrings ? option : JSON.stringify(option));
+  const index = options.findIndex((option) => jsonEqual(option, current));
+  const selected = index >= 0 ? String(index) : isUnset(current) && clearable ? UNSET_OPTION : '';
   return (
     <Select
       value={selected}
@@ -158,7 +157,7 @@ const EnumControl: React.FC<ControlProps & { options: unknown[] }> = ({ path, cl
       onValueChange={(next) => (next === UNSET_OPTION ? unset(path) : set(path, options[Number(next)]))}
     >
       <SelectTrigger id={fieldId(path)} className="h-8">
-        <SelectValue placeholder={current === undefined ? 'Not set' : `${optionLabel(current)} (not an option)`} />
+        <SelectValue placeholder={isUnset(current) ? 'Not set' : `${optionLabel(current)} (not an option)`} />
       </SelectTrigger>
       <SelectContent>
         {clearable && <SelectItem value={UNSET_OPTION}>Not set</SelectItem>}
@@ -177,7 +176,7 @@ const stringify = (value: unknown) => (value === undefined ? '' : JSON.stringify
 const sameJson = (text: string, value: unknown) => {
   if (text.trim() === '') return value === undefined;
   try {
-    return JSON.stringify(JSON.parse(text)) === JSON.stringify(value);
+    return jsonEqual(JSON.parse(text), value);
   } catch {
     return false;
   }
@@ -254,14 +253,15 @@ const countIssuesUnder = (issues: Map<string, CustomPreviewIssue[]>, path: Field
   return count;
 };
 
-const ObjectItem: React.FC<{ fields: FieldEntry[]; path: FieldPath; index: number; onRemove: () => void }> = ({
+const ObjectItem: React.FC<{ fields: FieldEntry[]; path: FieldPath; index: number; defaultOpen: boolean; onRemove: () => void }> = ({
   fields,
   path,
   index,
+  defaultOpen,
   onRemove,
 }) => {
   const { value, issues, disabled } = useForm();
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = React.useState(defaultOpen);
   const summary = itemSummary(value(path), fields);
   const issueCount = countIssuesUnder(issues, path);
   return (
@@ -277,7 +277,7 @@ const ObjectItem: React.FC<{ fields: FieldEntry[]; path: FieldPath; index: numbe
           <span className="font-medium">Item {index + 1}</span>
           {summary && <span className="truncate text-muted-foreground">{summary}</span>}
           {issueCount > 0 && (
-            <span className="shrink-0 rounded-full bg-amber-50 px-1.5 text-[10px] font-medium text-amber-800 ring-1 ring-amber-600/20 ring-inset">
+            <span className="shrink-0 rounded-full bg-amber-50 px-1.5 text-[10px] font-medium text-amber-800 ring-1 ring-amber-600/20 ring-inset dark:bg-amber-950/40 dark:text-amber-300">
               {issueCount} {issueCount === 1 ? 'issue' : 'issues'}
             </span>
           )}
@@ -305,62 +305,102 @@ const ObjectItem: React.FC<{ fields: FieldEntry[]; path: FieldPath; index: numbe
   );
 };
 
+const FOCUSABLE = 'input, textarea, button[role="combobox"]';
+
 const ArrayControl: React.FC<{ item: Field; path: FieldPath; label: string }> = ({ item, path, label }) => {
   const form = useForm();
   const current = form.value(path);
-  const items = toArrayItems(current);
-  const coerced = current !== undefined && !Array.isArray(current);
-  // Item writes need an array at `path`, so a single value is edited as the one-item list it is shown as.
-  const scoped = React.useMemo<FormState>(
-    () => (coerced ? { ...form, args: setAt(form.args, path, items) as CustomPreviewArgs } : form),
-    [coerced, form.args, form.onChange, form.issues, form.disabled] // eslint-disable-line react-hooks/exhaustive-deps
-  );
-  const setItems = (next: unknown[]) => form.set(path, next);
+  const items = Array.isArray(current) ? current : [];
+  const listRef = React.useRef<HTMLDivElement>(null);
+  // Cleared after focus, so a later add at the same index focuses again.
+  const [addedIndex, setAddedIndex] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (addedIndex === null) return;
+    listRef.current?.querySelector<HTMLElement>(`[data-item-index="${addedIndex}"]`)?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+    setAddedIndex(null);
+  }, [addedIndex]);
+
+  const add = () => {
+    setAddedIndex(items.length);
+    form.set(path, [...items, emptyFieldValue(item)]);
+  };
 
   return (
-    <FormContext.Provider value={scoped}>
-      <div className="space-y-1.5">
-        {coerced && <p className="text-xs text-muted-foreground">This value is not a list. Editing it here saves it as a list.</p>}
-        {items.map((value, index) => {
-          const itemPath = [...path, index];
-          const remove = () => setItems(items.filter((_, other) => other !== index));
-          if ('fields' in item) return <ObjectItem key={index} fields={item.fields} path={itemPath} index={index} onRemove={remove} />;
+    <div ref={listRef} className="space-y-1.5">
+      {items.map((value, index) => {
+        const itemPath = [...path, index];
+        const remove = () => form.set(path, items.filter((_, other) => other !== index));
+        if ('fields' in item) {
           return (
-            <div key={index} className="space-y-1">
-              <div className="flex items-start gap-2">
-                <div className="min-w-0 flex-1">
-                  <FieldControl field={item} path={itemPath} clearable={false} label={`${label} ${index + 1}`} />
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  aria-label={`Remove item ${index + 1}`}
-                  disabled={form.disabled}
-                  onClick={remove}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-              <IssueList issues={form.issues.get(pathKey(itemPath)) ?? []} />
+            <div key={index} data-item-index={index}>
+              <ObjectItem fields={item.fields} path={itemPath} index={index} defaultOpen={index === addedIndex} onRemove={remove} />
             </div>
           );
-        })}
+        }
+        return (
+          <div key={index} data-item-index={index} className="space-y-1">
+            <div className="flex items-start gap-2">
+              <div className="min-w-0 flex-1">
+                <FieldControl field={item} path={itemPath} clearable={false} label={`${label} ${index + 1}`} />
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                aria-label={`Remove item ${index + 1}`}
+                disabled={form.disabled}
+                onClick={remove}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+            <IssueList issues={form.issues.get(pathKey(itemPath)) ?? []} />
+          </div>
+        );
+      })}
+      <Button variant="outline" size="sm" className="h-7 gap-1 text-xs" disabled={form.disabled} onClick={add}>
+        <Plus className="h-3.5 w-3.5" /> Add item
+      </Button>
+    </div>
+  );
+};
+
+const ObjectControl: React.FC<{ fields: FieldEntry[]; path: FieldPath; clearable: boolean; label: string }> = ({
+  fields,
+  path,
+  clearable,
+  label,
+}) => {
+  const { value, set, disabled } = useForm();
+  if (clearable && isUnset(value(path))) {
+    return (
+      <div className="flex items-center gap-2 rounded-md border border-dashed border-input px-3 py-1">
+        <span className="text-xs text-muted-foreground">Not set</span>
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
-          className="h-7 gap-1 text-xs"
-          disabled={form.disabled}
-          onClick={() => setItems([...items, emptyFieldValue(item)])}
+          className="ml-auto h-6 gap-1 px-2 text-[11px]"
+          aria-label={`Add ${label}`}
+          disabled={disabled}
+          onClick={() => set(path, {})}
         >
-          <Plus className="h-3.5 w-3.5" /> Add item
+          <Plus className="h-3 w-3" /> Add
         </Button>
       </div>
-    </FormContext.Provider>
+    );
+  }
+  return (
+    <div className="border-l border-gray-200 pl-3 dark:border-gray-800">
+      {fields.map((entry) => (
+        <FieldRow key={entry.key} entry={entry} path={[...path, entry.key]} />
+      ))}
+    </div>
   );
 };
 
 const FieldControl: React.FC<ControlProps & { label: string }> = ({ field, path, clearable, label }) => {
+  const { value } = useForm();
   switch (field.kind) {
     case 'text':
       return <TextControl field={field} path={path} clearable={clearable} />;
@@ -369,23 +409,18 @@ const FieldControl: React.FC<ControlProps & { label: string }> = ({ field, path,
     case 'boolean':
       return <BooleanControl field={field} path={path} clearable={clearable} />;
     case 'enum':
-      return field.options.length ? (
-        <EnumControl field={field} path={path} clearable={clearable} options={field.options} />
-      ) : (
-        <TextControl field={field} path={path} clearable={clearable} />
-      );
+      return <EnumControl field={field} path={path} clearable={clearable} options={field.options} />;
     case 'object':
-    case 'image':
-    case 'button':
-      return (
-        <div className="border-l border-gray-200 pl-3 dark:border-gray-800">
-          {field.fields.map((entry) => (
-            <FieldRow key={entry.key} entry={entry} path={[...path, entry.key]} />
-          ))}
-        </div>
+      return <ObjectControl fields={field.fields} path={path} clearable={clearable} label={label} />;
+    case 'array': {
+      // A value that is not a list would be lost by editing it as one.
+      const current = value(path);
+      return isUnset(current) || Array.isArray(current) ? (
+        <ArrayControl item={field.item} path={path} label={label} />
+      ) : (
+        <JsonControl field={field} path={path} clearable={clearable} />
       );
-    case 'array':
-      return <ArrayControl item={field.item} path={path} label={label} />;
+    }
     case 'function':
       return <FunctionControl signature={field.signature} />;
     default:
@@ -434,7 +469,6 @@ const FieldRow: React.FC<{ entry: FieldEntry; path: FieldPath }> = ({ entry, pat
   );
 };
 
-/** Edits args through a form generated from the component contract. */
 export const ArgsForm: React.FC<{
   fields: FieldEntry[];
   args: CustomPreviewArgs;
@@ -452,9 +486,6 @@ export const ArgsForm: React.FC<{
     [args, onChange, issuesByPath, disabled]
   );
 
-  if (fields.length === 0) {
-    return <p className="px-6 py-4 text-sm text-muted-foreground">This component declares no properties. Use the JSON tab to set args.</p>;
-  }
   return (
     <FormContext.Provider value={state}>
       <div className="divide-y divide-gray-100 px-6 py-2 dark:divide-gray-800">

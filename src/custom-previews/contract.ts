@@ -1,4 +1,4 @@
-import type { TypeNode } from 'handoff-docgen';
+import type { TypeNode, TypeNodeProperty } from 'handoff-docgen';
 import type { SlotMetadata } from '../transformers/preview/component';
 
 // Type-only imports: the browser editor imports this module. Slot types compare as strings because `SlotType` pulls in the build.
@@ -19,7 +19,6 @@ export const literalValue = (display: string): unknown => {
   }
 };
 
-/** The value of a literal type node, or `undefined` when the node is not a literal. */
 export const literalNodeValue = (node: TypeNode): unknown => {
   if (node.kind === 'literal') return literalValue(node.display);
   // Docgen reports a union's literal members as primitives.
@@ -27,11 +26,35 @@ export const literalNodeValue = (node: TypeNode): unknown => {
   return undefined;
 };
 
+export const isTemplateLiteral = (node: TypeNode): boolean => node.kind === 'primitive' && node.display.trim().startsWith('`');
+
+/** `undefined` unless every member of the intersection is an object. */
+export const intersectionProperties = (node: TypeNode): TypeNodeProperty[] | undefined => {
+  const merged = new Map<string, TypeNodeProperty>();
+  for (const member of node.children ?? []) {
+    const properties =
+      member.kind === 'object' ? member.properties : member.kind === 'intersection' ? intersectionProperties(member) : undefined;
+    if (!properties) return undefined;
+    for (const property of properties) {
+      const existing = merged.get(property.name);
+      merged.set(property.name, existing ? { ...existing, optional: existing.optional && property.optional } : property);
+    }
+  }
+  return merged.size ? [...merged.values()] : undefined;
+};
+
+const objectNodeSchema = (properties: TypeNodeProperty[]): JsonSchema => ({
+  type: 'object',
+  properties: Object.fromEntries(properties.map((property) => [property.name, typeNodeSchema(property.type)])),
+  required: properties.filter((property) => !property.optional).map((property) => property.name),
+});
+
 const typeNodeSchema = (node: TypeNode): JsonSchema => {
   switch (node.kind) {
     case 'primitive': {
       if (node.display === 'string' || node.display === 'number' || node.display === 'boolean') return { type: node.display };
       if (node.display === 'null') return { type: 'null' };
+      if (isTemplateLiteral(node)) return { type: 'string' };
       const value = literalNodeValue(node);
       return value === undefined ? {} : { const: value };
     }
@@ -49,14 +72,15 @@ const typeNodeSchema = (node: TypeNode): JsonSchema => {
     }
     case 'array':
       return { type: 'array', ...(node.elementType ? { items: typeNodeSchema(node.elementType) } : {}) };
-    case 'object': {
-      const properties = node.properties ?? [];
-      return {
-        type: 'object',
-        properties: Object.fromEntries(properties.map((property) => [property.name, typeNodeSchema(property.type)])),
-        required: properties.filter((property) => !property.optional).map((property) => property.name),
-      };
+    case 'object':
+      return objectNodeSchema(node.properties ?? []);
+    case 'intersection': {
+      const properties = intersectionProperties(node);
+      return properties ? objectNodeSchema(properties) : {};
     }
+    // Value types are not checked: the checker has no `additionalProperties`.
+    case 'record':
+      return { type: 'object' };
     default:
       return {};
   }

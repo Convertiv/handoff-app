@@ -186,6 +186,21 @@ const toPropertiesMap = (generatedDocs: GeneratedDocs, entry: string, handoff: a
   return properties;
 };
 
+/** `file` may lack its extension. */
+export type ComponentDocSource = { file: string; exportName: string; workingPath: string };
+
+const stripScriptExtension = (file: string): string => file.replace(/\.[cm]?[jt]sx?$/, '');
+
+// Docgen names a component by its export, so a default export is `default`, not the name a story uses.
+const findComponentDocBySource = (generatedDocs: GeneratedDocs, source: ComponentDocSource) => {
+  const target = stripScriptExtension(path.resolve(source.file));
+  const inFile = generatedDocs.components.filter((component) => {
+    const file = stripScriptExtension(path.resolve(source.workingPath, component.sourceFile));
+    return file === target || file === `${target}/index`;
+  });
+  return inFile.find((component) => component.name === source.exportName) ?? (inFile.length === 1 ? inFile[0] : undefined);
+};
+
 /**
  * Get SlotMetadata map for a specific component by name from generated docs.
  * Used when a file has multiple components (e.g. CSF with CardRow + Card) and we need
@@ -193,14 +208,14 @@ const toPropertiesMap = (generatedDocs: GeneratedDocs, entry: string, handoff: a
  */
 export const getPropertiesForComponentFromDocs = (
   generatedDocs: GeneratedDocs,
-  componentName: string
+  componentName: string,
+  source?: ComponentDocSource
 ): { [key: string]: SlotMetadata } | null => {
   if (!generatedDocs?.components?.length || !componentName) {
     return null;
   }
-  const componentDoc = generatedDocs.components.find(
-    (c) => c.name === componentName
-  );
+  const componentDoc =
+    generatedDocs.components.find((c) => c.name === componentName) ?? (source ? findComponentDocBySource(generatedDocs, source) : undefined);
   if (!componentDoc || !componentDoc.props?.length) {
     return null;
   }
