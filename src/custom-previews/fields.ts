@@ -5,10 +5,11 @@ import { isPlainObject, jsonEqual } from './json';
 
 // Imports from outside `custom-previews` are type-only: the browser form editor imports this module.
 
-export type FieldKind = 'text' | 'number' | 'boolean' | 'enum' | 'object' | 'array' | 'function' | 'json';
-
 export type Field =
-  | { kind: 'text' | 'number' | 'boolean' | 'json' }
+  | { kind: 'text' }
+  | { kind: 'number' }
+  | { kind: 'boolean' }
+  | { kind: 'json' }
   | { kind: 'enum'; options: unknown[] }
   | { kind: 'object'; fields: FieldEntry[] }
   | { kind: 'array'; item: Field }
@@ -57,7 +58,7 @@ const objectField = (properties: TypeNodeProperty[]): Field => {
   return fields.length ? { kind: 'object', fields } : JSON_FIELD;
 };
 
-export const resolveTypeNode = (node: TypeNode): Field => {
+const resolveTypeNode = (node: TypeNode): Field => {
   switch (node.kind) {
     case 'union': {
       const members = unionMembers(node);
@@ -161,7 +162,7 @@ const resolveCompound = (type: 'object' | 'image' | 'button', slot: SlotMetadata
 };
 
 /** A declared non-`text` type wins; otherwise `deepType` decides, because docgen reports most React props as `text`. */
-export const resolveField = (slot: SlotMetadata): Field => {
+const resolveField = (slot: SlotMetadata): Field => {
   const type = slot.type as string | undefined;
   if (type && DECLARED_TYPES.has(type)) {
     switch (type) {

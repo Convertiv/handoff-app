@@ -68,13 +68,16 @@ const IssueList: React.FC<{ issues: CustomPreviewIssue[] }> = ({ issues }) =>
     </ul>
   ) : null;
 
-type ControlProps = { field: Field; path: FieldPath; clearable: boolean };
+type ControlProps<F extends Field = Field> = { field: F; path: FieldPath; clearable: boolean; label: string };
 
-const TextControl: React.FC<ControlProps> = ({ field, path, clearable }) => {
+type FieldOf<K extends Field['kind']> = Extract<Field, { kind: K }>;
+
+const TextControl: React.FC<ControlProps<FieldOf<'text'>>> = (props) => {
+  const { path, clearable } = props;
   const { value, set, unset, disabled } = useForm();
   const current = value(path);
   // A `text` prop can hold an object, such as an element. Editing it as text would lose it.
-  if (current !== null && typeof current === 'object') return <JsonControl field={field} path={path} clearable={clearable} />;
+  if (current !== null && typeof current === 'object') return <JsonControl {...props} />;
   return (
     <Input
       id={fieldId(path)}
@@ -90,7 +93,7 @@ const TextControl: React.FC<ControlProps> = ({ field, path, clearable }) => {
   );
 };
 
-const NumberControl: React.FC<ControlProps> = ({ path, clearable }) => {
+const NumberControl: React.FC<ControlProps<FieldOf<'number'>>> = ({ path, clearable }) => {
   const { value, set, unset, disabled } = useForm();
   const current = value(path);
   const shown = isUnset(current) ? '' : String(current);
@@ -123,7 +126,7 @@ const NumberControl: React.FC<ControlProps> = ({ path, clearable }) => {
   );
 };
 
-const BooleanControl: React.FC<ControlProps> = ({ path }) => {
+const BooleanControl: React.FC<ControlProps<FieldOf<'boolean'>>> = ({ path }) => {
   const { value, set, disabled } = useForm();
   const current = value(path);
   return (
@@ -143,7 +146,8 @@ const BooleanControl: React.FC<ControlProps> = ({ path }) => {
 
 const UNSET_OPTION = '__unset';
 
-const EnumControl: React.FC<ControlProps & { options: unknown[] }> = ({ path, clearable, options }) => {
+const EnumControl: React.FC<ControlProps<FieldOf<'enum'>>> = ({ field, path, clearable }) => {
+  const { options } = field;
   const { value, set, unset, disabled } = useForm();
   const current = value(path);
   const quoteStrings = options.some((option) => typeof option !== 'string');
@@ -227,7 +231,7 @@ const JsonControl: React.FC<ControlProps> = ({ path, clearable }) => {
   );
 };
 
-const FunctionControl: React.FC<{ signature: string }> = ({ signature }) => (
+const FunctionControl: React.FC<ControlProps<FieldOf<'function'>>> = ({ field: { signature } }) => (
   <div className="flex items-center gap-2 rounded-md border border-dashed border-input px-3 py-1.5">
     <code className="truncate font-mono text-xs text-muted-foreground" title={signature}>
       {signature}
@@ -307,7 +311,14 @@ const ObjectItem: React.FC<{ fields: FieldEntry[]; path: FieldPath; index: numbe
 
 const FOCUSABLE = 'input, textarea, button[role="combobox"]';
 
-const ArrayControl: React.FC<{ item: Field; path: FieldPath; label: string }> = ({ item, path, label }) => {
+const ArrayControl: React.FC<ControlProps<FieldOf<'array'>>> = (props) => {
+  const { value } = useForm();
+  const current = value(props.path);
+  // A value that is not a list would be lost by editing it as one.
+  return isUnset(current) || Array.isArray(current) ? <ArrayItems {...props} /> : <JsonControl {...props} />;
+};
+
+const ArrayItems: React.FC<ControlProps<FieldOf<'array'>>> = ({ field: { item }, path, label }) => {
   const form = useForm();
   const current = form.value(path);
   const items = Array.isArray(current) ? current : [];
@@ -366,12 +377,7 @@ const ArrayControl: React.FC<{ item: Field; path: FieldPath; label: string }> = 
   );
 };
 
-const ObjectControl: React.FC<{ fields: FieldEntry[]; path: FieldPath; clearable: boolean; label: string }> = ({
-  fields,
-  path,
-  clearable,
-  label,
-}) => {
+const ObjectControl: React.FC<ControlProps<FieldOf<'object'>>> = ({ field: { fields }, path, clearable, label }) => {
   const { value, set, disabled } = useForm();
   if (clearable && isUnset(value(path))) {
     return (
@@ -399,33 +405,20 @@ const ObjectControl: React.FC<{ fields: FieldEntry[]; path: FieldPath; clearable
   );
 };
 
-const FieldControl: React.FC<ControlProps & { label: string }> = ({ field, path, clearable, label }) => {
-  const { value } = useForm();
-  switch (field.kind) {
-    case 'text':
-      return <TextControl field={field} path={path} clearable={clearable} />;
-    case 'number':
-      return <NumberControl field={field} path={path} clearable={clearable} />;
-    case 'boolean':
-      return <BooleanControl field={field} path={path} clearable={clearable} />;
-    case 'enum':
-      return <EnumControl field={field} path={path} clearable={clearable} options={field.options} />;
-    case 'object':
-      return <ObjectControl fields={field.fields} path={path} clearable={clearable} label={label} />;
-    case 'array': {
-      // A value that is not a list would be lost by editing it as one.
-      const current = value(path);
-      return isUnset(current) || Array.isArray(current) ? (
-        <ArrayControl item={field.item} path={path} label={label} />
-      ) : (
-        <JsonControl field={field} path={path} clearable={clearable} />
-      );
-    }
-    case 'function':
-      return <FunctionControl signature={field.signature} />;
-    default:
-      return <JsonControl field={field} path={path} clearable={clearable} />;
-  }
+const CONTROLS: { [K in Field['kind']]: React.FC<ControlProps<FieldOf<K>>> } = {
+  text: TextControl,
+  number: NumberControl,
+  boolean: BooleanControl,
+  enum: EnumControl,
+  object: ObjectControl,
+  array: ArrayControl,
+  function: FunctionControl,
+  json: JsonControl,
+};
+
+const FieldControl: React.FC<ControlProps> = (props) => {
+  const Control = CONTROLS[props.field.kind] as React.FC<ControlProps>;
+  return <Control {...props} />;
 };
 
 const LEAF_KINDS = new Set<Field['kind']>(['text', 'number', 'boolean', 'enum', 'json']);
