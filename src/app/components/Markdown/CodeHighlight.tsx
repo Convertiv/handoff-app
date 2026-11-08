@@ -14,7 +14,7 @@ import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typesc
 import html from 'react-syntax-highlighter/dist/esm/languages/prism/xml-doc';
 import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/prism-light';
 import { githubDark, githubLight } from '../../lib/code-theme';
-import { codeTagPropsFor, codeWindowStyle } from '../../lib/code-window';
+import { codeTagPropsFor, codeWindowStyle, codeWindowSurface } from '../../lib/code-window';
 import CopyCode from '../CopyCode';
 import { Button } from '../ui/button';
 import { SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
@@ -22,15 +22,6 @@ import { SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/sel
 /** Lines a collapsed sample shows under its "View Code" button. */
 const COLLAPSED_LINES = 3;
 
-/**
- * The code window's background and line-number colours, modelled on the shadcn docs' code blocks.
- * They replace the theme's background; token colours still come from the theme. Dark mode uses the
- * site's gray scale.
- */
-const SURFACE = {
-  light: { background: '#f8f8f8', lineNumber: '#737373' },
-  dark: { background: '#111827', lineNumber: '#9ca3af' },
-};
 const LINE_HEIGHT = 'calc(1.75em + 2px)';
 
 // Register all supported languages
@@ -184,7 +175,7 @@ export const CodeHighlight: React.FC<{
   // Read, never written: the theme object is shared with every other highlighter in the app, so the
   // per-window overrides go in `customStyle` / `codeTagProps` below.
   const theme = isDark ? githubDark : githubLight;
-  const surface = isDark ? SURFACE.dark : SURFACE.light;
+  const surface = isDark ? codeWindowSurface.dark : codeWindowSurface.light;
 
   const getLabel = (state: string): string => {
     if (state === 'code' && typeof data === 'object') {

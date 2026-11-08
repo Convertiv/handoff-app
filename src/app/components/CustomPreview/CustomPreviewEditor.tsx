@@ -1,9 +1,9 @@
 'use client';
 
 import { buildArtifactUrl } from '@handoff/artifacts/url';
-import { assessArgs, type ComponentContract, type CustomPreviewIssue } from '@handoff/custom-previews';
+import { assessArgs, contractFields, fieldPaths, pathKey, type ComponentContract, type CustomPreviewIssue } from '@handoff/custom-previews';
 import type { PreviewObject } from '@handoff/types/preview';
-import { AlertCircle, ArrowLeft, Braces, CircleCheck, Loader2, Save, Trash2 } from 'lucide-react';
+import { AlertCircle, ArrowLeft, Braces, Loader2, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import * as React from 'react';
@@ -14,6 +14,7 @@ import { followWithDepth, guardPopState, markViewReady, navigateWithDepth, PREVI
 import { PreviewStage } from '../Component/PreviewStage';
 import HeadersType from '../Typography/Headers';
 import { ConfirmDialog } from '../ui/confirm-dialog';
+import { Tabs, TabsList, TabsTrigger } from '../ui/tabs';
 import {
   componentRoute,
   customPreviewEditorRoute,
@@ -23,6 +24,7 @@ import {
   saveCustomPreview,
   type CustomPreview,
 } from './api';
+import { ArgsForm } from './ArgsForm';
 import { EditableTitle } from './EditableTitle';
 import { onCustomPreviewChange, setCustomPreviewDraft } from './events';
 import { JsonEditor } from './JsonEditor';
@@ -49,41 +51,33 @@ type ArgsState = { kind: 'invalid'; error: string } | { kind: 'issues'; issues: 
 const STATUS_STYLES = {
   invalid: 'bg-red-50 text-red-700 ring-red-600/20 dark:bg-red-950/40 dark:text-red-300',
   issues: 'bg-amber-50 text-amber-800 ring-amber-600/20 dark:bg-amber-950/40 dark:text-amber-300',
-  ok: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-950/40 dark:text-emerald-300',
 } as const;
 
-const ArgsStatus: React.FC<{ state: ArgsState }> = ({ state }) => {
-  const label =
-    state.kind === 'invalid'
-      ? 'Invalid JSON'
-      : state.kind === 'issues'
-        ? `${state.issues.length} ${state.issues.length === 1 ? 'issue' : 'issues'}`
-        : 'Matches contract';
-  const Icon = state.kind === 'ok' ? CircleCheck : AlertCircle;
-  const isOk = state.kind === 'ok';
-  return (
-    <span
-      role="status"
-      aria-live="polite"
-      aria-label={isOk ? label : undefined}
-      title={isOk ? label : undefined}
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${STATUS_STYLES[state.kind]}`}
-    >
-      <Icon className="h-3 w-3" aria-hidden />
-      {isOk ? 'OK' : label}
-    </span>
-  );
-};
+/** The live region stays mounted, so a screen reader hears when problems are fixed. */
+const ArgsStatus: React.FC<{ state: ArgsState }> = ({ state }) => (
+  <span role="status" aria-live="polite">
+    {state.kind === 'ok' ? (
+      <span className="sr-only">Args match the contract</span>
+    ) : (
+      <span
+        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset ${STATUS_STYLES[state.kind]}`}
+      >
+        <AlertCircle className="h-3 w-3" aria-hidden />
+        {state.kind === 'invalid' ? 'Invalid JSON' : `${state.issues.length} ${state.issues.length === 1 ? 'issue' : 'issues'}`}
+      </span>
+    )}
+  </span>
+);
 
 const ArgsFooter: React.FC<{ state: ArgsState; contractChanged: boolean }> = ({ state, contractChanged }) => {
   if (state.kind === 'ok' && !contractChanged) return null;
   // `text-inherit` overrides the docs theme's gray `p` and `li` colors.
   const tone =
     state.kind === 'invalid'
-      ? 'border-red-200 bg-red-50 text-red-700'
+      ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300'
       : state.kind === 'issues'
-        ? 'border-amber-200 bg-amber-50 text-amber-800'
-        : 'border-gray-200 bg-gray-50 text-gray-600';
+        ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300'
+        : 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-900 dark:bg-gray-800 dark:text-gray-300';
   return (
     <div className={`space-y-1 border-t px-4 py-2.5 text-xs ${tone}`}>
       {state.kind === 'invalid' && <p className="font-mono text-inherit">{state.error}</p>}
@@ -98,7 +92,7 @@ const ArgsFooter: React.FC<{ state: ArgsState; contractChanged: boolean }> = ({ 
         </ul>
       )}
       {contractChanged && (
-        <p className={state.kind === 'ok' ? 'text-inherit' : 'text-gray-600'}>
+        <p className={state.kind === 'ok' ? 'text-inherit' : 'text-gray-600 dark:text-gray-300'}>
           The component changed since these args were saved.{state.kind === 'ok' ? ' They still match it.' : ''}
         </p>
       )}
@@ -128,15 +122,20 @@ export const CustomPreviewEditor: React.FC<{ componentId: string; componentTitle
   const [saving, setSaving] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [changedElsewhere, setChangedElsewhere] = React.useState(false);
+  const [argsView, setArgsView] = React.useState<'form' | 'json'>('form');
 
   const from = typeof router.query.from === 'string' ? router.query.from : undefined;
   const parsed = parseArgsText(argsText);
   const args = 'args' in parsed ? parsed.args : null;
-  const contract = (component?.properties ?? {}) as ComponentContract;
+  const contract = React.useMemo(() => (component?.properties ?? {}) as ComponentContract, [component]);
+  const fields = React.useMemo(() => contractFields(contract), [contract]);
   const assessment = args ? assessArgs(contract, args) : null;
   const issues = assessment?.issues ?? [];
   const argsState: ArgsState =
     'error' in parsed ? { kind: 'invalid', error: parsed.error } : issues.length ? { kind: 'issues', issues } : { kind: 'ok' };
+  const rowPaths = args ? new Set(fieldPaths(fields, args).map(pathKey)) : null;
+  const unplacedIssues = rowPaths ? issues.filter((issue) => !rowPaths.has(issue.path)) : issues;
+  const formFooterState: ArgsState = unplacedIssues.length ? { kind: 'issues', issues: unplacedIssues } : { kind: 'ok' };
   const renderPath = component?.customPreview?.renderUrl;
   const dirty = stored !== null && (stored.title !== title || stored.argsText !== argsText);
   const canEdit = customPreviewId === null ? Boolean(viewer) : canEditCustomPreview(viewer, record?.createdBy ?? null);
@@ -184,6 +183,16 @@ export const CustomPreviewEditor: React.FC<{ componentId: string; componentTitle
       cancelled = true;
     };
   }, [componentId, componentTitle, customPreviewId, from, router.isReady, loadRecord, showStored]);
+
+  const setFormArgs = React.useCallback((next: Record<string, unknown>) => setArgsText(formatArgs(next)), []);
+
+  const view = fields.length && args ? argsView : 'json';
+  const formUnavailable = !fields.length ? 'This component declares no properties.' : !args ? 'Fix the JSON to use the form.' : undefined;
+
+  const switchArgsView = (next: string) => {
+    if (next === 'json' && args) setArgsText(formatArgs(args));
+    if (next === 'json' || args) setArgsView(next as 'form' | 'json');
+  };
 
   const postArgs = React.useCallback((next: Record<string, unknown>) => {
     if (!frameReady.current) return;
@@ -439,30 +448,51 @@ export const CustomPreviewEditor: React.FC<{ componentId: string; componentTitle
       </div>
 
       <div className="min-w-0">
-        <div className="flex w-full items-center justify-between rounded-t-lg border border-gray-200 bg-gray-50 px-6 py-2 pr-3 dark:border-gray-900 dark:bg-gray-800">
+        <div className="flex w-full items-center justify-between rounded-t-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-900 dark:bg-gray-800">
           <div className="flex items-center gap-3">
-            <label htmlFor="custom-preview-args" className="font-mono text-[11px] text-accent-foreground">
-              Args (JSON)
-            </label>
+            <Tabs value={view} onValueChange={switchArgsView}>
+              <TabsList className="h-7 p-0.5" aria-label="Edit args as">
+                <TabsTrigger value="form" className="h-6 px-2.5 text-xs" disabled={Boolean(formUnavailable)} title={formUnavailable}>
+                  Form
+                </TabsTrigger>
+                <TabsTrigger value="json" className="h-6 px-2.5 text-xs">
+                  JSON
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
             <ArgsStatus state={argsState} />
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 gap-1.5 text-xs hover:bg-gray-300 [&_svg]:size-3"
-            disabled={!args || !canEdit}
-            onClick={() => args && setArgsText(formatArgs(args))}
-          >
-            <Braces /> Format
-          </Button>
+          {view === 'json' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 gap-1.5 text-xs hover:bg-white hover:shadow-xs dark:hover:bg-gray-700 [&_svg]:size-3"
+              disabled={!args || !canEdit}
+              onClick={() => args && setArgsText(formatArgs(args))}
+            >
+              <Braces /> Format
+            </Button>
+          )}
         </div>
-        <JsonEditor
-          id="custom-preview-args"
-          value={argsText}
-          readOnly={!canEdit}
-          onChange={setArgsText}
-          footer={<ArgsFooter state={argsState} contractChanged={Boolean(record?.contractChanged) && !dirty} />}
-        />
+        {view === 'form' && args ? (
+          <div className="overflow-hidden rounded-b-lg border border-t-0 border-gray-200 dark:border-gray-900">
+            <ArgsForm fields={fields} args={args} onChange={setFormArgs} issues={issues} disabled={!canEdit} />
+            <ArgsFooter state={formFooterState} contractChanged={Boolean(record?.contractChanged) && !dirty} />
+          </div>
+        ) : (
+          <>
+            <label htmlFor="custom-preview-args" className="sr-only">
+              Args (JSON)
+            </label>
+            <JsonEditor
+              id="custom-preview-args"
+              value={argsText}
+              readOnly={!canEdit}
+              onChange={setArgsText}
+              footer={<ArgsFooter state={argsState} contractChanged={Boolean(record?.contractChanged) && !dirty} />}
+            />
+          </>
+        )}
       </div>
 
       <ConfirmDialog

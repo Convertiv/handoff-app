@@ -1,4 +1,5 @@
 import { toArgsSchema, type ComponentContract, type JsonSchema } from './contract';
+import { isPlainObject, jsonEqual } from './json';
 import {
   MAX_ARGS_BYTES,
   MAX_DESCRIPTION_LENGTH,
@@ -14,14 +15,9 @@ import {
 const MAX_ARRAY_ITEMS_CHECKED = 50;
 const MAX_ISSUES = 50;
 
-const isPlainObject = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-
 const typeOf = (value: unknown): string => (value === null ? 'null' : Array.isArray(value) ? 'array' : typeof value);
 
 const join = (path: string, key: string | number): string => (path ? `${path}.${key}` : String(key));
-
-const equal = (a: unknown, b: unknown): boolean => JSON.stringify(a) === JSON.stringify(b);
 
 const check = (value: unknown, schema: JsonSchema, path: string, issues: CustomPreviewIssue[]): boolean => {
   if (Array.isArray(schema.anyOf)) {
@@ -29,11 +25,11 @@ const check = (value: unknown, schema: JsonSchema, path: string, issues: CustomP
     if (!matches) issues.push({ code: 'type-mismatch', path, message: `\`${path}\` does not match any allowed type.` });
     return matches;
   }
-  if ('const' in schema && !equal(value, schema.const)) {
+  if ('const' in schema && !jsonEqual(value, schema.const)) {
     issues.push({ code: 'type-mismatch', path, message: `\`${path}\` must be ${JSON.stringify(schema.const)}.` });
     return false;
   }
-  if (Array.isArray(schema.enum) && !schema.enum.some((option) => equal(option, value))) {
+  if (Array.isArray(schema.enum) && !schema.enum.some((option) => jsonEqual(option, value))) {
     const allowed = schema.enum.map((option) => JSON.stringify(option)).join(', ');
     issues.push({ code: 'type-mismatch', path, message: `\`${path}\` must be one of ${allowed}.` });
     return false;

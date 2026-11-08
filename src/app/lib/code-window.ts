@@ -22,6 +22,11 @@ export const codeWindowStyle: CSSProperties = {
   fontSize: '14px',
 };
 
+export const codeWindowSurface = {
+  light: { background: '#f8f8f8', lineNumber: '#737373' },
+  dark: { background: '#111827', lineNumber: '#9ca3af' },
+};
+
 /**
  * `codeTagProps` for `react-syntax-highlighter` that actually apply the long-line behaviour.
  *
