@@ -20,6 +20,6 @@ transformers/
 
 ## Preview frame layout
 
-Each plugin passes its preview documents and render shell through `frameDocumentFor()` (`utils/frame-layout.ts`). A component of type `element` (the default) gets a style that centers its specimen in the frame, with a 100px minimum body height. Other types (`block`, `navigation`, `utility`) keep the bare `<body>`, because a full-width block would shrink under the centering grid.
+Each plugin passes its preview documents and render shell through `frameDocumentFor()` (`utils/frame-layout.ts`). A component of type `element` (the default) gets a style that centers its specimen in the frame, with a 100px minimum body height. Other types, such as `block`, keep the bare `<body>`, because a full-width block would shrink under the centering grid.
 
 Element frames also clear their page background while the frame URL ends with `#handoff-background=transparent`. The docs app sets that fragment with `frameUrlWithBackground()`, so switching does not reload the frame.

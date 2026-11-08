@@ -1,7 +1,7 @@
 import { Types as CoreTypes } from 'handoff-core';
 import type { GeneratedDocs } from 'handoff-docgen';
 import { SlotMetadata } from '../transformers/preview/component';
-import { ComponentPageDefinition } from '../transformers/preview/types';
+import { ComponentPageDefinition, type ComponentTypeValue } from '../transformers/preview/types';
 import { type Filter } from '../utils/filter';
 
 export interface ValidationResult {
@@ -47,8 +47,8 @@ export interface PreviewObject {
   figmaComponentId?: string;
   should_do: string[];
   should_not_do: string[];
-  /** Component classification, such as `element` or `block`. Missing means `element`. */
-  type?: string;
+  /** Missing means `element`. */
+  type?: ComponentTypeValue;
   group?: string;
   categories?: string[];
   tags?: string[];

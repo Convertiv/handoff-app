@@ -24,8 +24,8 @@ export type NormalizedImplementation = {
 export type CatalogItemEntries = Pick<NonNullable<ComponentObject['entries']>, 'js' | 'scss' | 'schema' | 'templates'>;
 
 /**
- * Metadata a catalog item can carry. `type` and `categories` are free-form classification, so a
- * term such as atom, element, or block goes there.
+ * Metadata a catalog item can carry. `categories` is free-form. `type` suggests known values and
+ * accepts any other term, such as `atom`.
  */
 export type CatalogItemMeta = Partial<
   Omit<ComponentObject, 'previews' | 'previewOrder' | 'entries' | 'title' | 'should_do' | 'should_not_do' | 'renderer' | 'sourceFormat' | 'componentExport'>

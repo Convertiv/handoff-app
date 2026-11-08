@@ -1,4 +1,5 @@
-// No imports: the docs app loads this module in the browser.
+// Type imports only: the docs app loads this module in the browser.
+import type { ComponentType } from '../preview/types';
 
 /** `page` keeps the project's own page background. */
 export type FrameBackground = 'page' | 'transparent';
@@ -27,7 +28,9 @@ const BACKGROUND_SCRIPT = `(function(){var p=${JSON.stringify(FRAME_BACKGROUND_H
 
 const ELEMENT_FRAME_HEAD = `<style data-handoff-frame-layout="center">${CENTERING_CSS}${TRANSPARENT_CSS}</style><script>${BACKGROUND_SCRIPT}</script>`;
 
-export const isElementType = (type: string | undefined): boolean => (type || 'element') === 'element';
+const ELEMENT_TYPE: `${ComponentType.Element}` = 'element';
+
+export const isElementType = (type: string | undefined): boolean => (type || ELEMENT_TYPE) === ELEMENT_TYPE;
 
 /** Last in `<head>`, so it overrides earlier `body` rules on the properties it sets. */
 const injectElementFrameHead = (html: string): string =>
