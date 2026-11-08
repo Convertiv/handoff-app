@@ -12,6 +12,7 @@ import {
   type ComponentArtifactPresence,
   type SharedArtifactPresence,
 } from '../preview/component/shared-artifacts';
+import { frameDocumentFor } from '../utils/frame-layout';
 import { createHandlebarsContext, registerHandlebarsHelpers } from '../utils/handlebars';
 import { formatHtmlWithWrapper, trimPreview } from '../utils/html';
 import { slugify } from '../utils/string';
@@ -276,8 +277,8 @@ export function handlebarsPreviewsPlugin(
           emitPreviewFiles(
             componentId,
             previewKey,
-            normalModeHtml,
-            inspectModeHtml,
+            frameDocumentFor(componentData.type, normalModeHtml),
+            frameDocumentFor(componentData.type, inspectModeHtml),
             (file) => this.emitFile(file)
           );
 
@@ -311,7 +312,10 @@ export function handlebarsPreviewsPlugin(
           this.emitFile({
             type: 'asset',
             fileName: renderShellFileName(componentId),
-            source: generateRenderShellDocument({ componentId, title: componentData.title || componentId, head: '' }),
+            source: frameDocumentFor(
+              componentData.type,
+              generateRenderShellDocument({ componentId, title: componentData.title || componentId, head: '' })
+            ),
           });
           componentData.customPreview = { renderUrl: renderShellArtifactPath(componentId) };
         } else {

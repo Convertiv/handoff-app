@@ -47,6 +47,8 @@ export interface PreviewObject {
   figmaComponentId?: string;
   should_do: string[];
   should_not_do: string[];
+  /** Component classification, such as `element` or `block`. Missing means `element`. */
+  type?: string;
   group?: string;
   categories?: string[];
   tags?: string[];

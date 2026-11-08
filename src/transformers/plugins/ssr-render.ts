@@ -24,6 +24,7 @@ import {
   type SharedArtifactPresence,
 } from '../preview/component/shared-artifacts';
 import { TransformComponentTokensResult } from '../preview/types';
+import { frameDocumentFor } from '../utils/frame-layout';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { loadSchemaFromComponent, loadSchemaFromFile } from '../utils/schema-loader';
@@ -381,14 +382,17 @@ export function ssrRenderPlugin(
         // does not expect, so it discards the server markup and re-renders the preview on the client.
         const serverRenderedHtml = ReactDOMServer.renderToString(React.createElement(PreviewComponent, previewProps));
 
-        finalHtml = generateHtmlDocument(
-          componentId,
-          hydrationPreviewKey,
-          preview.title,
-          serverRenderedHtml,
-          previewProps,
-          sharedArtifacts,
-          componentArtifacts
+        finalHtml = frameDocumentFor(
+          componentData.type,
+          generateHtmlDocument(
+            componentId,
+            hydrationPreviewKey,
+            preview.title,
+            serverRenderedHtml,
+            previewProps,
+            sharedArtifacts,
+            componentArtifacts
+          )
         );
 
         // Emit preview files
@@ -417,11 +421,14 @@ export function ssrRenderPlugin(
       this.emitFile({
         type: 'asset',
         fileName: renderShellFileName(componentId),
-        source: generateRenderShellDocument({
-          componentId,
-          title: componentData.title || componentId,
-          head: renderShellHead(sharedArtifacts, componentArtifacts, componentId),
-        }),
+        source: frameDocumentFor(
+          componentData.type,
+          generateRenderShellDocument({
+            componentId,
+            title: componentData.title || componentId,
+            head: renderShellHead(sharedArtifacts, componentArtifacts, componentId),
+          })
+        ),
       });
       componentData.customPreview = { renderUrl: renderShellArtifactPath(componentId) };
 
