@@ -1,4 +1,4 @@
-import { and, eq } from 'drizzle-orm';
+import { and, eq, not } from 'drizzle-orm';
 import matter from 'gray-matter';
 import { normalizePageDeclaration } from '@handoff/config/normalizers/page';
 import type { RegistryDatabase } from '@handoff/registry/db/client';
@@ -19,6 +19,7 @@ import type { ComponentListObject, PageListObject, PatternListObject } from '@ha
 import { mergeReviewMetadata, type ManagedEntityKind, type ValidatedMetadataWrite } from './allowlist';
 import type { ValidatedFile } from './files';
 import { resolveBuildMeta, type RegistryBuildMeta } from './meta';
+import { pruneRegistry, referencedByLiveHtml } from './prune';
 
 /**
  * Database operations behind the registry management API.
@@ -28,8 +29,9 @@ import { resolveBuildMeta, type RegistryBuildMeta } from './meta';
  * never touches `docs_artifacts` or `build_metadata` — published artifacts and build state are only
  * changed by transfer/publish. Pages are the one exception: their markdown frontmatter *is* the
  * record's source, so a page edit writes both rows and re-hashes the file (see
- * {@link updatePageMetadata}). Entity deletion removes only that entity's owned artifacts;
- * shared/global artifacts (owned by `asset`) are preserved.
+ * {@link updatePageMetadata}). Entity deletion removes only that entity's owned artifacts, and
+ * keeps those that another entity's HTML still references; shared/global artifacts (owned by
+ * `asset`) are preserved.
  */
 
 /** A registry record as served by the management API: the normalized record plus review metadata. */
@@ -308,24 +310,36 @@ export const updateEntityMetadata = async (
 };
 
 /**
- * Delete an entity and only the artifacts it owns. Cascade removes its text-file records; shared
- * artifacts owned by `asset` are preserved. Returns `false` when the entity does not exist.
+ * Delete an entity and the artifacts it owns. Cascade removes its text-file records; shared
+ * artifacts owned by `asset` are preserved. Owned artifacts that another entity's HTML references
+ * (a component's client bundle that a published pattern loads) stay until the prune pass finds them
+ * unreferenced. Returns `false` when the entity does not exist.
  */
 export const deleteEntity = async (db: RegistryDatabase, kind: ManagedEntityKind, id: string): Promise<boolean> => {
-  return db.transaction(async (tx) => {
+  const deleted = await db.transaction(async (tx) => {
     const transactionalDb = tx as unknown as RegistryDatabase;
     const spec = ENTITY[kind];
     if (!(await entityExists(transactionalDb, kind, id))) {
       return false;
     }
-    await transactionalDb.delete(docsArtifacts).where(and(eq(docsArtifacts.entityKind, kind), eq(docsArtifacts.entityId, id)));
+    // The record goes first, so the entity's own HTML no longer counts as a live reference below.
+    await transactionalDb.delete(spec.table).where(eq(spec.table.id, id));
+    const unreferenced = not(referencedByLiveHtml(transactionalDb, docsArtifacts.path));
+    await transactionalDb
+      .delete(docsArtifacts)
+      .where(and(eq(docsArtifacts.entityKind, kind), eq(docsArtifacts.entityId, id), unreferenced));
     if (kind !== 'page') {
-      await transactionalDb.delete(docsArtifacts).where(and(eq(docsArtifacts.ownerKind, kind), eq(docsArtifacts.ownerId, id)));
+      await transactionalDb
+        .delete(docsArtifacts)
+        .where(and(eq(docsArtifacts.ownerKind, kind), eq(docsArtifacts.ownerId, id), unreferenced));
     }
     await transactionalDb.delete(buildMetadata).where(and(eq(buildMetadata.entityKind, kind), eq(buildMetadata.entityId, id)));
-    await transactionalDb.delete(spec.table).where(eq(spec.table.id, id));
     return true;
   });
+  if (deleted) {
+    await pruneRegistry(db);
+  }
+  return deleted;
 };
 
 /** List an entity's text-file records (inline content only). */

@@ -91,6 +91,7 @@ export {
 export {
   REGISTRY_READ_SCOPE,
   REGISTRY_WRITE_SCOPE,
+  PREVIEWS_WRITE_SCOPE,
   scopesForRegistryRole,
   registryPrincipalHasScope,
   isRegistryTokenPrincipal,

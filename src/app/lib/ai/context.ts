@@ -1,7 +1,8 @@
 import type { UIMessage } from 'ai';
 
 import type { DocsBackend } from '../docs-api/backend';
-import { pageIdFromUrl } from '../mcp/page-url';
+import { getServerRuntimeConfig } from '../docs-api/runtime-config';
+import { pageRefFromPath, type AiPageRef } from './page-ref';
 
 /**
  * The page a question was asked from.
@@ -9,25 +10,6 @@ import { pageIdFromUrl } from '../mcp/page-url';
  * The client sends only the route. The server resolves it through the docs backend, so only
  * backend data reaches the model and the raw route never does.
  */
-
-export type AiPageKind = 'component' | 'pattern' | 'page';
-
-export interface AiPageRef {
-  kind: AiPageKind;
-  id: string;
-}
-
-/** Token and foundation routes map to token sets, not pages, so they give no context yet. */
-const UNSUPPORTED = /^(system\/tokens|foundations)(\/|$)/;
-
-/** The entity a route shows, or `null` for a route that gives no context. Pure, so the client uses it too. */
-export const pageRefFromPath = (path: string): AiPageRef | null => {
-  const id = pageIdFromUrl(path);
-  if (id === null || UNSUPPORTED.test(id)) return null;
-  const entity = /^system\/(component|pattern)\/([^/]+)$/.exec(id);
-  if (entity) return { kind: entity[1] as AiPageKind, id: decodeURIComponent(entity[2]) };
-  return { kind: 'page', id };
-};
 
 /** One line, bounded, and unable to open or close a tag, so an authored title cannot reshape the prompt. */
 const clean = (text: string, max: number): string => {
@@ -47,6 +29,9 @@ const describePage = async (backend: DocsBackend, path: string): Promise<string[
   const ref = pageRefFromPath(path);
   if (!ref) return null;
   try {
+    if (ref.kind === 'custom-preview') {
+      return await describeCustomPreviewEditor(backend, ref);
+    }
     if (ref.kind === 'component') {
       const component = await backend.getComponentDetail(ref.id);
       if (!component) return null;
@@ -68,6 +53,42 @@ const describePage = async (backend: DocsBackend, path: string): Promise<string[
   } catch {
     return null;
   }
+};
+
+const describeCustomPreviewEditor = async (backend: DocsBackend, ref: AiPageRef): Promise<string[] | null> => {
+  if (getServerRuntimeConfig().mode !== 'registry') return null;
+  const component = await backend.getComponentDetail(ref.id);
+  if (!component) return null;
+  const fields = [
+    'page: custom preview editor',
+    `component title: ${clean(component.title || component.id, 50)}`,
+    `component id: ${clean(component.id, 50)}`,
+  ];
+  if (!ref.customPreviewId) {
+    return [...fields, 'custom preview: not saved yet (save it with handoff_create_custom_preview)'];
+  }
+  // Lazy, so a workspace never loads the registry database packages.
+  const [{ getRegistryConnection }, { getCustomPreview }] = await Promise.all([
+    import('../registry-connection'),
+    import('../custom-previews/service'),
+  ]);
+  const { db } = await getRegistryConnection();
+  const { preview } = await getCustomPreview(db, backend, ref.customPreviewId);
+  return [
+    ...fields,
+    `custom preview id: ${clean(preview.id, 50)}`,
+    `custom preview title: ${clean(preview.title, 50)}`,
+    `custom preview status: ${preview.status}`,
+  ];
+};
+
+const MAX_DRAFT_CHARS = 4000;
+
+/** Escaped so it cannot open or close a tag. A draft that is too long is left out, not cut into invalid JSON. */
+const describeDraft = (draft: unknown): string | null => {
+  if (!draft || typeof draft !== 'object' || Array.isArray(draft)) return null;
+  const json = JSON.stringify(draft).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+  return json.length <= MAX_DRAFT_CHARS ? `unsaved args in the editor (JSON): ${json}` : 'unsaved args in the editor: too large to include';
 };
 
 const CONTEXT_TAG = /<(\/?)application_context/gi;
@@ -92,7 +113,8 @@ export const withPageContext = async (messages: UIMessage[], backend: DocsBacken
       if (!pages.has(path)) pages.set(path, describePage(backend, path));
       const fields = await pages.get(path);
       if (!fields) return { ...message, parts };
-      const block = ['<application_context>', ...fields, '</application_context>'].join('\n');
+      const draft = pageRefFromPath(path)?.kind === 'custom-preview' ? describeDraft((message.metadata as { draft?: unknown }).draft) : null;
+      const block = ['<application_context>', ...fields, ...(draft ? [draft] : []), '</application_context>'].join('\n');
       return { ...message, parts: [{ type: 'text' as const, text: block }, ...parts] };
     })
   );

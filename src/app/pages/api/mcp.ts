@@ -28,7 +28,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  if (!(await authorizeMcpRequest(req, res))) {
+  const authorization = await authorizeMcpRequest(req, res);
+  if (!authorization) {
     return;
   }
 
@@ -41,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  const server = createMcpServer();
+  const server = createMcpServer({ principal: authorization.principal });
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
   res.on('close', () => {
     void transport.close();

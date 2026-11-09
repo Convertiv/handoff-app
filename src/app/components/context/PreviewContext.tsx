@@ -4,6 +4,8 @@ import { evaluateFilter, type Filter } from '@handoff/utils/filter';
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 
 interface IPreviewContext {
+  /** Differs from `preview.id` when the page groups previews. */
+  componentId: string;
   preview?: PreviewObject;
   setPreview: (preview: PreviewObject) => void;
   variants?: Record<string, string[]>;
@@ -51,6 +53,7 @@ export const PreviewContext = createContext<IPreviewContext | undefined>(undefin
 
 export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
   children,
+  id,
   defaultMenu,
   defaultMetadata,
   defaultPreview,
@@ -105,6 +108,7 @@ export const PreviewContextProvider: React.FC<IPreviewContextProviderProps> = ({
   return (
     <PreviewContext.Provider
       value={{
+        componentId: id,
         preview,
         setPreview,
         variants,

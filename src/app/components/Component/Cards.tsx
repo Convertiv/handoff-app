@@ -63,7 +63,7 @@ const Cards: React.FC<CardsProps> = ({ cards, maxCardsPerRow = 2, className = ''
           key={`card-${index}`}
           className="relative rounded-lg border bg-gray-50 p-8 text-gray-600 dark:bg-gray-800"
         >
-          <h2 className="mb-3 font-normal text-gray-700">
+          <h2 className="mb-3 font-normal text-gray-700 dark:text-gray-100">
             {card.title}
           </h2>
           <CardItem card={card} />

@@ -8,9 +8,10 @@ import { SlotMetadata } from './component';
 export enum ComponentType {
   Element = 'element',
   Block = 'block',
-  Navigation = 'navigation',
-  Utility = 'utility',
 }
+
+/** A known `ComponentType` value, or any other string as the project's own classification. */
+export type ComponentTypeValue = `${ComponentType}` | (string & {});
 
 export type PageSliceType = 'BEST_PRACTICES' | 'COMPONENT_DISPLAY' | 'VALIDATION_RESULTS' | 'PROPERTIES' | 'TEXT' | 'CARDS';
 
@@ -104,8 +105,16 @@ export type ComponentObject = {
   image: string;
   /** Group or category under which this component falls (e.g. "Inputs", "Atoms") */
   group: string;
-  /** String identifier for the component type (e.g. "element", "compound") */
-  type: string;
+  /**
+   * How the docs app presents the component. Defaults to `element`.
+   *
+   * - `element`: a standalone control, such as a button or a badge.
+   * - `block`: a page section, such as a hero or a feature list.
+   *
+   * Any other value is the project's own classification. Navigation sections can filter components by
+   * this value.
+   */
+  type: ComponentTypeValue;
   /** Optional file entry references for the component's implementation */
   entries?: {
     /** Optional path to the main JS module (if available) */
@@ -190,6 +199,7 @@ export type TransformComponentTokensResult = {
   previews?: { [key: string]: OptionalPreviewRender };
   internalPatternPreviews?: { [key: string]: OptionalPreviewRender };
   properties?: { [key: string]: SlotMetadata };
+  customPreview?: { renderUrl: string };
   variant?: Record<string, string>;
   entries?: {
     js?: string;

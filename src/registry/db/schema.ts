@@ -53,7 +53,7 @@ export type RegistryUserStatus = 'invited' | 'active' | 'deactivated';
 export type RegistryAuthActionPurpose = 'invite' | 'password_reset';
 
 /** Capability granted to a registry access token. */
-export type RegistryAccessScope = 'registry:read' | 'registry:write';
+export type RegistryAccessScope = 'registry:read' | 'registry:write' | 'previews:write';
 
 /** State machine for an RFC 8628-style CLI device authorization. */
 export type RegistryDeviceAuthorizationStatus = 'pending' | 'approved' | 'denied' | 'consumed';
@@ -598,6 +598,33 @@ export const registryAiKeys = pgTable(
   (table) => [
     primaryKey({ columns: [table.userId, table.connectionId] }),
     check('registry_ai_keys_connection_not_blank', sql`length(btrim(${table.connectionId})) > 0`),
+  ]
+);
+
+/**
+ * `component_id` is not a foreign key. Publish deletes and re-creates component rows, and a cascade would drop readers' work.
+ * Reads hide a row whose component is gone.
+ */
+export const componentCustomPreviews = pgTable(
+  'component_custom_previews',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    componentId: text('component_id').notNull(),
+    title: text('title').notNull(),
+    description: text('description'),
+    args: jsonb('args').$type<Record<string, unknown>>().notNull(),
+    contractFingerprint: text('contract_fingerprint').notNull(),
+    createdBy: text('created_by').references(() => registryUsers.id, { onDelete: 'set null' }),
+    updatedBy: text('updated_by').references(() => registryUsers.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index('component_custom_previews_component_idx').on(table.componentId),
+    check('component_custom_previews_title_not_blank', sql`length(btrim(${table.title})) > 0`),
+    check('component_custom_previews_args_object', sql`jsonb_typeof(${table.args}) = 'object'`),
   ]
 );
 

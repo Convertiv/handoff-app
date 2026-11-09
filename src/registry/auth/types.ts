@@ -4,6 +4,8 @@ export type { RegistryAccessScope, RegistryUserRole, RegistryUserStatus };
 
 export const REGISTRY_READ_SCOPE = 'registry:read' as const;
 export const REGISTRY_WRITE_SCOPE = 'registry:write' as const;
+/** Narrower than `registry:write`: a token can save previews but cannot publish. */
+export const PREVIEWS_WRITE_SCOPE = 'previews:write' as const;
 
 export interface RegistryUser {
   id: string;
@@ -51,7 +53,7 @@ export const isRegistryTokenPrincipal = (principal: RegistryPrincipal): principa
   principal.kind === 'access_token';
 
 export const scopesForRegistryRole = (role: RegistryUserRole): RegistryAccessScope[] =>
-  role === 'admin' ? [REGISTRY_READ_SCOPE, REGISTRY_WRITE_SCOPE] : [REGISTRY_READ_SCOPE];
+  role === 'admin' ? [REGISTRY_READ_SCOPE, REGISTRY_WRITE_SCOPE, PREVIEWS_WRITE_SCOPE] : [REGISTRY_READ_SCOPE, PREVIEWS_WRITE_SCOPE];
 
 export const registryPrincipalHasScope = (principal: RegistryPrincipal, scope: RegistryAccessScope): boolean =>
   principal.scopes.includes(scope);

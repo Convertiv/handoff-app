@@ -64,8 +64,18 @@ const ComponentDisplaySlice: React.FC<ComponentDisplaySliceProps> = ({
     }
   }
 
+  // Under a preview the code sits inside its card, as one block; with no preview it stands on its own.
+  const attachCode = finalShowCodeHighlight && showPreview;
+  const codeSample = (attached: boolean) => (
+    <>
+      <a id="code-highlight" />
+      <CodeHighlight data={filteredPreview} collapsible={true} attached={attached} currentPreviewUrl={currentPreviewUrl} />
+    </>
+  );
+
+  // `mb-10` separates the code sample from the next slice, which has no top margin.
   return (
-    <div id={filteredPreview.id}>
+    <div id={filteredPreview.id} className={finalShowCodeHighlight ? 'mb-10' : undefined}>
       {showPreview && (
         <ComponentDisplay
           title={title}
@@ -73,19 +83,10 @@ const ComponentDisplaySlice: React.FC<ComponentDisplaySliceProps> = ({
           defaultHeight={finalDefaultHeight}
           defaultWidth={defaultWidth}
           onPreviewChange={onPreviewChange}
+          footer={attachCode ? codeSample(true) : undefined}
         />
       )}
-      {finalShowCodeHighlight && (
-        <>
-          <a id="code-highlight" />
-          <CodeHighlight
-            title={title}
-            data={filteredPreview}
-            collapsible={true}
-            currentPreviewUrl={currentPreviewUrl}
-          />
-        </>
-      )}
+      {finalShowCodeHighlight && !attachCode && codeSample(false)}
     </div>
   );
 };

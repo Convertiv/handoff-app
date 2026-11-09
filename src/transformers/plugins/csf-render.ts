@@ -1,11 +1,12 @@
 import fs from 'fs-extra';
+import type { TypeNode } from 'handoff-docgen';
 import { Types as CoreTypes } from 'handoff-core';
 import { startCase } from 'lodash';
 import path from 'path';
 import React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import reactElementToJSXString from 'react-element-to-jsx-string';
-import { Plugin } from 'vite';
+import { Plugin, normalizePath } from 'vite';
 import Handoff from '../..';
 import { orderPreviews, readExportOrderFromSource } from '../../catalog';
 import { Logger } from '../../utils/logger';
@@ -21,16 +22,29 @@ import {
   type SharedArtifactPresence,
 } from '../preview/component/shared-artifacts';
 import { TransformComponentTokensResult } from '../preview/types';
+import { frameDocumentFor } from '../utils/frame-layout';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { ensureIds } from '../utils/schema';
 import { extractComponentName, generateUsageSnippet } from '../utils/usage';
 import { createCsfStoryPreviews, CsfMeta, getCsfStoryEntries, StoryObject } from '../utils/csf';
+import {
+  bundleClientSource,
+  clientArtifactFileName,
+  CLIENT_RENDER_RUNTIME_SOURCE,
+  generateRenderShellDocument,
+  REACT_CLIENT_RENDER_SOURCE,
+  renderShellArtifactPath,
+  renderShellFileName,
+  renderShellHead,
+} from '../utils/render-shell';
 import { createViteLogger } from '../utils/vite-logger';
 
 type ComponentImportInfo = {
   componentName: string;
   importStatement: string;
+  source: string;
+  exportName: string;
 };
 const PLUGIN_CONSTANTS = {
   PLUGIN_NAME: 'vite-plugin-csf-render',
@@ -60,6 +74,19 @@ function inferSlotType(controlType: string | undefined, value: any): SlotType {
   return SlotType.TEXT;
 }
 
+const SINGLE_SELECT_CONTROLS = new Set(['select', 'radio', 'inline-radio']);
+
+/** Skips `mapping`: the arg value is then the mapped value, not the option. */
+function optionsType(controlType: string | undefined, argType: any): TypeNode | undefined {
+  const options = argType?.options;
+  if (!SINGLE_SELECT_CONTROLS.has((controlType || '').toLowerCase()) || argType?.mapping || !Array.isArray(options) || !options.length) {
+    return undefined;
+  }
+  if (!options.every((option) => ['string', 'number', 'boolean'].includes(typeof option))) return undefined;
+  const members: TypeNode[] = options.map((option) => ({ kind: 'literal', display: JSON.stringify(option) }));
+  return { kind: 'union', display: members.map((member) => member.display).join(' | '), children: members };
+}
+
 function createSlotMetadata(
   key: string,
   argType: any,
@@ -67,16 +94,18 @@ function createSlotMetadata(
 ): SlotMetadata {
   const controlType = typeof argType?.control === 'string' ? argType.control : argType?.control?.type;
   const type = inferSlotType(controlType, value);
+  const deepType = optionsType(controlType, argType);
   return {
     id: key,
     name: argType?.name || startCase(key),
     description: argType?.description || '',
-    generic: argType?.type?.name || typeof value,
+    generic: argType?.type?.name || deepType?.display || typeof value,
     type,
     default: value as any,
     rules: {
       required: !!argType?.required,
     },
+    ...(deepType ? { deepType } : {}),
   };
 }
 
@@ -223,6 +252,8 @@ function resolveComponentImportInfo(sourceCode: string): ComponentImportInfo | n
     return {
       componentName: localName,
       importStatement: `import ${localName} from '${defaultImportMatch[1]}';`,
+      source: defaultImportMatch[1],
+      exportName: 'default',
     };
   }
 
@@ -240,6 +271,8 @@ function resolveComponentImportInfo(sourceCode: string): ComponentImportInfo | n
         return {
           componentName: localName,
           importStatement: `import { ${aliasMatch[1]} as ${localName} } from '${moduleSpecifier}';`,
+          source: moduleSpecifier,
+          exportName: aliasMatch[1],
         };
       }
 
@@ -247,6 +280,8 @@ function resolveComponentImportInfo(sourceCode: string): ComponentImportInfo | n
         return {
           componentName: localName,
           importStatement: `import { ${localName} } from '${moduleSpecifier}';`,
+          source: moduleSpecifier,
+          exportName: localName,
         };
       }
     }
@@ -273,6 +308,33 @@ function buildUsageSnippet(
     previewValues,
     importStatement,
   });
+}
+
+// Custom previews render the meta-level component with args, never a story.
+function generateCsfClientSource(templatePath: string): string {
+  return `
+    import React from 'react';
+    import { createRoot } from 'react-dom/client';
+    import * as stories from '${normalizePath(templatePath)}';
+    ${CLIENT_RENDER_RUNTIME_SOURCE}
+    ${REACT_CLIENT_RENDER_SOURCE}
+
+    const meta = stories.default || {};
+
+    // Storybook's order without a story: meta render, then meta component, then the args as JSON.
+    const elementFor = (args) => {
+      const merged = { ...(meta.args || {}), ...args };
+      if (typeof meta.render === 'function') {
+        const result = meta.render(merged, { args: merged });
+        if (React.isValidElement(result)) return result;
+        return React.createElement(React.Fragment, null, ...(Array.isArray(result) ? result : [result]));
+      }
+      if (meta.component) return React.createElement(meta.component, merged);
+      return React.createElement('pre', null, JSON.stringify(merged, null, 2));
+    };
+
+    mountClientRender(elementFor);
+  `;
 }
 
 function createHtmlDocument(
@@ -391,25 +453,30 @@ export function csfRenderPlugin(
       }
 
       // Enrich with docgen: descend into array/object types (e.g. cards[].image, title, link)
-      const generatedDocs = await generateDocsArtifact(templatePath, handoff);
       const componentName =
         (meta.component as any)?.displayName || (meta.component as any)?.name;
       const componentImportInfo = resolveComponentImportInfo(sourceCode);
+      // Docgen reads one directory, so an imported component is documented from its own file.
+      const componentSource = componentImportInfo?.source.startsWith('.')
+        ? { file: path.resolve(path.dirname(templatePath), componentImportInfo.source), exportName: componentImportInfo.exportName }
+        : undefined;
+      const generatedDocs = await generateDocsArtifact(componentSource?.file ?? templatePath, handoff);
       const usageComponentName = componentImportInfo?.componentName || componentName || extractComponentName(templatePath);
       const usageImportStatement =
         componentImportInfo?.importStatement || `import ${usageComponentName} from './${usageComponentName}';`;
       if (generatedDocs && componentName) {
         const docgenProperties = getPropertiesForComponentFromDocs(
           generatedDocs,
-          componentName
+          componentName,
+          componentSource && { ...componentSource, workingPath: handoff.workingPath }
         );
         if (docgenProperties) {
           for (const [propKey, docgenProp] of Object.entries(docgenProperties)) {
             const hasNestedShape =
               (docgenProp.items?.properties && Object.keys(docgenProp.items.properties).length > 0) ||
               (docgenProp.properties && Object.keys(docgenProp.properties).length > 0);
+            const existing = generatedProperties[propKey];
             if (hasNestedShape) {
-              const existing = generatedProperties[propKey];
               generatedProperties[propKey] = existing
                 ? {
                     ...existing,
@@ -420,6 +487,8 @@ export function csfRenderPlugin(
                     properties: docgenProp.properties,
                   }
                 : docgenProp;
+            } else if (existing && !existing.deepType && docgenProp.deepType) {
+              generatedProperties[propKey] = { ...existing, docgenType: docgenProp.docgenType, deepType: docgenProp.deepType };
             }
           }
         }
@@ -461,16 +530,17 @@ export function csfRenderPlugin(
         const rendered = safeRenderToHtml(meta, storyValue, storyArgs);
         const html = await formatHtml(createHtmlDocument(componentId, preview.title, rendered, sharedArtifacts, componentArtifacts));
         const fileName = `${componentId}-${previewKey}.html`;
+        const frameHtml = frameDocumentFor(componentData.type, html);
 
         this.emitFile({
           type: 'asset',
           fileName,
-          source: html,
+          source: frameHtml,
         });
         this.emitFile({
           type: 'asset',
           fileName: `${componentId}-${previewKey}${PLUGIN_CONSTANTS.INSPECT_SUFFIX}.html`,
-          source: html,
+          source: frameHtml,
         });
 
         // Capture JSX usage for each story so docs can switch usage by selected preview.
@@ -491,6 +561,26 @@ export function csfRenderPlugin(
 
         preview.url = fileName;
         lastHtml = html;
+      }
+
+      const clientBundle = await bundleClientSource(generateCsfClientSource(templatePath), handoff, componentId);
+      if (clientBundle) {
+        this.emitFile({ type: 'asset', fileName: clientArtifactFileName(componentId), source: clientBundle });
+        this.emitFile({
+          type: 'asset',
+          fileName: renderShellFileName(componentId),
+          source: frameDocumentFor(
+            componentData.type,
+            generateRenderShellDocument({
+              componentId,
+              title: componentData.title || componentId,
+              head: renderShellHead(sharedArtifacts, componentArtifacts, componentId),
+            })
+          ),
+        });
+        componentData.customPreview = { renderUrl: renderShellArtifactPath(componentId) };
+      } else {
+        delete componentData.customPreview;
       }
 
       componentData.format = 'react';

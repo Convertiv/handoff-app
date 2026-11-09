@@ -7,12 +7,11 @@ import {
   SHARED_STYLES_CSS_ARTIFACT_PATH,
 } from '../../artifacts';
 import type { ArtifactKind, ArtifactReference } from '../../artifacts/types';
+import { CLIENT_ARTIFACT_SUFFIX, RENDER_SHELL_SUFFIX } from '../../custom-previews/shell';
 import Handoff from '../../index';
 import type { TransferArtifact } from '../transfer';
 
 const SHARED_ARTIFACT_PATHS = new Set([SHARED_MAIN_CSS_ARTIFACT_PATH, SHARED_MAIN_JS_ARTIFACT_PATH, SHARED_STYLES_CSS_ARTIFACT_PATH]);
-
-const CLIENT_ARTIFACT_SUFFIX = '.client.js';
 
 const ARTIFACT_KIND_BY_EXT: Record<string, ArtifactKind> = {
   '.json': 'json',
@@ -52,6 +51,10 @@ export const resolveComponentArtifactOwner = (fileName: string, componentIds: Se
   if (fileName.endsWith(CLIENT_ARTIFACT_SUFFIX)) {
     const id = fileName.slice(0, -CLIENT_ARTIFACT_SUFFIX.length);
     return componentIds.has(id) ? id : null;
+  }
+  if (fileName.endsWith(RENDER_SHELL_SUFFIX)) {
+    const id = fileName.slice(0, -RENDER_SHELL_SUFFIX.length);
+    if (componentIds.has(id)) return id;
   }
   const ext = path.extname(fileName).toLowerCase();
   if (ext === '.css' || ext === '.js' || ext === '.json') {
@@ -107,13 +110,16 @@ const toArtifactReference = (referencedPath: string): ArtifactReference => {
   return { path: referencedPath, kind: 'other', required: false };
 };
 
+/** An artifact read from the build output, so its content is always present. */
+export type InlineArtifact = TransferArtifact & { content: string };
+
 /** Read a generated artifact file into a {@link TransferArtifact}, or `null` when it does not exist. */
 export const readArtifact = (
   root: string,
   artifactPath: string,
   ownerKind: TransferArtifact['ownerKind'],
   ownerId: string | null
-): TransferArtifact | null => {
+): InlineArtifact | null => {
   const absolutePath = path.resolve(root, ...artifactPath.split('/'));
   if (!fs.existsSync(absolutePath) || !fs.statSync(absolutePath).isFile()) {
     return null;
@@ -133,7 +139,7 @@ export const readArtifact = (
 };
 
 /** Add a referenced shared/component artifact to the map when present on disk (deduped by path). */
-export const addReferencedArtifact = (root: string, artifactPath: string, byPath: Map<string, TransferArtifact>): void => {
+export const addReferencedArtifact = (root: string, artifactPath: string, byPath: Map<string, InlineArtifact>): void => {
   if (byPath.has(artifactPath)) {
     return;
   }

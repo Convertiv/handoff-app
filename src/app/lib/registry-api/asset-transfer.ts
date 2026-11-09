@@ -12,6 +12,7 @@ import { getActiveAssetStorage, getActiveStorageProvider, getStorageProvider } f
 import { sendRegistryError } from './errors';
 import { buildMeta } from './meta';
 import { handleRegistryRoute, sendRegistryData } from './handler';
+import { pruneRegistry } from './prune';
 import {
   asString,
   invalidPackage as invalid,
@@ -31,12 +32,13 @@ import {
  * - `GET  /api/registry/transfer/assets` lists collection summaries (collection + source hash).
  * - `GET  /api/registry/transfer/assets/:collection` is checkout: the collection manifest metadata.
  * - `PUT  /api/registry/transfer/assets/:collection` is publish ingestion: validates the manifest,
- *   asserts every referenced blob already exists (so a manifest never references missing content),
- *   then atomically upserts the `asset_collections` row and replaces its `assets` rows in one
- *   transaction. An unchanged collection (matching `sourceHash`) is a no-op.
+ *   then in one transaction asserts every referenced blob exists (so a manifest never references
+ *   missing content), upserts the `asset_collections` row, and replaces its `assets` rows. An
+ *   unchanged collection (matching `sourceHash`) is a no-op. A changed one is followed by a prune pass.
  * - `POST /api/registry/transfer/assets/blobs/have` returns which content hashes are missing.
  * - `PUT  /api/registry/transfer/assets/blobs/:hash` stores one content-addressed blob (binary body)
- *   through the active storage provider (inline `bytea` by default). Idempotent by hash.
+ *   through the active storage provider (inline `bytea` by default). Idempotent by hash. Entity
+ *   publishes also use these blob routes to carry artifacts too large for their package.
  * - `GET  /api/registry/transfer/assets/blobs/:hash` returns/redirects to one blob's bytes.
  * - `POST /api/registry/transfer/assets/blobs/:hash/upload` returns a signed URL for a direct upload
  *   to storage, or `null` when the active provider cannot take one (the client then uses `PUT`).
@@ -130,8 +132,14 @@ const storedSourceHash = async (db: RegistryDatabase, collection: string): Promi
   return rows.length ? rows[0].sourceHash : undefined;
 };
 
-/** Atomically upsert the collection row and replace its manifest rows in one transaction. */
-const ingestAssetCollection = async (db: RegistryDatabase, pkg: AssetCollectionTransferPackage): Promise<void> => {
+/**
+ * Atomically upsert the collection row and replace its manifest rows in one transaction. Returns the
+ * referenced blob hashes the registry does not have, and writes nothing when there are any.
+ *
+ * The blob check runs inside the transaction and locks the blob rows, because a prune pass or an
+ * entity publish can delete a blob after the client's have-check found it.
+ */
+const ingestAssetCollection = async (db: RegistryDatabase, pkg: AssetCollectionTransferPackage): Promise<string[]> => {
   const collectionValues = {
     sourceHash: pkg.build.sourceHash ?? null,
     status: pkg.build.status,
@@ -140,7 +148,15 @@ const ingestAssetCollection = async (db: RegistryDatabase, pkg: AssetCollectionT
     updatedAt: new Date(),
   };
 
-  await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
+    const referenced = Array.from(new Set(pkg.assets.map((asset) => asset.contentHash)));
+    if (referenced.length > 0) {
+      const present = await tx.select({ hash: assetBlobs.hash }).from(assetBlobs).where(inArray(assetBlobs.hash, referenced)).for('share');
+      const presentSet = new Set(present.map((row) => row.hash));
+      const missing = referenced.filter((hash) => !presentSet.has(hash));
+      if (missing.length > 0) return missing;
+    }
+
     await tx
       .insert(assetCollections)
       .values({ collection: pkg.collection, metadata: null, ...collectionValues } as any)
@@ -159,6 +175,7 @@ const ingestAssetCollection = async (db: RegistryDatabase, pkg: AssetCollectionT
         blobHash: asset.contentHash,
       } as any);
     }
+    return [];
   });
 };
 
@@ -258,21 +275,19 @@ export const applyAssetCollectionPackage = async (
     return { ok: true, value: { collection, unchanged: true, assets: pkg.assets.length } };
   }
 
-  // Guard: never finalize a manifest that references a blob the registry does not have.
-  const referenced = Array.from(new Set(pkg.assets.map((asset) => asset.contentHash)));
-  if (referenced.length > 0) {
-    const present = await db.select({ hash: assetBlobs.hash }).from(assetBlobs).where(inArray(assetBlobs.hash, referenced));
-    const presentSet = new Set(present.map((row) => row.hash));
-    const missing = referenced.filter((hash) => !presentSet.has(hash));
-    if (missing.length > 0) {
-      return applyFailed('bad_request', `Cannot finalize collection "${collection}": ${missing.length} referenced blob(s) were not uploaded.`, {
+  const missing = await ingestAssetCollection(db, pkg);
+  if (missing.length > 0) {
+    return applyFailed(
+      'bad_request',
+      `Cannot finalize collection "${collection}": ${missing.length} referenced blob(s) were not uploaded.`,
+      {
         rejectedFields: ['assets'],
         missing,
-      });
-    }
+      }
+    );
   }
 
-  await ingestAssetCollection(db, pkg);
+  await pruneRegistry(db);
   return { ok: true, value: { collection, unchanged: false, assets: pkg.assets.length } };
 };
 

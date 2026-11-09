@@ -13,7 +13,8 @@ import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typesc
 import html from 'react-syntax-highlighter/dist/esm/languages/prism/xml-doc';
 import yaml from 'react-syntax-highlighter/dist/esm/languages/prism/yaml';
 import SyntaxHighlighter from 'react-syntax-highlighter/dist/esm/prism-light';
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { githubDark, githubLight } from '../../lib/code-theme';
+import { codeWindowStyle } from '../../lib/code-window';
 import CopyCode from '../CopyCode';
 
 import {
@@ -184,7 +185,7 @@ function MarkdownCodeBlock(props: any) {
   const IconComponent = LANGUAGE_ICONS[lang] || Code;
   const langLabel = LANGUAGE_LABELS[lang] || lang;
 
-  const theme = isDark ? { ...oneDark } : { ...oneLight };
+  const theme = isDark ? { ...githubDark } : { ...githubLight };
   theme['pre[class*="language-"]'] = {
     ...theme['pre[class*="language-"]'],
     overflow: 'auto',
@@ -209,6 +210,7 @@ function MarkdownCodeBlock(props: any) {
         showLineNumbers={lang !== 'text'}
         wrapLines={true}
         useInlineStyles={true}
+        customStyle={codeWindowStyle}
       >
         {codeString}
       </SyntaxHighlighter>

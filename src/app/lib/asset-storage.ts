@@ -24,6 +24,19 @@ export const getActiveAssetStorage = (): ResolvedAssetStorage => {
   return activeCache;
 };
 
+/** The largest request or response body a function handles; Vercel's limit is 4.5 MB. */
+const MAX_FUNCTION_BODY_BYTES = 4_500_000;
+
+/**
+ * The largest artifact a publish can send as a blob. The registry serves each artifact from a
+ * function, and the `database` provider receives each blob through one and keeps at most
+ * `maxInlineBytes` inline.
+ */
+export const getMaxArtifactBytes = (): number => {
+  const active = getActiveAssetStorage();
+  return active.provider === 'database' ? Math.min(MAX_FUNCTION_BODY_BYTES, active.maxInlineBytes) : MAX_FUNCTION_BODY_BYTES;
+};
+
 /** A storage configuration error whose message is safe to show to a client. */
 export class AssetStorageError extends Error {
   constructor(message: string) {

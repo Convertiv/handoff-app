@@ -1,4 +1,5 @@
 import type { NextApiResponse } from 'next';
+import { CLIENT_ARTIFACT_SUFFIX, CUSTOM_PREVIEW_CONTENT_SECURITY_POLICY, RENDER_SHELL_SUFFIX } from '@handoff/custom-previews';
 import { validateArtifactSegments } from './artifacts';
 import type { DocsBackend } from './backend';
 import { sendDocsError } from './errors';
@@ -32,6 +33,15 @@ export const serveArtifactBySegments = async (
     return;
   }
 
+  const fileName = validation.segments[validation.segments.length - 1] ?? '';
+  // The shell runs args from any member, so even a direct navigation runs sandboxed, not as the registry.
+  if (fileName.endsWith(RENDER_SHELL_SUFFIX)) {
+    res.setHeader('Content-Security-Policy', CUSTOM_PREVIEW_CONTENT_SECURITY_POLICY);
+  }
+  // The sandboxed shell loads this bundle from origin `null`. It is public and sent without credentials.
+  if (fileName.endsWith(CLIENT_ARTIFACT_SUFFIX)) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  }
   res.setHeader('Content-Type', resolved.contentType);
   res.status(200).send(resolved.body);
 };

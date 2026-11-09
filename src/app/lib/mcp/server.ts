@@ -2,12 +2,16 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { AjvJsonSchemaValidator } from '@modelcontextprotocol/sdk/validation/ajv';
 import { componentTools } from './components';
+import { customPreviewTools } from './custom-previews';
+import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 import { pageTools } from './pages';
 import { fail } from './result';
 import { tokenTools } from './tokens';
+import type { McpPrincipal, McpTool } from './tool';
 
 /**
- * The Handoff MCP server: read-only access to the design system's components, tokens and pages.
+ * The Handoff MCP server: read access to the design system's components, tokens and pages, and, in
+ * registry mode, saving custom previews of components.
  *
  * Every tool reads through `resolveDocsBackend`, the same mode-aware backing the `/api/docs/*` routes
  * use, so workspace and registry deployments answer identically.
@@ -22,9 +26,9 @@ import { tokenTools } from './tokens';
  */
 
 /** Version of the MCP surface itself, reported in `initialize`. Bump when a tool contract changes. */
-const MCP_SERVER_VERSION = '2.0.0';
+const MCP_SERVER_VERSION = '2.1.0';
 
-const tools = [...componentTools, ...tokenTools, ...pageTools];
+const tools = [...componentTools, ...customPreviewTools, ...tokenTools, ...pageTools];
 
 /** Compiled once per process, not per request. */
 const validator = new AjvJsonSchemaValidator();
@@ -32,7 +36,9 @@ const toolsByName = new Map(
   tools.map((tool) => [tool.definition.name, { ...tool, validate: validator.getValidator(tool.definition.inputSchema) }])
 );
 
-export const createMcpServer = (): Server => {
+const isOffered = (tool: McpTool): boolean => !tool.registryOnly || getServerRuntimeConfig().mode === 'registry';
+
+export const createMcpServer = ({ principal }: { principal: McpPrincipal }): Server => {
   const server = new Server(
     { name: 'handoff', version: MCP_SERVER_VERSION },
     {
@@ -41,23 +47,25 @@ export const createMcpServer = (): Server => {
         'Design-system knowledge for this project. Before writing UI code, find an existing component ' +
         'with handoff_search_components and read it with handoff_get_component. Take colors, typography ' +
         'and spacing from handoff_get_tokens instead of inventing values. Search documentation with ' +
-        'handoff_search_pages and read a page with handoff_get_page.',
+        'handoff_search_pages and read a page with handoff_get_page. Where custom preview tools are ' +
+        'listed, save a new state of a component with handoff_create_custom_preview, writing its args ' +
+        'against `argsSchema` from handoff_get_component.',
     }
   );
 
-  server.setRequestHandler(ListToolsRequestSchema, () => ({ tools: tools.map((tool) => tool.definition) }));
+  server.setRequestHandler(ListToolsRequestSchema, () => ({ tools: tools.filter(isOffered).map((tool) => tool.definition) }));
 
   // Unknown tools and invalid arguments are tool errors, so the agent can read them and retry.
   server.setRequestHandler(CallToolRequestSchema, async ({ params }) => {
     const tool = toolsByName.get(params.name);
-    if (!tool) {
+    if (!tool || !isOffered(tool)) {
       return fail(`Tool "${params.name}" was not found.`);
     }
     const args = tool.validate(params.arguments ?? {});
     if (!args.valid) {
       return fail(`Invalid arguments for tool "${params.name}": ${args.errorMessage}.`);
     }
-    return tool.run(args.data);
+    return tool.run(args.data, { principal });
   });
 
   return server;
