@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[2.1.0] - TBD
+## \[2.1.0] - 2026-11-09
 
 This release adds custom previews to the registry. Readers, coding agents, and
 the AI assistant save a component with their own args, and every reader sees
@@ -21,6 +21,9 @@ Components and patterns above 4.5 MB now publish.
 * Added a custom preview editor. **Create** on the component page opens it
   with the args of the selected built preview. The editor shows a live preview
   and checks the JSON args against the component properties while you type.
+* The editor has a **Form** view next to the **JSON** view. The form shows one
+  control for each component property, including object, array, and union
+  properties. The JSON view supports dark mode.
 * A republished component does not break a custom preview. Each read checks
   the saved args against the current properties and reports unknown
   properties, missing required properties, and type mismatches. At render
@@ -46,6 +49,16 @@ Components and patterns above 4.5 MB now publish.
 * The registry deletes blobs and artifact rows that nothing uses.
 * Redesigned the component preview card. It shows the component code behind
   **View Code**, highlights code in GitHub colors, and supports dark mode.
+* A component preview shows a loading spinner while its frame loads.
+* Previews of `element` components (the default type) are centered in the
+  frame on a transparent background. A toolbar button shows the project's page
+  background, and the docs app remembers the choice. `block` components keep
+  the full-width layout.
+* The component `type` field suggests `element` and `block` in your editor, and
+  still accepts any other value.
+* In a CSF story, the component properties keep the options of a Storybook
+  `select` or `radio` control. A component imported from another file now gets
+  its property types from that file.
 
 ### Upgrade
 
