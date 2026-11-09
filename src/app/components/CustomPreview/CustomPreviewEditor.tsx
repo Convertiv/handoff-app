@@ -2,6 +2,7 @@
 
 import { buildArtifactUrl } from '@handoff/artifacts/url';
 import { assessArgs, contractFields, fieldPaths, pathKey, type ComponentContract, type CustomPreviewIssue } from '@handoff/custom-previews';
+import { isElementType } from '@handoff/transformers/utils/frame-layout';
 import type { PreviewObject } from '@handoff/types/preview';
 import { AlertCircle, ArrowLeft, Braces, Loader2, Save, Trash2 } from 'lucide-react';
 import Link from 'next/link';
@@ -435,6 +436,7 @@ export const CustomPreviewEditor: React.FC<{ componentId: string; componentTitle
           frameKey={renderPath ?? 'none'}
           frameRef={frameRef}
           sandboxed
+          backgroundControl={Boolean(component) && isElementType(component?.type)}
           transitionName={PREVIEW_STAGE_TRANSITION}
           title={`${componentTitle}: ${title || 'custom preview'}`}
           leading={<p className="flex h-8 items-center font-mono text-[11px] text-accent-foreground">Live preview</p>}

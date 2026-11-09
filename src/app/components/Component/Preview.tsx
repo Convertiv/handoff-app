@@ -1,6 +1,7 @@
 import { buildArtifactUrl } from '@handoff/artifacts/url';
 import { SlotMetadata } from '@handoff/transformers/preview/component';
 import { PageSlice, PreviewWidth } from '@handoff/transformers/preview/types';
+import { isElementType } from '@handoff/transformers/utils/frame-layout';
 import { PreviewObject } from '@handoff/types/preview';
 import { Types as CoreTypes } from 'handoff-core';
 import type { TypeNode, TypeNodeProperty } from 'handoff-docgen';
@@ -311,6 +312,7 @@ export const ComponentDisplay: React.FC<{
       actions={inspectAction}
       openUrl={frameSrc}
       sandboxed={Boolean(selectedCustom)}
+      backgroundControl={isElementType(component?.type)}
       footer={footer}
       // Grouped pages render several cards, and a transition name must be unique.
       transitionName={component.id === componentId ? PREVIEW_STAGE_TRANSITION : undefined}

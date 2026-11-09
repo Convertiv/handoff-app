@@ -1,6 +1,7 @@
 import { CUSTOM_PREVIEW_FRAME_SANDBOX } from '@handoff/custom-previews';
 import { PreviewWidth } from '@handoff/transformers/preview/types';
-import { Loader2, Maximize2, Minimize2, Monitor, RefreshCcw, Smartphone, SquareArrowOutUpRight, Tablet } from 'lucide-react';
+import { frameUrlWithBackground } from '@handoff/transformers/utils/frame-layout';
+import { Loader2, Maximize2, Minimize2, Monitor, PaintBucket, RefreshCcw, Smartphone, SquareArrowOutUpRight, Tablet } from 'lucide-react';
 import React, { useCallback } from 'react';
 import { Button } from '../ui/button';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -25,6 +26,25 @@ const WIDTH_OPTION_CLASS =
 
 const TOOLBAR_BUTTON_CLASS = 'h-7 px-2.5 hover:bg-white hover:shadow-xs dark:hover:bg-gray-700 [&_svg]:size-3';
 
+const PAGE_BACKGROUND_KEY = 'handoff:preview:page-background';
+
+const readPageBackground = (): boolean => {
+  try {
+    return window.localStorage.getItem(PAGE_BACKGROUND_KEY) === 'on';
+  } catch {
+    return false;
+  }
+};
+
+const writePageBackground = (show: boolean): void => {
+  try {
+    if (show) window.localStorage.setItem(PAGE_BACKGROUND_KEY, 'on');
+    else window.localStorage.removeItem(PAGE_BACKGROUND_KEY);
+  } catch {
+    /* empty */
+  }
+};
+
 export interface PreviewStageProps {
   src: string | null;
   frameKey: string;
@@ -39,6 +59,8 @@ export interface PreviewStageProps {
   emptyMessage?: string;
   transitionName?: string;
   sandboxed?: boolean;
+  /** Opens the frame on a transparent background, with a toggle for the project's page background. Element frames only. */
+  backgroundControl?: boolean;
   /** Rendered inside the card under the canvas, so the preview and its code sample read as one block. Folded away while expanded. */
   footer?: React.ReactNode;
 }
@@ -57,6 +79,7 @@ export const PreviewStage: React.FC<PreviewStageProps> = ({
   emptyMessage = 'No preview available for this selection.',
   transitionName,
   sandboxed = false,
+  backgroundControl = false,
   footer,
 }) => {
   const ownFrameRef = React.useRef<HTMLIFrameElement | null>(null);
@@ -75,6 +98,15 @@ export const PreviewStage: React.FC<PreviewStageProps> = ({
   // Derived from the frame id, so a new frame starts loading in the same render that mounts it.
   const [loadedFrameId, setLoadedFrameId] = React.useState<string | null>(null);
   const isLoading = loadedFrameId !== frameId;
+  const [showPageBackground, setShowPageBackground] = React.useState(false);
+  // Runs before the frame mounts, so a stored choice never shows the other background first.
+  React.useLayoutEffect(() => setShowPageBackground(readPageBackground()), []);
+  const transparent = backgroundControl && !showPageBackground;
+  const frameSrc = src && backgroundControl ? frameUrlWithBackground(src, transparent ? 'transparent' : 'page') : src;
+  const togglePageBackground = () => {
+    writePageBackground(!showPageBackground);
+    setShowPageBackground(!showPageBackground);
+  };
   // Viewport percentages, like the expanded card: a transition from px to vw does not interpolate.
   const [originRect, setOriginRect] = React.useState<{ top: number; left: number; width: number; height: number } | null>(null);
 
@@ -313,6 +345,26 @@ export const PreviewStage: React.FC<PreviewStageProps> = ({
               <TooltipContent sideOffset={8} className="rounded-sm px-2 py-1 text-[11px]">Refresh Preview</TooltipContent>
             </Tooltip>
           </TooltipProvider>
+          {backgroundControl && (
+            <TooltipProvider delayDuration={0}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label="Page background"
+                    aria-pressed={showPageBackground}
+                    className={showPageBackground ? 'h-7 px-2.5 [&_svg]:size-3' : TOOLBAR_BUTTON_CLASS}
+                    onClick={togglePageBackground}
+                    variant={showPageBackground ? 'default' : 'ghost'}
+                  >
+                    <PaintBucket />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent sideOffset={8} className="rounded-sm px-2 py-1 text-[11px]">
+                  {showPageBackground ? 'Hide Page Background' : 'Show Page Background'}
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           {actions}
           <TooltipProvider delayDuration={0}>
             <Tooltip>
@@ -383,8 +435,11 @@ export const PreviewStage: React.FC<PreviewStageProps> = ({
                     transition: animates ? 'none' : 'transform 0.2s ease-in-out, opacity 0.2s ease-in-out',
                     opacity: isLoading ? 0 : 1,
                     display: 'block',
+                    // Under the dark docs theme, the browser paints an opaque backdrop behind a frame whose
+                    // color scheme differs from the page. The frame's document declares none.
+                    colorScheme: transparent ? 'light' : undefined,
                   }}
-                  src={src}
+                  src={frameSrc ?? undefined}
                 />
               </div>
             )}

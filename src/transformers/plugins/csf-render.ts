@@ -22,6 +22,7 @@ import {
   type SharedArtifactPresence,
 } from '../preview/component/shared-artifacts';
 import { TransformComponentTokensResult } from '../preview/types';
+import { frameDocumentFor } from '../utils/frame-layout';
 import { formatHtml, trimPreview } from '../utils/html';
 import { buildAndEvaluateModule } from '../utils/module';
 import { ensureIds } from '../utils/schema';
@@ -529,16 +530,17 @@ export function csfRenderPlugin(
         const rendered = safeRenderToHtml(meta, storyValue, storyArgs);
         const html = await formatHtml(createHtmlDocument(componentId, preview.title, rendered, sharedArtifacts, componentArtifacts));
         const fileName = `${componentId}-${previewKey}.html`;
+        const frameHtml = frameDocumentFor(componentData.type, html);
 
         this.emitFile({
           type: 'asset',
           fileName,
-          source: html,
+          source: frameHtml,
         });
         this.emitFile({
           type: 'asset',
           fileName: `${componentId}-${previewKey}${PLUGIN_CONSTANTS.INSPECT_SUFFIX}.html`,
-          source: html,
+          source: frameHtml,
         });
 
         // Capture JSX usage for each story so docs can switch usage by selected preview.
@@ -567,11 +569,14 @@ export function csfRenderPlugin(
         this.emitFile({
           type: 'asset',
           fileName: renderShellFileName(componentId),
-          source: generateRenderShellDocument({
-            componentId,
-            title: componentData.title || componentId,
-            head: renderShellHead(sharedArtifacts, componentArtifacts, componentId),
-          }),
+          source: frameDocumentFor(
+            componentData.type,
+            generateRenderShellDocument({
+              componentId,
+              title: componentData.title || componentId,
+              head: renderShellHead(sharedArtifacts, componentArtifacts, componentId),
+            })
+          ),
         });
         componentData.customPreview = { renderUrl: renderShellArtifactPath(componentId) };
       } else {
