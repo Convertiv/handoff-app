@@ -5,9 +5,10 @@ import { BuildInputs, withBuildInputs } from '../../../cache/build-inputs';
 import type { RendererKind, SourceFormat } from '../../../catalog/renderers';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
-import { csfRenderPlugin, handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
+import { angularRenderPlugins, csfRenderPlugin, handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
 import viteBaseConfig from '../../vite-config';
-import { getComponentOutputPath } from '../component';
+import { PREVIEW_ENTRY_ID } from '../../utils/render-shell';
+import { getComponentOutputPath } from './api';
 import { TransformComponentTokensResult } from '../types';
 
 type PreviewPlugins = (
@@ -28,10 +29,11 @@ const FORMAT_PLUGINS: Record<SourceFormat, PreviewPlugins> = {
 const RENDERER_PLUGINS: Record<RendererKind, PreviewPlugins> = {
   handlebars: (data, components, handoff) => [handlebarsPreviewsPlugin(data, components, handoff)],
   react: (data, components, handoff) => [react(), ssrRenderPlugin(data, components, handoff)],
+  angular: (data, components, handoff) => angularRenderPlugins(data, components, handoff),
 };
 
 /**
- * Builds previews for components using Vite and Handlebars.
+ * Builds previews for components with Vite and the plugins of their renderer.
  *
  * @param data - The result of transforming component tokens.
  * @param handoff - The Handoff configuration object.
@@ -57,6 +59,7 @@ export const buildPreviews = async (
 
   const previewPlugins = sourceFormat ? FORMAT_PLUGINS[sourceFormat] : RENDERER_PLUGINS[renderer];
   if (!previewPlugins) {
+    if (inputs) inputs.failed = true;
     Logger.error(
       `No preview support for renderer "${renderer}"${sourceFormat ? ` and source format "${sourceFormat}"` : ''}: ${data.entries.template}`
     );
@@ -80,7 +83,7 @@ export const buildPreviews = async (
         outDir: getComponentOutputPath(handoff),
         emptyOutDir: false,
         rollupOptions: {
-          input: { script: 'script' },
+          input: { [PREVIEW_ENTRY_ID]: PREVIEW_ENTRY_ID },
         },
       },
     };
@@ -93,7 +96,7 @@ export const buildPreviews = async (
     await viteBuild(withBuildInputs(viteConfig, inputs));
   } catch (error) {
     if (inputs) inputs.failed = true;
-    Logger.error(`Error building component previews: ${data.entries.template}`, error);
+    Logger.error(`Error building the previews of ${data.id} (${data.entries.template})`, error);
   } finally {
     // Restore the original NODE_ENV value after vite build completes
     // This prevents interference with Next.js app building/running processes

@@ -32,6 +32,10 @@
       "types": "./dist/react.d.ts",
       "default": "./dist/react.js"
     },
+    "./angular": {
+      "types": "./dist/angular.d.ts",
+      "default": "./dist/angular.js"
+    },
     "./handlebars": {
       "types": "./dist/handlebars.d.ts",
       "default": "./dist/handlebars.js"
@@ -51,6 +55,9 @@
     "*": {
       "react": [
         "./dist/react.d.ts"
+      ],
+      "angular": [
+        "./dist/angular.d.ts"
       ],
       "handlebars": [
         "./dist/handlebars.d.ts"
@@ -94,6 +101,7 @@
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.53",
     "@ai-sdk/react": "^4.0.110",
+    "@analogjs/vite-plugin-angular": "^2.9.6",
     "@clack/prompts": "^0.7.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "@neondatabase/serverless": "^1.1.0",

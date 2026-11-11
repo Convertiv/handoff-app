@@ -43,7 +43,7 @@ const resolveImplementation = (item: CatalogItem, options: NormalizeOptions): Re
     return { ...source, file: resolved.file, exportName: resolved.exportName };
   }
 
-  const sibling = findSiblingComponentFile(declarationDir, options.declarationPath);
+  const sibling = findSiblingComponentFile(declarationDir, options.declarationPath, stamped.renderer);
   if (sibling) {
     options.warn(
       `Catalog item "${options.fallbackId}" in "${options.declarationPath}" could not resolve the import behind ` +

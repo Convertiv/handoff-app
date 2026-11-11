@@ -4,11 +4,15 @@ export { computeDirectoryState, computeFileState, directoryStatesMatch, statesMa
 // Build cache utilities
 export {
   checkOutputExists,
+  collectBuildInputFiles,
+  collectComponentSources,
   computeBuildInputStates,
   computeComponentFileStates,
   computeGlobalDepsState,
   createEmptyCache,
   getCachePath,
+  getComponentFilePaths,
+  getGlobalEntryDirectories,
   hasComponentChanged,
   haveGlobalDepsChanged,
   loadBuildCache,
@@ -22,3 +26,12 @@ export {
 
 // Build input collection
 export { createBuildInputs, type BuildInputs } from './build-inputs';
+
+// Source files of each component, for the watcher and publish
+export {
+  getComponentSourcesPath,
+  readComponentSources,
+  recordComponentSources,
+  type BuiltComponentSources,
+  type ComponentSources,
+} from './component-sources';

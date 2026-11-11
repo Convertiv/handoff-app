@@ -107,7 +107,7 @@ const findComponentDocForEntry = (generatedDocs: GeneratedDocs, entry: string, h
   return generatedDocs.components[0];
 };
 
-const toSlotMetadata = (prop: any): SlotMetadata => {
+export const toSlotMetadata = (prop: any): SlotMetadata => {
   const slotType = mapDocgenTypeToSlotType(prop.docgenType || prop.deepType?.kind || 'any');
   const deepType = prop.deepType;
   const metadata: SlotMetadata = {

@@ -1,8 +1,7 @@
 import { CommandModule } from 'yargs';
-import { DEFAULT_BUILD_TARGET, HandoffBuildError, type BuildPackage, type BuildTarget } from '../../app-builder';
-import { Logger } from '../../utils/logger';
+import { DEFAULT_BUILD_TARGET, type BuildPackage, type BuildTarget } from '../../app-builder';
 import { SharedArgs } from '../types';
-import { createHandoff, getSharedOptions } from '../utils';
+import { createHandoff, getSharedOptions, runBuildCommand } from '../utils';
 
 const BUILD_TARGETS: BuildTarget[] = ['static', 'registry'];
 const BUILD_PACKAGES: BuildPackage[] = ['standalone', 'vercel'];
@@ -42,18 +41,7 @@ const command: CommandModule<{}, BuildArgs> = {
   },
   handler: async (args: BuildArgs) => {
     const handoff = createHandoff(args);
-    try {
-      await handoff.build(args.target ?? DEFAULT_BUILD_TARGET, args.skipComponents ?? false, args.package);
-    } catch (error) {
-      // Expected business/flow failures (invalid combinations, unsupported runtime modes) print as a
-      // single actionable line; unexpected errors re-throw so their stack trace is preserved.
-      if (error instanceof HandoffBuildError) {
-        Logger.error(error.message);
-        process.exitCode = 1;
-        return;
-      }
-      throw error;
-    }
+    await runBuildCommand(() => handoff.build(args.target ?? DEFAULT_BUILD_TARGET, args.skipComponents ?? false, args.package));
   },
 };
 

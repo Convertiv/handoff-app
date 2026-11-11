@@ -5,6 +5,7 @@ import path from 'path';
 import { Plugin, normalizePath } from 'vite';
 import Handoff from '../..';
 import { Logger } from '../../utils/logger';
+import { addFigmaInstancePreviews } from '../preview/component/previews';
 import { TransformComponentTokensResult } from '../preview/types';
 import {
   resolveComponentArtifactPresence,
@@ -15,13 +16,14 @@ import {
 import { frameDocumentFor } from '../utils/frame-layout';
 import { createHandlebarsContext, registerHandlebarsHelpers } from '../utils/handlebars';
 import { formatHtmlWithWrapper, trimPreview } from '../utils/html';
-import { slugify } from '../utils/string';
 import { resolveModule } from '../utils/build';
 import {
   bundleClientSource,
   clientArtifactFileName,
   CLIENT_RENDER_RUNTIME_SOURCE,
   generateRenderShellDocument,
+  PREVIEW_ENTRY_ID,
+  previewFileName,
   renderShellArtifactPath,
   renderShellFileName,
 } from '../utils/render-shell';
@@ -40,38 +42,8 @@ interface PreviewRenderData {
  */
 const PLUGIN_CONSTANTS = {
   PLUGIN_NAME: 'vite-plugin-previews',
-  SCRIPT_ID: 'script',
-  DUMMY_EXPORT: 'export default {}',
-  INSPECT_SUFFIX: '-inspect',
   OUTPUT_FORMAT: 'handlebars',
 } as const;
-
-/**
- * Processes component instances from documentation and creates preview data
- * @param componentData - Component transformation data
- * @param documentationComponents - Documentation components
- */
-function processComponentInstances(
-  componentData: TransformComponentTokensResult,
-  documentationComponents: CoreTypes.IDocumentationObject['components']
-): void {
-  // Use figmaComponentId if provided, otherwise skip implicit matching
-  if (componentData.figmaComponentId) {
-    const figmaComponentKey = slugify(componentData.figmaComponentId);
-    if (documentationComponents[figmaComponentKey]) {
-      for (const instance of documentationComponents[figmaComponentKey].instances) {
-        const variationId = instance.id;
-        const instanceValues = Object.fromEntries(instance.variantProperties);
-
-        componentData.previews[variationId] = {
-          title: variationId,
-          url: '',
-          values: instanceValues,
-        };
-      }
-    }
-  }
-}
 
 /**
  * Renders a Handlebars template with the given preview data
@@ -128,13 +100,13 @@ function emitPreviewFiles(
 ): void {
   emitFile({
     type: 'asset',
-    fileName: `${componentId}-${previewKey}.html`,
+    fileName: previewFileName(componentId, previewKey),
     source: normalHtml,
   });
   
   emitFile({
     type: 'asset',
-    fileName: `${componentId}-${previewKey}${PLUGIN_CONSTANTS.INSPECT_SUFFIX}.html`,
+    fileName: previewFileName(componentId, previewKey, true),
     source: inspectHtml,
   });
 }
@@ -207,13 +179,13 @@ export function handlebarsPreviewsPlugin(
       customLogger: createViteLogger(),
     }),
     resolveId(resolveId) {
-      if (resolveId === PLUGIN_CONSTANTS.SCRIPT_ID) {
+      if (resolveId === PREVIEW_ENTRY_ID) {
         return resolveId;
       }
     },
     load(loadId) {
-      if (loadId === PLUGIN_CONSTANTS.SCRIPT_ID) {
-        return PLUGIN_CONSTANTS.DUMMY_EXPORT;
+      if (loadId === PREVIEW_ENTRY_ID) {
+        return 'export default {}';
       }
     },
     async generateBundle() {
@@ -221,13 +193,7 @@ export function handlebarsPreviewsPlugin(
       const templatePath = path.resolve(componentData.entries.template);
       const templateContent = await fs.readFile(templatePath, 'utf8');
 
-      // Ensure components object exists
-      if (!documentationComponents) {
-        documentationComponents = {};
-      }
-
-      // Process component instances from documentation
-      processComponentInstances(componentData, documentationComponents);
+      addFigmaInstancePreviews(componentData, documentationComponents);
 
       if (!componentData.previews || Object.keys(componentData.previews).length === 0) {
         Logger.warn(`No previews defined for ${componentId}; using default preview values.`);
@@ -283,7 +249,7 @@ export function handlebarsPreviewsPlugin(
           );
 
           generatedPreviews[previewKey] = normalModeHtml;
-          componentData.previews[previewKey].url = `${componentId}-${previewKey}.html`;
+          componentData.previews[previewKey].url = previewFileName(componentId, previewKey);
           
           Logger.debug(`Generated Handlebars preview: ${componentId}-${previewKey}`);
         } catch (err) {

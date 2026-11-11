@@ -10,7 +10,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { resolveComponentDeclaration } from '../config/runtime';
 import type { ComponentListObject, PatternListObject } from '../transformers/preview/types';
-import { normalizePathForCompare } from '../utils/path';
+import { isPathInside, normalizePathForCompare } from '../utils/path';
 import type { RegistryTextFileResource, TextFileKind, TextFileResource } from './types';
 
 /** A normalized record carrying a source directory `path` and resolved absolute `entries`. */
@@ -104,12 +104,39 @@ const readDeclarationFile = (sourceDir: string): TextFileResource | null => {
   return readTextFile(absolutePath, 'declaration', sourceDir);
 };
 
+/** The kind of a source file that no entry names, from its extension. */
+const KIND_BY_EXT: Record<string, TextFileKind> = {
+  ts: 'script',
+  tsx: 'script',
+  js: 'script',
+  jsx: 'script',
+  cjs: 'script',
+  mjs: 'script',
+  css: 'style',
+  scss: 'style',
+  sass: 'style',
+  html: 'template',
+  hbs: 'template',
+  md: 'markdown',
+};
+
+/**
+ * Whether a file that an entity's build read travels with the entity: a text source file inside its
+ * source directory. A registry path cannot leave the entity directory, and a source record holds text,
+ * so a binary file such as an imported image is not published.
+ */
+export const isPublishableSourceFile = (file: string, sourceDir: string): boolean =>
+  isPathInside(file, sourceDir) && path.extname(file).slice(1).toLowerCase() in SOURCE_CONTENT_TYPE_BY_EXT;
+
 /**
  * Gather an entity's declaration plus every `entries`-referenced source file. Files are deduped by
  * normalized absolute path (entries duplicate `template`/`component`/`story` after normalization),
  * and a `templates` directory entry is expanded into its files. Declaration always sorts first.
+ *
+ * `sourceFiles` are the other files the entity's last build read, such as imports or an Angular
+ * `templateUrl`. Only the publishable ones travel with it (see {@link isPublishableSourceFile}).
  */
-export const getRelatedSourceFilesForRecord = (record: SourcedRecord): TextFileResource[] => {
+export const getRelatedSourceFilesForRecord = (record: SourcedRecord, sourceFiles: string[] = []): TextFileResource[] => {
   const sourceDir = record.path;
   if (!sourceDir) {
     return [];
@@ -144,6 +171,12 @@ export const getRelatedSourceFilesForRecord = (record: SourcedRecord): TextFileR
       continue;
     }
     add(value, kind);
+  }
+
+  for (const file of sourceFiles) {
+    if (isPublishableSourceFile(file, sourceDir)) {
+      add(file, KIND_BY_EXT[path.extname(file).slice(1).toLowerCase()] ?? 'other');
+    }
   }
 
   return collected;

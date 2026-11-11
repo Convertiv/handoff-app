@@ -1,11 +1,9 @@
+/**
+ * Component metadata types. Types only: the docs app imports this module, and an import of the
+ * build pipeline here would make `next build` type-check the whole CLI against whichever Vite and
+ * Angular copies the workspace resolves.
+ */
 import type { DocAnnotation, TypeNode } from 'handoff-docgen';
-import path from 'path';
-import Handoff from '../../index';
-import { getAPIPath } from './component/api';
-import processComponents from './component/builder';
-import { buildMainCss } from './component/css';
-import { buildMainJS } from './component/javascript';
-import writeComponentSummaryAPI from './component/summary';
 
 export interface ComponentMetadata {
   title: string;
@@ -77,20 +75,3 @@ export type RuleObject = {
   filetype?: string;
   pattern?: string;
 };
-
-export const getComponentOutputPath = (handoff: Handoff) => path.resolve(getAPIPath(handoff), 'component');
-/**
- * Create a component transformer
- * @param handoff
- * @param documentationObject
- * @returns
- */
-export async function componentTransformer(handoff: Handoff) {
-  // Build the shared/global artifacts first so component/pattern preview HTML can reference them
-  // only when they actually exist. A failed/absent global build therefore never produces a dangling
-  // reference in generated HTML.
-  await buildMainJS(handoff);
-  await buildMainCss(handoff);
-  const componentData = await processComponents(handoff);
-  await writeComponentSummaryAPI(handoff, componentData);
-}

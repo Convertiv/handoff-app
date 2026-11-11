@@ -411,6 +411,8 @@ export interface Config {
     /**
      * Optional hook to override the client-side build configuration used in the ssrRenderPlugin
      *
+     * Angular client artifacts build with Vite, so `htmlBuildConfig` configures them instead.
+     *
      * Stylesheet loaders are re-applied after this hook, so a `.css`/`.scss`/`.sass` import stays out
      * of the JavaScript graph whatever the hook returns.
      * @param config - The default esbuild configuration
@@ -473,6 +475,8 @@ export interface Config {
 
     /**
      * Optional hook to override the HTML Vite configuration
+     *
+     * For an Angular component, this build also compiles and bundles its client artifact.
      * @param config - The default Vite configuration
      * @returns Modified Vite configuration
      * @example
@@ -567,6 +571,14 @@ export interface DuplicateCatalogId {
   skipped: string;
 }
 
+export interface InvalidDeclaration {
+  /** The item directory name, which is the id until the declaration loads. */
+  entityId: string;
+  /** Absolute path of the declaration. */
+  path: string;
+  message: string;
+}
+
 export interface RuntimeConfig {
   /** Resolved absolute paths of the project-wide bundle entry points, from `config.entries`. */
   entries?: {
@@ -590,6 +602,11 @@ export interface RuntimeConfig {
    * Discovery is the only pass that sees both declarations, so publish reads the duplicates from here.
    */
   duplicateCatalogIds: DuplicateCatalogId[];
+  /**
+   * Catalog declarations that did not load. Always present, possibly empty. `start` retries them on
+   * the next save; `build` and `publish` fail on them.
+   */
+  invalidDeclarations: InvalidDeclaration[];
   options: {
     [key: string]: RuntimeConfigComponentOptions;
   };

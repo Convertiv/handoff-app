@@ -6,7 +6,7 @@ import Handoff from '../../../index';
 import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
 import viteBaseConfig from '../../vite-config';
-import { getComponentOutputPath } from '../component';
+import { getComponentOutputPath } from './api';
 import { TransformComponentTokensResult } from '../types';
 
 export const MAIN_COMPONENT_JS_FILE = 'main.js';

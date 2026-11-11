@@ -1,5 +1,6 @@
 export { createCatalogItem, validateCatalogItem } from './define';
 export {
+  createImplementationPlaceholder,
   findSiblingComponentFile,
   isInsideDirectory,
   resolveModulePath,

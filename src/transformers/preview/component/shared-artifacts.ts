@@ -8,7 +8,7 @@ import {
 } from '../../../artifacts';
 import { buildArtifactUrl } from '../../../artifacts/url';
 import Handoff from '../../../index';
-import { getComponentOutputPath } from '../component';
+import { getComponentOutputPath } from './api';
 import { MAIN_COMPONENT_CSS_FILE, SHARED_COMPONENT_CSS_FILE } from './css';
 import { MAIN_COMPONENT_JS_FILE } from './javascript';
 

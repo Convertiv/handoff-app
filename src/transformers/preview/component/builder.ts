@@ -1,10 +1,14 @@
 import { Types as CoreTypes } from 'handoff-core';
 import cloneDeep from 'lodash/cloneDeep';
+import path from 'path';
 import { buildComponentDetailUrl } from '../../../artifacts/url';
 import type { SourceFormat } from '../../../catalog/renderers';
 import {
   BuildCache,
+  BuiltComponentSources,
   checkOutputExists,
+  collectBuildInputFiles,
+  collectComponentSources,
   computeBuildInputStates,
   computeComponentFileStates,
   computeGlobalDepsState,
@@ -14,6 +18,8 @@ import {
   haveGlobalDepsChanged,
   loadBuildCache,
   pruneRemovedComponents,
+  readComponentSources,
+  recordComponentSources,
   saveBuildCache,
   updateComponentCacheEntry,
 } from '../../../cache';
@@ -165,6 +171,43 @@ const createComponentBuildPlan = (
 };
 
 /**
+ * Thrown after a run in which components failed to build or their declarations failed to load, so
+ * that `build` and `publish` exit with an error.
+ */
+export class ComponentBuildError extends Error {
+  constructor(
+    readonly componentIds: string[],
+    readonly invalidDeclarations: string[] = []
+  ) {
+    const parts = [
+      componentIds.length ? `${componentIds.length} component(s) failed to build: ${componentIds.join(', ')}` : '',
+      invalidDeclarations.length ? `${invalidDeclarations.length} declaration(s) did not load: ${invalidDeclarations.join(', ')}` : '',
+    ].filter(Boolean);
+    super(`${parts.join('. ')}. The errors above give the cause of each.`);
+    this.name = 'ComponentBuildError';
+  }
+}
+
+const assertComponentsBuilt = (handoff: Handoff, id: string | undefined, failedIds: string[], options: ProcessComponentsOptions): void => {
+  if (!options.failOnError) return;
+  const invalid = (handoff.runtimeConfig?.invalidDeclarations ?? [])
+    .filter((declaration) => !id || declaration.entityId === id)
+    .map((declaration) => path.relative(handoff.workingPath, declaration.path));
+  if (failedIds.length > 0 || invalid.length > 0) {
+    throw new ComponentBuildError(failedIds, invalid);
+  }
+};
+
+export type ProcessComponentsOptions = {
+  /**
+   * Throw a {@link ComponentBuildError} after the run when a component failed. The run still builds
+   * every other component first, so one error reports every failure. `start` leaves it off and keeps
+   * running.
+   */
+  failOnError?: boolean;
+};
+
+/**
  * Process components and generate their code, styles, and previews
  * @param handoff - The Handoff instance containing configuration and state
  * @param id - Optional component ID to process a specific component
@@ -174,9 +217,11 @@ const createComponentBuildPlan = (
 export async function processComponents(
   handoff: Handoff,
   id?: string,
-  segmentToProcess?: ComponentSegment
+  segmentToProcess?: ComponentSegment,
+  options: ProcessComponentsOptions = {}
 ): Promise<ComponentListObject[]> {
   const result: ComponentListObject[] = [];
+  const failedIds: string[] = [];
 
   const documentationObject = await handoff.getDocumentationObject();
   const components = documentationObject?.components ?? ({} as CoreTypes.IDocumentationObject['components']);
@@ -193,8 +238,14 @@ export async function processComponents(
     await removeComponentApi(handoff, id);
     await removeComponentFromSummaryApi(handoff, id);
     await syncComponentArtifacts(handoff, [id]);
+    await recordComponentSources(handoff.workingPath, [], allComponentIds);
+    assertComponentsBuilt(handoff, id, [], options);
     return [];
   }
+
+  // `start` and `publish` read the sources after every build, cached or not.
+  const recordedSources = readComponentSources(handoff.workingPath);
+  const builtSources: BuiltComponentSources[] = [];
 
   // Determine which components need building based on cache
   let componentsToBuild: Set<string>;
@@ -236,6 +287,9 @@ export async function processComponents(
           componentsToBuild.add(componentId);
         } else if (!(await checkOutputExists(handoff, componentId))) {
           Logger.info(`Component '${componentId}': output missing, will rebuild`);
+          componentsToBuild.add(componentId);
+        } else if (!recordedSources[componentId]) {
+          Logger.info(`Component '${componentId}': source files not recorded, will rebuild`);
           componentsToBuild.add(componentId);
         } else {
           Logger.info(`Component '${componentId}': unchanged, skipping`);
@@ -363,7 +417,7 @@ export async function processComponents(
     // Components should always have at least one preview variation.
     ensureDefaultPreview(data);
 
-    const inputs = shouldUseCache ? createBuildInputs() : undefined;
+    const inputs = createBuildInputs();
     const runsViteBuildSteps = buildPlan.js || buildPlan.css || buildPlan.previews;
     let viteBuildStartedAtMs = 0;
     if (runsViteBuildSteps) {
@@ -375,9 +429,14 @@ export async function processComponents(
     if (buildPlan.js) {
       data = await buildComponentJs(data, handoff, inputs);
     }
-    // Build CSS if needed.
+    // A style error fails only this component, like a script or preview error.
     if (buildPlan.css) {
-      data = await buildComponentCss(data, handoff, inputs);
+      try {
+        data = await buildComponentCss(data, handoff, inputs);
+      } catch (error) {
+        inputs.failed = true;
+        Logger.error(`Style build failed for component "${runtimeComponentId}":`, error);
+      }
     }
     // Build previews (HTML, snapshots, etc) if needed.
     if (buildPlan.previews) {
@@ -392,7 +451,9 @@ export async function processComponents(
       );
     }
 
-    if (runsViteBuildSteps) {
+    if (inputs.failed) {
+      failedIds.push(runtimeComponentId);
+    } else if (runsViteBuildSteps) {
       const elapsedMs = Date.now() - viteBuildStartedAtMs;
       Logger.info(viteBuildFinishMessage(runtimeComponentId, buildPlan, elapsedMs));
     }
@@ -420,16 +481,27 @@ export async function processComponents(
     // Add to the cumulative results, to later update the global components summary file.
     result.push(summary);
 
+    // A run that built only the styles adds to the recorded list, so it needs no module graphs.
+    const inputFiles = runsViteBuildSteps
+      ? await collectBuildInputFiles(handoff, runtimeComponentId, inputs, { moduleGraphs: buildPlan.js || buildPlan.previews })
+      : null;
+    if (inputFiles) {
+      builtSources.push({
+        id: runtimeComponentId,
+        files: collectComponentSources(handoff, runtimeComponentId, inputFiles),
+        complete: isFullViteComponentBuild(buildPlan),
+      });
+    }
+
     // Update cache entry for this component after successful build
-    if (shouldUseCache && inputs) {
+    if (shouldUseCache) {
       if (!cache) {
         cache = createEmptyCache();
       }
       // Compute file states if not already computed (e.g., when global deps changed)
       const fileStates = componentFileStatesMap.get(runtimeComponentId) ?? (await computeComponentFileStates(handoff, runtimeComponentId));
-      const inputStates = await computeBuildInputStates(handoff, runtimeComponentId, inputs);
-      if (inputStates) {
-        updateComponentCacheEntry(cache, runtimeComponentId, fileStates, inputStates);
+      if (inputFiles) {
+        updateComponentCacheEntry(cache, runtimeComponentId, fileStates, await computeBuildInputStates(inputFiles));
       } else {
         // An incomplete list can miss a changed file, so the next run builds this component again.
         delete cache.components[runtimeComponentId];
@@ -445,8 +517,11 @@ export async function processComponents(
 
   // Always merge and write summary file, even if no components processed
   const isFullRebuild = !id;
+  await recordComponentSources(handoff.workingPath, builtSources, isFullRebuild ? allComponentIds : undefined);
   await updateComponentSummaryApi(handoff, result, isFullRebuild);
   await syncComponentArtifacts(handoff);
+
+  assertComponentsBuilt(handoff, id, failedIds, options);
 
   return result;
 }
