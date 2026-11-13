@@ -143,11 +143,11 @@ catalog: { include: ['src/components', 'src/blocks'] },
 Two rules apply to every layout.
 
 **`handoff-app` must be a dependency of the package that holds the
-`*.handoff.ts` files.** A declaration imports `handoff-app/react`. Handoff
-resolves that import from the directory of the declaration, not from the
-directory of the config. With npm, hoisting usually hides a missing dependency.
-With pnpm, Handoff skips the affected items with
-`Could not resolve "handoff-app/react"`, and the build still exits with code 0.
+`*.handoff.ts` files.** A declaration imports a renderer module, such as
+`handoff-app/react`. Handoff resolves that import from the directory of the
+declaration, not from the directory of the config. With npm, hoisting usually
+hides a missing dependency. With pnpm, the affected declarations fail to load
+with `Could not resolve "handoff-app/react"`, and the build fails.
 In a workspace-package layout, the application package and the `handoff/`
 package must both declare `handoff-app`.
 
@@ -421,7 +421,8 @@ variable directly.
 
 Every documented UI entry is a catalog item. An item declares one of these:
 
-- An `implementation`, which names a renderer: React, Handlebars, or CSF.
+- An `implementation`, which names a renderer: React, Angular, Handlebars, or
+  CSF.
   The registry stores the item as a component.
 - A `composition` of other items. The registry stores the item as a pattern.
 
@@ -475,6 +476,15 @@ declaration that holds JSX must use the `.handoff.tsx` extension.
 
 **Handlebars.** The implementation is the path to the template:
 `implementation: './Badge.hbs'`, from `handoff-app/handlebars`.
+
+**Angular.** The implementation is a standalone component class, from
+`handoff-app/angular`. The preview arguments are the component inputs. Handoff
+compiles the component ahead of time with the Angular version of the workspace,
+so the workspace must have Angular 19 or later (`@angular/core` and
+`@angular/platform-browser`), `@angular/compiler-cli`, `@angular/build`, and
+`@analogjs/vite-plugin-angular` 2.9 or later. Angular previews render only in
+the browser. See
+[RECIPES.md](RECIPES.md#angular-item).
 
 **CSF.** A React item uses an existing story file with
 `implementation: fromCSF('./Card.stories.tsx')`. The story file does not
@@ -920,6 +930,12 @@ items, not component or pattern kinds.
 
 `tokens` and `assets` run the Figma pipeline before the upload. Thus the
 [Figma credentials](#figma-foundations) must be available.
+
+A catalog item uploads its declared files and every other text source file in
+its directory that its last build read, such as an imported file or an Angular
+template. A file of another catalog item travels with that item. Publish warns
+about every other file that the build read, such as an image or a file outside
+every catalog item directory. Files in a global entry directory get no warning.
 
 Add one or more ids to publish only those entities:
 

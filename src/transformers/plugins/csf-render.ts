@@ -33,6 +33,8 @@ import {
   clientArtifactFileName,
   CLIENT_RENDER_RUNTIME_SOURCE,
   generateRenderShellDocument,
+  PREVIEW_ENTRY_ID,
+  previewFileName,
   REACT_CLIENT_RENDER_SOURCE,
   renderShellArtifactPath,
   renderShellFileName,
@@ -48,9 +50,6 @@ type ComponentImportInfo = {
 };
 const PLUGIN_CONSTANTS = {
   PLUGIN_NAME: 'vite-plugin-csf-render',
-  SCRIPT_ID: 'script',
-  DUMMY_EXPORT: 'export default {}',
-  INSPECT_SUFFIX: '-inspect',
 } as const;
 
 function inferSlotType(controlType: string | undefined, value: any): SlotType {
@@ -376,18 +375,18 @@ export function csfRenderPlugin(
       customLogger: createViteLogger(),
     }),
     resolveId(resolveId) {
-      if (resolveId === PLUGIN_CONSTANTS.SCRIPT_ID) {
+      if (resolveId === PREVIEW_ENTRY_ID) {
         return resolveId;
       }
     },
     load(loadId) {
-      if (loadId === PLUGIN_CONSTANTS.SCRIPT_ID) {
-        return PLUGIN_CONSTANTS.DUMMY_EXPORT;
+      if (loadId === PREVIEW_ENTRY_ID) {
+        return 'export default {}';
       }
     },
     async generateBundle(_, bundle) {
       for (const [fileName, chunkInfo] of Object.entries(bundle)) {
-        if (chunkInfo.type === 'chunk' && fileName.includes(PLUGIN_CONSTANTS.SCRIPT_ID)) {
+        if (chunkInfo.type === 'chunk' && fileName.includes(PREVIEW_ENTRY_ID)) {
           delete bundle[fileName];
         }
       }
@@ -529,7 +528,7 @@ export function csfRenderPlugin(
         const storyArgs = preview.values || {};
         const rendered = safeRenderToHtml(meta, storyValue, storyArgs);
         const html = await formatHtml(createHtmlDocument(componentId, preview.title, rendered, sharedArtifacts, componentArtifacts));
-        const fileName = `${componentId}-${previewKey}.html`;
+        const fileName = previewFileName(componentId, previewKey);
         const frameHtml = frameDocumentFor(componentData.type, html);
 
         this.emitFile({
@@ -539,7 +538,7 @@ export function csfRenderPlugin(
         });
         this.emitFile({
           type: 'asset',
-          fileName: `${componentId}-${previewKey}${PLUGIN_CONSTANTS.INSPECT_SUFFIX}.html`,
+          fileName: previewFileName(componentId, previewKey, true),
           source: frameHtml,
         });
 

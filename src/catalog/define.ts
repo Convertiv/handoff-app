@@ -2,7 +2,7 @@ import { isRendererKind, isSourceFormat, SOURCE_FORMATS, type RendererKind } fro
 import type { CatalogItem, CatalogItemInput, NormalizedImplementation } from './types';
 
 const MISSING_RENDERER_HELP =
-  "An implementation needs a renderer. Import defineCatalogItem from 'handoff-app/react' or 'handoff-app/handlebars'.";
+  "An implementation needs a renderer. Import defineCatalogItem from 'handoff-app/react', 'handoff-app/angular' or 'handoff-app/handlebars'.";
 
 /** Handles the shared implementation forms here so renderer entry points only supply types and a renderer. */
 const stampImplementation = (implementation: unknown, renderer: RendererKind): NormalizedImplementation => {

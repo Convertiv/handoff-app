@@ -26,6 +26,7 @@ import {
   moduleFor,
   isRendererKind,
   isSourceFormat,
+  RENDERERS,
   SOURCE_FORMATS,
   type ComponentSource,
   type RendererKind,
@@ -567,9 +568,9 @@ type ImplementationDeclaration = {
 };
 
 /**
- * How each renderer authors its implementation. A source format claims an item before its renderer,
- * because a CSF item is also a React item and the React row would claim it first. The maps are
- * exhaustive, so a new renderer fails to compile until checkout can write its declaration.
+ * How each source format authors its implementation. A source format claims an item before its
+ * renderer, because a CSF item is also a React item. The map is exhaustive, so a new format fails to
+ * compile until checkout can write its declaration.
  */
 const FORMAT_DECLARATIONS: Record<SourceFormat, (context: ImplementationContext) => ImplementationDeclaration> = {
   // The story file owns the previews, so the declaration carries none.
@@ -581,24 +582,16 @@ const FORMAT_DECLARATIONS: Record<SourceFormat, (context: ImplementationContext)
   }),
 };
 
-const RENDERER_DECLARATIONS: Record<RendererKind, (context: ImplementationContext) => ImplementationDeclaration> = {
-  handlebars: ({ entry, previews }) => ({
-    entryPoint: moduleFor('handlebars'),
-    imports: [],
-    named: ['defineCatalogItem'],
-    implementation: toFilePath(entry),
-    previews: toCatalogPreviews(previews),
-  }),
-  react: ({ declaration, entry, format, previews }) => {
-    const { statement, identifier } = buildImplementationImport(declaration, entry, format);
-    return {
-      entryPoint: moduleFor('react'),
-      imports: [statement],
-      named: ['defineCatalogItem'],
-      implementation: new RawExpression(identifier),
-      previews: toCatalogPreviews(previews),
-    };
-  },
+/** Writes the implementation the way `RENDERERS[renderer].checkoutImplementation` says. */
+const rendererDeclaration = (renderer: RendererKind, context: ImplementationContext): ImplementationDeclaration => {
+  const { declaration, entry, format, previews } = context;
+  const form = RENDERERS[renderer].checkoutImplementation;
+  const imports = form === 'import' || (form === 'named-import' && !!asString(declaration.componentExport));
+  const base = { entryPoint: RENDERERS[renderer].module, named: ['defineCatalogItem'], previews: toCatalogPreviews(previews) };
+  if (!imports) return { ...base, imports: [], implementation: toFilePath(entry) };
+
+  const { statement, identifier } = buildImplementationImport(declaration, entry, format);
+  return { ...base, imports: [statement], implementation: new RawExpression(identifier) };
 };
 
 /** Emit only catalog declarations, with previews as named exports. */
@@ -632,8 +625,8 @@ const renderComponentDeclaration = (declaration: Record<string, unknown>, format
     throw new CheckoutError(`Catalog item "${declaration.id}" has no valid implementation source. Rebuild and republish it.`);
   }
 
-  const build = sourceFormat ? FORMAT_DECLARATIONS[sourceFormat] : RENDERER_DECLARATIONS[renderer];
-  const { implementation, ...parts } = build({ declaration, entry, format, previews });
+  const context = { declaration, entry, format, previews };
+  const { implementation, ...parts } = sourceFormat ? FORMAT_DECLARATIONS[sourceFormat](context) : rendererDeclaration(renderer, context);
   return renderCatalogDeclaration({ format, ...parts, item: withImplementation(item, implementation) });
 };
 

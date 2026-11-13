@@ -1,5 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
+import { sourceForFile, type RendererKind } from './renderers';
 
 /** A source file plus the export the implementation is bound to. */
 export type ResolvedSource = {
@@ -9,8 +10,6 @@ export type ResolvedSource = {
 };
 
 const CANDIDATE_EXTENSIONS = ['.tsx', '.jsx', '.ts', '.js', '.mjs', '.cjs'];
-
-const isStoryFile = (filePath: string): boolean => /\.stories\.(jsx|tsx|js|ts)$/.test(filePath);
 
 /**
  * Resolves a relative module specifier to a file. Node and bundlers probe extensions and index
@@ -83,13 +82,38 @@ const findBinding = (sourceCode: string, localName: string): Binding | undefined
   }
 
   const requireNamed = sourceCode.match(
-    new RegExp(`(?:const|let|var)\\s*\\{[^}]*\\b${localName}\\b[^}]*\\}\\s*=\\s*require\\(\\s*['"]([^'"]+)['"]\\s*\\)`)
+    new RegExp(`(?:const|let|var)\\s*\\{([^}]*\\b${localName}\\b[^}]*)\\}\\s*=\\s*require\\(\\s*['"]([^'"]+)['"]\\s*\\)`)
   );
   if (requireNamed) {
-    return { specifier: requireNamed[1], exportName: localName };
+    // `{ default: Button }` binds `Button` to the `default` export.
+    const renamed = requireNamed[1].match(new RegExp(`([A-Za-z_$][\\w$]*)\\s*:\\s*${localName}\\b`));
+    return { specifier: requireNamed[2], exportName: renamed?.[1] ?? localName };
   }
 
   return undefined;
+};
+
+/**
+ * Stands in for an implementation module that the loader must not run. Every export, including
+ * `default`, is a named empty class, so any import form binds without knowing the export names.
+ *
+ * The lookups live on the prototype because esbuild's ESM interop copies a CommonJS module onto a new
+ * object with the same prototype, and a Proxy cannot list names it does not know.
+ */
+export const createImplementationPlaceholder = (): object => {
+  const placeholders = new Map<string, unknown>();
+  const anyExport = new Proxy(
+    {},
+    {
+      get: (_target, key) => {
+        if (key === '__esModule') return true;
+        if (typeof key !== 'string') return undefined;
+        if (!placeholders.has(key)) placeholders.set(key, Object.defineProperty(class {}, 'name', { value: key }));
+        return placeholders.get(key);
+      },
+    }
+  );
+  return Object.create(anyExport);
 };
 
 /**
@@ -123,15 +147,18 @@ export const resolvePropertySource = (sourcePath: string, property: string): Res
 };
 
 /**
- * Last-resort lookup when the import cannot be resolved: the single component file sitting next to
- * the declaration. Story files and the declaration itself are excluded.
+ * Last-resort lookup when the import cannot be resolved: the single file next to the declaration
+ * whose name only `renderer` can own. Source format files, such as stories, are excluded.
  */
-export const findSiblingComponentFile = (directory: string, declarationPath: string): string | undefined => {
+export const findSiblingComponentFile = (directory: string, declarationPath: string, renderer: RendererKind): string | undefined => {
   if (!fs.existsSync(directory)) return undefined;
 
   const candidates = fs
     .readdirSync(directory)
-    .filter((name) => /\.(tsx|jsx)$/.test(name) && !isStoryFile(name))
+    .filter((name) => {
+      const claim = sourceForFile(name);
+      return !!claim && !claim.format && claim.renderers.includes(renderer);
+    })
     .map((name) => path.resolve(directory, name))
     .filter((file) => file !== path.resolve(declarationPath));
 

@@ -10,38 +10,55 @@ pipeline.
 
 ## Files
 
-| File                | Purpose                                                                                                                                              |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `renderers.ts`      | The renderer registry: one row per renderer, per source format, and per source suffix, plus `sourceForFile()`, `entryKeyFor()`, `moduleFor()`        |
-| `types.ts`          | `CatalogItem`, `CatalogItemMeta`, `CompositionRef`, `CatalogPreview`, `Preview<TItem>`, `SourceDescriptor`. Types only, no React                     |
-| `define.ts`         | `createCatalogItem()` shared by the entry points (it stamps the renderer), `validateCatalogItem()`                                                   |
-| `previews.ts`       | `createCatalogPreviews()` — named exports of a declaration module become previews; `readExportOrder()` / `orderPreviews()` restore declaration order |
-| `implementation.ts` | `resolvePropertySource()` — maps an authored value back to its source file and export                                                                |
-| `normalize.ts`      | `normalizeCatalogItem()` — declaration module to runtime component or pattern record                                                                 |
-| `index.ts`          | Barrel re-exports                                                                                                                                    |
+| File                | Purpose                                                                                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `renderers.ts`      | The renderer registry: one row per renderer, per source format, and per source suffix, plus `sourceForFile()`, `entryKeyFor()`, `moduleFor()`. Browser-safe             |
+| `types.ts`          | `CatalogItem`, `CatalogItemMeta`, `CompositionRef`, `CatalogPreview`, `Preview<TItem>`, `DataPreview`, `DataPreviewOf<TItem>`, `SourceDescriptor`. Types only, no React |
+| `define.ts`         | `createCatalogItem()` shared by the entry points (it stamps the renderer), `validateCatalogItem()`                                                                      |
+| `previews.ts`       | `createCatalogPreviews()` — named exports of a declaration module become previews; `readExportOrder()` / `orderPreviews()` restore declaration order                    |
+| `implementation.ts` | `resolvePropertySource()` — maps an authored value back to its source file and export. `createImplementationPlaceholder()` — the module the loader binds in its place   |
+| `normalize.ts`      | `normalizeCatalogItem()` — declaration module to runtime component or pattern record                                                                                    |
+| `index.ts`          | Barrel re-exports                                                                                                                                                       |
 
 ## Entry points
 
-`src/react.ts`, `src/handlebars.ts` and `src/pattern.ts` compile to `dist/react.js`,
-`dist/handlebars.js` and `dist/pattern.js`, and `package.json` `exports` maps them to
-`handoff-app/react`, `handoff-app/handlebars` and `handoff-app/pattern`. The React entry point also
+`src/react.ts`, `src/angular.ts`, `src/handlebars.ts` and `src/pattern.ts` compile to
+`dist/react.js`, `dist/angular.js`, `dist/handlebars.js` and `dist/pattern.js`, and `package.json`
+`exports` maps them to `handoff-app/react`, `handoff-app/angular`, `handoff-app/handlebars` and
+`handoff-app/pattern`. The React entry point also
 owns `fromCSF`, because CSF is a source format of React rather than a framework.
 
 The renderer entry points call `createCatalogItem` with their renderer. The pattern entry point calls it without a renderer.
 `define.ts` handles the shared `implementation` forms: a helper's `{ format, file }`, a file path, or an imported component.
 
 An entry point re-exports only the preview shape its renderer honors: `react.ts` exports `CatalogPreview` with `render`,
-`handlebars.ts` narrows it to reject `render`, and `pattern.ts` exports neither.
+`handlebars.ts` and `angular.ts` export `DataPreview` and `DataPreviewOf` as `CatalogPreview` and
+`Preview`, which reject `render`. `pattern.ts` exports neither. `angular.ts` types preview arguments
+from the component class with `InputsOf`. The type is structural, so Handoff needs no Angular types.
+Its doc comment lists where it differs from what Angular accepts.
 
 A new renderer needs:
 
-- A `RENDERERS` row in `renderers.ts`
+- A `RENDERERS` row in `renderers.ts`. The row holds everything that other layers read about the
+  renderer: its declaration module and entry key, the packages the loader keeps external, whether
+  the loader may run the implementation, how checkout writes the implementation, and how the docs
+  label and highlight its code
+- `SOURCE_SUFFIXES` rows for the file names only this renderer owns, if any. They enable the
+  mismatch check and the sibling-file fallback
 - An entry point file, plus its `exports` and `typesVersions` entries in `package.json`
 - A `RENDERER_PLUGINS` row in `transformers/preview/component/html.ts`
-- A `RENDERER_DECLARATIONS` row in `registry/checkout/index.ts`
+- A call to `this.addWatchFile()` in its preview plugin for each file the build reads outside the
+  import graph, such as an Angular `templateUrl`. With `clientRenderPlugin()`, list them in
+  `watchFiles`. The build cache, `start`, and `publish` then track the file. Imported files need
+  nothing
+- The name of the entry point in `MISSING_RENDERER_HELP` (`define.ts`)
+- Framework tooling from the workspace, never from Handoff's `dependencies`: check it with
+  `requireWorkspacePackages()` and declare its Vite plugin as an optional peer dependency (see
+  `transformers/README.md`, "Framework tooling"). A project then installs only the tooling of the
+  renderers it uses
 
-The last two maps are `Record<RendererKind, …>`, so the build fails until the renderer can build
-previews and checkout can write its declaration. No existing renderer file changes.
+`RENDERERS` and `RENDERER_PLUGINS` are `Record<RendererKind, …>` with required fields, so the build
+fails until the renderer is complete. No existing renderer file changes.
 
 ## Why the renderer is stamped into the declaration
 
@@ -75,11 +92,26 @@ always CSF, while a plain `.tsx` file says nothing about its format.
 `implementation: Button` and a CSF `meta.component` are values. The build still needs the file, for
 docgen, file watching, and publishing. `resolvePropertySource` reads the declaration or story source,
 finds the identifier the property is bound to, and follows its import. Resolution never throws. An
-explicit path takes precedence, and a single sibling component file is the fallback.
+explicit path takes precedence. The fallback is the single sibling file whose suffix only the item's renderer owns.
 If resolution fails, Handoff skips the item with an actionable warning and retries on the next save.
 
 A resolved file outside the item directory is reported. `publish` makes entry paths relative to the
 entity directory and `registry/path.ts` rejects a `..` segment, so such an item cannot be published.
+
+## Why the loader can skip the implementation module
+
+The loader runs a declaration only to read catalog data. A declaration that imports its
+implementation would also run that module in Node. For Angular this fails or depends on the
+workspace: decorators need the workspace compiler options, Angular packages are ES modules that
+`require()` cannot always load, and a component may touch the DOM when it loads.
+
+When `loadsImplementation` is false, `config/runtime.ts` resolves the implementation file from the
+import text, as it does for `componentExport`, and marks that path external. esbuild matches an
+external path against the resolved import, so every import form that reaches the file stays out of
+the bundle, and the modules that only it imports are never read. At run time, `require` returns
+`createImplementationPlaceholder()` for that file: every export is a named empty class, including
+any other value the declaration imports from it. Keep preview data in a separate file. When the
+import text cannot be resolved, such as through a tsconfig path alias, the loader runs the module.
 
 ## Why preview order comes from the source text
 

@@ -267,6 +267,80 @@ Notes:
 - `npx handoff-app make:component badge` creates a Handlebars item with a
   CommonJS declaration.
 
+### Angular item
+
+The implementation is a standalone Angular component. Import the class, and
+Handoff finds its file from the import. The preview arguments are the component
+inputs.
+
+```ts
+// components/button/button.component.ts
+import { Component, input } from '@angular/core';
+
+@Component({
+  selector: 'demo-button',
+  templateUrl: './button.component.html',
+  styleUrl: './button.component.scss',
+})
+export class ButtonComponent {
+  /** Text inside the button. */
+  readonly label = input('Button');
+  readonly variant = input<'primary' | 'secondary'>('primary');
+}
+```
+
+```ts
+// components/button/button.handoff.ts
+import { defineCatalogItem, type Preview } from 'handoff-app/angular';
+import { ButtonComponent } from './button.component';
+
+const item = defineCatalogItem({
+  id: 'button',
+  name: 'Button',
+  implementation: ButtonComponent,
+});
+
+export default item;
+
+type ButtonPreview = Preview<typeof item>;
+
+export const Primary = {
+  args: { label: 'Save', variant: 'primary' },
+} satisfies ButtonPreview;
+```
+
+Notes:
+
+- The workspace supplies Angular. It needs Angular 19 or later, plus
+  `@angular/compiler-cli` and `@angular/build`. An Angular CLI project already
+  has them. It also needs the Vite plugin that compiles the components:
+
+  ```bash
+  npm install -D @analogjs/vite-plugin-angular
+  ```
+
+- Handoff compiles each component with the workspace `tsconfig.json`, so its
+  `paths` and compiler options apply.
+- Signal inputs, `model()` inputs, and `@Input()` properties are all
+  arguments. `Preview<typeof item>` types a signal input by the value it
+  accepts, so `input(false, { transform: booleanAttribute })` accepts any
+  value.
+- `Preview<typeof item>` keys inputs by their class property names, and also
+  accepts other public properties. `args` also accepts the `alias` of an input.
+  If `args` gives both names, the class property name wins. The usage snippet
+  and the properties table show the alias.
+- Handoff does not run the component file when it reads the declaration. A
+  value that the declaration imports from that file is a placeholder. Keep
+  preview data in another file.
+- Inputs that the arguments leave out keep their defaults. A missing required
+  input is a render error.
+- The browser renders the previews, so the component has no HTML code view.
+- A preview cannot declare `render`. Wrap the component in a demo component to
+  show content projection.
+- `start` and the build cache track the `templateUrl` and `styleUrl` files and
+  the Sass partials that they load. `publish` uploads only the files inside the
+  item directory, so keep templates and styles there.
+
 ### CSF stories
 
 A React item can use an existing CSF story file. The story file does not

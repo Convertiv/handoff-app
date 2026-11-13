@@ -3,7 +3,7 @@ import path from 'path';
 import Handoff from '../index';
 import { collectModuleInputs } from '../transformers/utils/build';
 import { Logger } from '../utils/logger';
-import { normalizePathForCompare } from '../utils/path';
+import { isPathInside, normalizePathForCompare } from '../utils/path';
 import { BuildInputs } from './build-inputs';
 import { computeDirectoryState, computeFileState, directoryStatesMatch, FileState, statesMatch } from './file-state';
 
@@ -355,50 +355,92 @@ export async function hasComponentChanged(
 const SCRIPT_EXTENSIONS = new Set(['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.mts', '.cts']);
 
 /**
- * File states for every file that the builds of a component read, or `null` when that list is
- * incomplete and the component must not be cached.
+ * Every file that the builds of a component read, or `null` when that list is incomplete.
  *
  * Previews compile their sources with esbuild inside a Vite plugin, so Rollup does not see those
- * imports. The esbuild graph of each script entry supplies them. The lockfile covers the files under
- * `node_modules`, so they are skipped, together with the generated files in the output directory.
+ * imports. The esbuild graph of each script entry supplies them. A run that built only the styles
+ * passes `moduleGraphs: false` to skip that work, because its list is added to the previous one.
+ *
+ * Left out: files under `node_modules`, which the lockfile stands for; generated output; and the files
+ * that Handoff writes under `.handoff`, such as a compilation tsconfig, which change on every build.
  */
-export async function computeBuildInputStates(
+export async function collectBuildInputFiles(
   handoff: Handoff,
   componentId: string,
-  inputs: BuildInputs
-): Promise<Record<string, FileState> | null> {
+  inputs: BuildInputs,
+  { moduleGraphs = true }: { moduleGraphs?: boolean } = {}
+): Promise<string[] | null> {
   if (inputs.failed) {
     return null;
   }
 
   const files = new Set(inputs.files);
-  const entries = handoff.runtimeConfig?.entities.components[componentId]?.entries as Record<string, string | undefined> | undefined;
-  const scriptEntries = new Set(Object.values(entries ?? {}).filter((entry): entry is string => !!entry && SCRIPT_EXTENSIONS.has(path.extname(entry))));
-
-  for (const entry of scriptEntries) {
-    const moduleInputs = await collectModuleInputs(entry, handoff);
-    if (!moduleInputs) {
-      return null;
+  if (moduleGraphs) {
+    const entries = handoff.runtimeConfig?.entities.components[componentId]?.entries as Record<string, string | undefined> | undefined;
+    const scriptEntries = new Set(
+      Object.values(entries ?? {}).filter((entry): entry is string => !!entry && SCRIPT_EXTENSIONS.has(path.extname(entry)))
+    );
+    for (const entry of scriptEntries) {
+      const moduleInputs = await collectModuleInputs(entry, handoff);
+      if (!moduleInputs) {
+        return null;
+      }
+      for (const file of moduleInputs) files.add(file);
     }
-    for (const file of moduleInputs) files.add(file);
   }
 
-  const outputDirectory = path.resolve(handoff.workingPath, 'public/api/component');
-  const states: Record<string, FileState> = {};
-
+  const excludedDirectories = [path.resolve(handoff.workingPath, 'public', 'api'), path.resolve(handoff.workingPath, '.handoff')];
+  const collected = new Set<string>();
   for (const id of files) {
     const file = id.split('?')[0];
-    if (!path.isAbsolute(file) || file.split(path.sep).includes('node_modules') || file.startsWith(outputDirectory + path.sep)) {
+    if (
+      !path.isAbsolute(file) ||
+      file.split(path.sep).includes('node_modules') ||
+      excludedDirectories.some((directory) => isPathInside(file, directory))
+    ) {
       continue;
     }
-    const state = await computeFileState(file);
-    if (state) {
-      states[path.resolve(file)] = state;
-    }
+    collected.add(path.resolve(file));
   }
 
+  return Array.from(collected);
+}
+
+/** File states for the files that a build read. A file that no longer exists is left out. */
+export async function computeBuildInputStates(files: string[]): Promise<Record<string, FileState>> {
+  const states: Record<string, FileState> = {};
+  for (const file of files) {
+    const state = await computeFileState(file);
+    if (state) {
+      states[file] = state;
+    }
+  }
   return states;
 }
+
+/**
+ * The directories of the global entries. Their watcher rebuilds every component when a file in them
+ * changes, and the workspace, not a catalog item, owns those files.
+ */
+export const getGlobalEntryDirectories = (handoff: Handoff): string[] => {
+  const { scss, js } = handoff.runtimeConfig?.entries ?? {};
+  const directories: string[] = [];
+  if (scss && fs.existsSync(scss)) directories.push(fs.statSync(scss).isDirectory() ? scss : path.dirname(scss));
+  if (js && fs.existsSync(js)) directories.push(path.dirname(js));
+  return directories;
+};
+
+/**
+ * The files to record for a component (see `component-sources.ts`): its declared files and the files
+ * its build read. Left out: declarations, which the config watcher and publish handle (a pattern
+ * declaration is not a source of the component); and `package.json`, which the bundler reads to
+ * resolve modules and the lockfile stands for.
+ */
+export const collectComponentSources = (handoff: Handoff, componentId: string, buildInputFiles: string[]): string[] => {
+  const declarations = new Set(handoff.getConfigFilePaths().map(normalizePathForCompare));
+  const files = new Set([...getComponentFilePaths(handoff, componentId).files.map((file) => path.resolve(file)), ...buildInputFiles]);
+  return Array.from(files).filter((file) => !declarations.has(normalizePathForCompare(file)) && path.basename(file) !== 'package.json');
+};
 
 /**
  * Checks if the component output files exist

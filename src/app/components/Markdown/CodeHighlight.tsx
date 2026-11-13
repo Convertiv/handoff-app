@@ -1,4 +1,4 @@
-import type { RendererKind } from '@handoff/catalog/renderers';
+import { RENDERERS, type RendererCode, type RendererKind } from '@handoff/catalog/renderers';
 import { PreviewObject } from '@handoff/types/preview';
 import { Select } from '@radix-ui/react-select';
 import { useTheme } from 'next-themes';
@@ -40,17 +40,7 @@ SyntaxHighlighter.registerLanguage('xml', html);
 SyntaxHighlighter.registerLanguage('handlebars', handlebars);
 SyntaxHighlighter.registerLanguage('hbs', handlebars);
 
-type CodeFormat = { label: string; language: string };
-
-/**
- * How each renderer's implementation code is shown. Exhaustive over `RendererKind`, so a new
- * renderer fails to compile until its label and highlighting are declared. `RENDERER_PLUGINS`
- * puts the same guard on preview support.
- */
-const CODE_FORMATS: Record<RendererKind, CodeFormat> = {
-  react: { label: 'React (TSX)', language: 'tsx' },
-  handlebars: { label: 'Handlebars', language: 'handlebars' },
-};
+type CodeFormat = Pick<RendererCode, 'label' | 'language'> & Partial<Pick<RendererCode, 'usageLanguage'>>;
 
 /**
  * Formats that are not a renderer name: the synthetic `html` that the string and empty-data
@@ -58,7 +48,7 @@ const CODE_FORMATS: Record<RendererKind, CodeFormat> = {
  */
 const FORMAT_ALIASES: Record<string, CodeFormat> = {
   html: { label: 'HTML', language: 'html' },
-  tsx: CODE_FORMATS.react,
+  tsx: RENDERERS.react.code,
   jsx: { label: 'React (JSX)', language: 'jsx' },
   ts: { label: 'TypeScript', language: 'typescript' },
   typescript: { label: 'TypeScript', language: 'typescript' },
@@ -69,7 +59,7 @@ const FORMAT_ALIASES: Record<string, CodeFormat> = {
 const formatFor = (format?: string): CodeFormat => {
   const key = format?.toLowerCase() ?? '';
   // Legacy default: an unrecognized format reads as plain code and highlights as Handlebars.
-  return CODE_FORMATS[key as RendererKind] ?? FORMAT_ALIASES[key] ?? { label: 'Code', language: 'handlebars' };
+  return RENDERERS[key as RendererKind]?.code ?? FORMAT_ALIASES[key] ?? { label: 'Code', language: 'handlebars' };
 };
 
 type CodeView = { label?: string; language?: string };
@@ -158,9 +148,7 @@ export const CodeHighlight: React.FC<{
 
   const states = RECORD_VIEWS.filter((key) => !!(data as Record<string, any>)[key]);
   const hasPerPreviewUsage =
-    typeof data === 'object' &&
-    !!data.previews &&
-    Object.values(data.previews).some((preview) => !!preview?.usage);
+    typeof data === 'object' && !!data.previews && Object.values(data.previews).some((preview) => !!preview?.usage);
   const hasUsageState = (typeof data === 'object' && !!data.usage) || hasPerPreviewUsage;
   const selectableStates = hasUsageState && !states.includes('usage') ? ['usage', ...states] : states;
   const preferredState = selectableStates.includes('usage') ? 'usage' : selectableStates[0];
@@ -196,6 +184,10 @@ export const CodeHighlight: React.FC<{
       return formatFor(data.format).language;
     }
 
+    if (activeState === 'usage') {
+      return formatFor(data.format).usageLanguage ?? CODE_VIEWS.usage.language!;
+    }
+
     // The `type` prop names the markup language of the rendered preview.
     if (activeState === 'html') {
       return type || 'html';
@@ -220,14 +212,14 @@ export const CodeHighlight: React.FC<{
     // - Fragment syntax: <> or </>
     // - JSX expressions: {expression}
     const jsxPatterns = [
-      /<[A-Z][a-zA-Z0-9]*\s*[^>]*\/>/,  // Self-closing component tags
-      /<[A-Z][a-zA-Z0-9]*\s*[^>]*>/,    // Opening component tags
-      /<\/[A-Z][a-zA-Z0-9]*>/,          // Closing component tags
-      /<>\s*|<\/>/,                      // Fragment syntax
-      /className\s*=/,                   // className attribute (React-specific)
-      /\{[^}]+\}/,                       // JSX expressions (basic check)
+      /<[A-Z][a-zA-Z0-9]*\s*[^>]*\/>/, // Self-closing component tags
+      /<[A-Z][a-zA-Z0-9]*\s*[^>]*>/, // Opening component tags
+      /<\/[A-Z][a-zA-Z0-9]*>/, // Closing component tags
+      /<>\s*|<\/>/, // Fragment syntax
+      /className\s*=/, // className attribute (React-specific)
+      /\{[^}]+\}/, // JSX expressions (basic check)
     ];
-    return jsxPatterns.some(pattern => pattern.test(code));
+    return jsxPatterns.some((pattern) => pattern.test(code));
   };
 
   const resolveUsageCode = (): string => {
@@ -300,7 +292,7 @@ export const CodeHighlight: React.FC<{
       style={attached ? undefined : { maxWidth: '71vw' }}
     >
       {showAll && (
-        <div className="absolute right-4 top-3 z-10 flex items-center gap-1.5 rounded-md" style={{ background: surface.background }}>
+        <div className="absolute top-3 right-4 z-10 flex items-center gap-1.5 rounded-md" style={{ background: surface.background }}>
           {selectableStates.length > 1 && (
             <Select
               value={activeState}
