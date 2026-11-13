@@ -8,7 +8,43 @@ and this project adheres to
 
 ## \[2.2.0] - 2026-11-16
 
-<!-- Release summary and entries go here. -->
+This release is all about meeting your components where they live. Handoff now
+documents components from more frameworks, and it builds every preview with the
+framework version your project already uses, so the docs show what you ship.
+You install only the tooling for the frameworks you document, nothing more.
+
+### Angular
+
+* Added Angular catalog items from `handoff-app/angular`. The implementation is
+  a standalone component class, and the preview arguments are its inputs.
+* Handoff compiles each component with the Angular version of the workspace.
+  The workspace needs Angular 19 or later, `@angular/compiler-cli`,
+  `@angular/build`, and `@analogjs/vite-plugin-angular`.
+* Previews render in the browser. The properties table and the usage snippet
+  cover signal, `model()`, and `@Input()` inputs.
+* `start` rebuilds a component when its template or stylesheet changes.
+
+### Other changes
+
+* A component that does not build, or a declaration that does not load, now
+  fails the build with exit code 1. Handoff still builds the rest first and
+  lists what failed, and `publish` uploads everything else. `start` logs the
+  error and keeps running.
+* `start` and `publish` now follow every file that a component's last build
+  read, such as an imported file. `start` rebuilds when one changes, and
+  `publish` uploads the text files in the item directory.
+
+### Smaller changes
+
+* Build errors show the message and location. The stack trace shows only with
+  `--debug`.
+* `start` no longer rebuilds in a loop when a global entry is in the project
+  root.
+
+### Upgrade
+
+* If a component in your project does not build, CI now fails where it passed
+  before. Fix the components that the build lists.
 
 ## \[2.1.0] - 2026-11-09
 
