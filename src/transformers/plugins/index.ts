@@ -10,6 +10,7 @@ export { handlebarsPreviewsPlugin } from './handlebars-previews';
 export { ssrRenderPlugin } from './ssr-render';
 export { csfRenderPlugin } from './csf-render';
 export { angularRenderPlugins } from './angular-render';
+export { vueRenderPlugins } from './vue-render';
 
 // Re-export types for convenience
 export type { PluginFactory } from '../types';

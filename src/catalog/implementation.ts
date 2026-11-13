@@ -1,6 +1,6 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { sourceForFile, type RendererKind } from './renderers';
+import { RENDERERS, rendererImportedBy, sourceForFile, type RendererKind } from './renderers';
 
 /** A source file plus the export the implementation is bound to. */
 export type ResolvedSource = {
@@ -169,4 +169,21 @@ export const findSiblingComponentFile = (directory: string, declarationPath: str
 export const isInsideDirectory = (file: string, directory: string): boolean => {
   const relative = path.relative(directory, file);
   return !!relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+};
+
+/**
+ * The implementation file that reading this declaration must not run, resolved from its import text
+ * like `componentExport`. Undefined when the renderer may run it. The loader binds a placeholder for
+ * the file, and the build cache leaves it out of the declaration's module graph.
+ */
+export const implementationToSkip = (filePath: string): string | undefined => {
+  let sourceCode: string;
+  try {
+    sourceCode = fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return undefined;
+  }
+  const renderer = rendererImportedBy(sourceCode);
+  if (!renderer || RENDERERS[renderer].loadsImplementation) return undefined;
+  return resolvePropertySource(filePath, 'implementation')?.file;
 };

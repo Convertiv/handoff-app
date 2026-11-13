@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../index';
+import { implementationToSkip } from '../catalog/implementation';
 import { collectModuleInputs } from '../transformers/utils/build';
 import { Logger } from '../utils/logger';
 import { isPathInside, normalizePathForCompare } from '../utils/path';
@@ -381,7 +382,9 @@ export async function collectBuildInputFiles(
       Object.values(entries ?? {}).filter((entry): entry is string => !!entry && SCRIPT_EXTENSIONS.has(path.extname(entry)))
     );
     for (const entry of scriptEntries) {
-      const moduleInputs = await collectModuleInputs(entry, handoff);
+      // A declaration's graph is what the loader reads, so it stops at an implementation that only the renderer's build can read.
+      const skipped = implementationToSkip(entry);
+      const moduleInputs = await collectModuleInputs(entry, handoff, skipped ? [skipped] : []);
       if (!moduleInputs) {
         return null;
       }

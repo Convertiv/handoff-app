@@ -9,6 +9,7 @@
  * - handlebarsPreviewsPlugin: Handlebars-based template rendering
  * - ssrRenderPlugin: React server-side rendering with hydration
  * - angularRenderPlugins: Angular ahead-of-time compilation with client rendering
+ * - vueRenderPlugins: Vue single-file component compilation with client rendering
  */
 
 // Export the main plugins
@@ -16,4 +17,5 @@ export { handlebarsPreviewsPlugin } from './plugins/handlebars-previews';
 export { ssrRenderPlugin } from './plugins/ssr-render';
 export { csfRenderPlugin } from './plugins/csf-render';
 export { angularRenderPlugins } from './plugins/angular-render';
+export { vueRenderPlugins } from './plugins/vue-render';
 

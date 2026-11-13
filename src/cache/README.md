@@ -2,7 +2,7 @@
 
 Incremental build cache for component previews. Tracks file states to skip rebuilding unchanged components.
 
-Every full component build uses the cache (`start`, `build`, `build:components` without an id, and bulk `publish`), unless `--force` is set. The cache file is `<workingPath>/.handoff/.cache/build-cache.json`. A component entry holds its declared files and every file that its last build read: Rollup watch files from the Vite builds (Sass partials included) and the esbuild graph of each script entry. The lockfile state in the global dependencies covers the files under `node_modules`.
+Every full component build uses the cache (`start`, `build`, `build:components` without an id, and bulk `publish`), unless `--force` is set. The cache file is `<workingPath>/.handoff/.cache/build-cache.json`. A component entry holds its declared files and every file that its last build read: Rollup watch files from the Vite builds (Sass partials included) and the esbuild graph of each script entry. A declaration's graph stops at an implementation that the loader does not run (`implementationToSkip()`), such as a `.vue` file, which esbuild cannot read; the Vite build records that file. The lockfile state in the global dependencies covers the files under `node_modules`.
 
 `component-sources.json`, in the same directory, lists the source files of each component: its declared files and every file that its last build read, except declarations and `package.json`. `start` watches these files, and `publish` uploads the text files inside the item directory. A renderer whose build reads a file outside the import graph, such as an Angular `templateUrl`, calls `this.addWatchFile()` in its Vite plugin, so the file reaches this record and the build cache.
 

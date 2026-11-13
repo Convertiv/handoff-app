@@ -16,26 +16,27 @@ pipeline.
 | `types.ts`          | `CatalogItem`, `CatalogItemMeta`, `CompositionRef`, `CatalogPreview`, `Preview<TItem>`, `DataPreview`, `DataPreviewOf<TItem>`, `SourceDescriptor`. Types only, no React |
 | `define.ts`         | `createCatalogItem()` shared by the entry points (it stamps the renderer), `validateCatalogItem()`                                                                      |
 | `previews.ts`       | `createCatalogPreviews()` — named exports of a declaration module become previews; `readExportOrder()` / `orderPreviews()` restore declaration order                    |
-| `implementation.ts` | `resolvePropertySource()` — maps an authored value back to its source file and export. `createImplementationPlaceholder()` — the module the loader binds in its place   |
+| `implementation.ts` | `resolvePropertySource()` — maps an authored value back to its source file and export. `createImplementationPlaceholder()` — the module the loader binds in its place. `implementationToSkip()` — the file it binds it for |
 | `normalize.ts`      | `normalizeCatalogItem()` — declaration module to runtime component or pattern record                                                                                    |
 | `index.ts`          | Barrel re-exports                                                                                                                                                       |
 
 ## Entry points
 
-`src/react.ts`, `src/angular.ts`, `src/handlebars.ts` and `src/pattern.ts` compile to
-`dist/react.js`, `dist/angular.js`, `dist/handlebars.js` and `dist/pattern.js`, and `package.json`
-`exports` maps them to `handoff-app/react`, `handoff-app/angular`, `handoff-app/handlebars` and
-`handoff-app/pattern`. The React entry point also
+`src/react.ts`, `src/angular.ts`, `src/vue.ts`, `src/handlebars.ts` and `src/pattern.ts` compile to
+`dist/react.js`, `dist/angular.js`, `dist/vue.js`, `dist/handlebars.js` and `dist/pattern.js`, and
+`package.json` `exports` maps them to `handoff-app/react`, `handoff-app/angular`, `handoff-app/vue`,
+`handoff-app/handlebars` and `handoff-app/pattern`. The React entry point also
 owns `fromCSF`, because CSF is a source format of React rather than a framework.
 
 The renderer entry points call `createCatalogItem` with their renderer. The pattern entry point calls it without a renderer.
 `define.ts` handles the shared `implementation` forms: a helper's `{ format, file }`, a file path, or an imported component.
 
 An entry point re-exports only the preview shape its renderer honors: `react.ts` exports `CatalogPreview` with `render`,
-`handlebars.ts` and `angular.ts` export `DataPreview` and `DataPreviewOf` as `CatalogPreview` and
+`handlebars.ts`, `angular.ts` and `vue.ts` export `DataPreview` and `DataPreviewOf` as `CatalogPreview` and
 `Preview`, which reject `render`. `pattern.ts` exports neither. `angular.ts` types preview arguments
-from the component class with `InputsOf`. The type is structural, so Handoff needs no Angular types.
-Its doc comment lists where it differs from what Angular accepts.
+from the component class with `InputsOf`, and `vue.ts` from the component's `$props` with `PropsOf`.
+The types are structural, so Handoff needs no Angular or Vue types. Their doc comments list where they
+differ from what the framework accepts.
 
 A new renderer needs:
 
@@ -48,9 +49,9 @@ A new renderer needs:
 - An entry point file, plus its `exports` and `typesVersions` entries in `package.json`
 - A `RENDERER_PLUGINS` row in `transformers/preview/component/html.ts`
 - A call to `this.addWatchFile()` in its preview plugin for each file the build reads outside the
-  import graph, such as an Angular `templateUrl`. With `clientRenderPlugin()`, list them in
-  `watchFiles`. The build cache, `start`, and `publish` then track the file. Imported files need
-  nothing
+  import graph, such as an Angular `templateUrl` or a Vue `<template src>`. With `clientRenderPlugin()`,
+  list them in `watchFiles`. The build cache, `start`, and `publish` then track the file. Imported
+  files need nothing
 - The name of the entry point in `MISSING_RENDERER_HELP` (`define.ts`)
 - Framework tooling from the workspace, never from Handoff's `dependencies`: check it with
   `requireWorkspacePackages()` and declare its Vite plugin as an optional peer dependency (see
@@ -105,13 +106,16 @@ implementation would also run that module in Node. For Angular this fails or dep
 workspace: decorators need the workspace compiler options, Angular packages are ES modules that
 `require()` cannot always load, and a component may touch the DOM when it loads.
 
-When `loadsImplementation` is false, `config/runtime.ts` resolves the implementation file from the
-import text, as it does for `componentExport`, and marks that path external. esbuild matches an
-external path against the resolved import, so every import form that reaches the file stays out of
-the bundle, and the modules that only it imports are never read. At run time, `require` returns
+When `loadsImplementation` is false, `implementationToSkip()` resolves the implementation file from
+the import text, as it does for `componentExport`, and `config/runtime.ts` marks that path external.
+The build cache walks the declaration's module graph with the same external, so a file that esbuild
+cannot read, such as a `.vue` file, does not void the graph; the renderer's Vite build records it.
+esbuild matches an external path against the resolved import, so every import form that reaches the
+file stays out of the bundle, and the modules that only it imports are never read. At run time, `require` returns
 `createImplementationPlaceholder()` for that file: every export is a named empty class, including
 any other value the declaration imports from it. Keep preview data in a separate file. When the
 import text cannot be resolved, such as through a tsconfig path alias, the loader runs the module.
+That fails for a `.vue` file, so a Vue declaration must import its component by a relative path.
 
 ## Why preview order comes from the source text
 

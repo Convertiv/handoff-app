@@ -6,7 +6,7 @@ import { BuildInputs, withBuildInputs } from '../../../cache/build-inputs';
 import type { RendererKind, SourceFormat } from '../../../catalog/renderers';
 import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
-import { angularRenderPlugins, csfRenderPlugin, handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
+import { angularRenderPlugins, csfRenderPlugin, handlebarsPreviewsPlugin, ssrRenderPlugin, vueRenderPlugins } from '../../plugins';
 import viteBaseConfig from '../../vite-config';
 import { logBuildError } from '../../utils/build-errors';
 import { PREVIEW_ENTRY_ID } from '../../utils/render-shell';
@@ -33,6 +33,7 @@ const RENDERER_PLUGINS: Record<RendererKind, PreviewPlugins> = {
   handlebars: (data, components, handoff) => [handlebarsPreviewsPlugin(data, components, handoff)],
   react: (data, components, handoff) => [react(), ssrRenderPlugin(data, components, handoff)],
   angular: (data, components, handoff) => angularRenderPlugins(data, components, handoff),
+  vue: (data, components, handoff) => vueRenderPlugins(data, components, handoff),
 };
 
 /**
