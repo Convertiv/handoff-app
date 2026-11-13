@@ -5,6 +5,7 @@ import { createRequire } from 'module';
 import path from 'path';
 import {
   createImplementationPlaceholder,
+  implementationToSkip,
   isInsideDirectory,
   normalizeCatalogItem,
   orderPreviews,
@@ -12,7 +13,7 @@ import {
   resolvePropertySource,
   type CatalogNormalizeResult,
 } from '../catalog';
-import { RENDERERS, rendererImportedBy, RUNTIME_PACKAGES } from '../catalog/renderers';
+import { RUNTIME_PACKAGES } from '../catalog/renderers';
 import { HOME_PAGE_ID, HOME_PAGE_PATH } from '../registry/content-kinds';
 import { ComponentListObject } from '../transformers/preview/types';
 import { createCsfStoryPreviews } from '../transformers/utils/csf';
@@ -65,16 +66,6 @@ const findPreferredDeclaration = (componentDir: string, componentBaseName: strin
 export const resolveComponentDeclaration = (componentDir: string, componentBaseName: string): DeclarationResolution | null => {
   const declarationMatch = findPreferredDeclaration(componentDir, componentBaseName);
   return declarationMatch ? { fileName: declarationMatch } : null;
-};
-
-/**
- * The implementation file that reading this declaration must not run, or undefined when the renderer
- * may run it. The file comes from the declaration's import text, like the recorded `componentExport`.
- */
-const implementationToSkip = (filePath: string): string | undefined => {
-  const renderer = rendererImportedBy(fs.readFileSync(filePath, 'utf8'));
-  if (!renderer || RENDERERS[renderer].loadsImplementation) return undefined;
-  return resolvePropertySource(filePath, 'implementation')?.file;
 };
 
 const evaluateDeclaration = (filePath: string, handoffModulePath: string): any => {

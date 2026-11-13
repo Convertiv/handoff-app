@@ -370,9 +370,9 @@ const toFilePath = (entryPath: string): string => {
   return normalized.startsWith('.') ? normalized : `./${normalized}`;
 };
 
-/** Derive a safe PascalCase identifier for the imported React component. */
+/** Derive a safe PascalCase identifier for the imported component, from the file name without its extension. */
 const toComponentIdentifier = (entryPath: string, fallback: string): string => {
-  const base = path.basename(entryPath).replace(COMPONENT_EXTENSION, '');
+  const base = path.basename(entryPath, path.extname(entryPath));
   const pascal = (base || fallback)
     .replace(/[^a-zA-Z0-9]+/g, ' ')
     .trim()

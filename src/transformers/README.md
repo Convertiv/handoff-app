@@ -10,9 +10,9 @@ transformers/
 │   ├── component/      # Component builder, CSS/JS bundling, SSR rendering, validation
 │   ├── component.ts    # Component transformer entry point, shared styles processing
 │   └── types.ts        # Preview/component type definitions
-├── plugins/            # Build plugins (React SSR render, Angular render, Handlebars previews, CSF render with per-preview/story usage generation); each also emits the custom preview render shell
+├── plugins/            # Build plugins (React SSR render, Angular render, Vue render, Handlebars previews, CSF render with per-preview/story usage generation); each also emits the custom preview render shell
 ├── docgen/             # React component documentation generation
-├── utils/              # Build utilities (handlebars, schema, HTML, SVG sprites, Vite logger, usage snippet helpers, render-shell.ts for the preview document, the custom preview shell and its postMessage protocol, frame-layout.ts for element frame layout and background, angular.ts for the Angular toolchain and input extraction, tsconfig-paths.ts for workspace `paths` imports, type-nodes.ts for the TypeScript-to-docgen type tree, stylesheets.ts for the files a stylesheet loads)
+├── utils/              # Build utilities (handlebars, schema, HTML, SVG sprites, Vite logger, usage snippet helpers, render-shell.ts for the preview document, the custom preview shell and its postMessage protocol, frame-layout.ts for element frame layout and background, angular.ts for the Angular toolchain and input extraction, vue.ts for the Vue toolchain and prop extraction, tsconfig-paths.ts for workspace `paths` imports, type-nodes.ts for the TypeScript-to-docgen type tree, stylesheets.ts for the files a stylesheet loads)
 ├── plugins.ts          # Barrel re-exports for plugins
 ├── vite-config.ts      # Shared Vite configuration
 └── types.ts            # Transformer-level type definitions
@@ -42,7 +42,8 @@ mount hydrates. A renderer that renders only in the browser uses `clientRenderPl
 supplies a `ClientRenderer` (the client source, the properties, a usage function, and its watch
 files) and adds its own Vite plugins. The preview build then bundles the client source as its entry. The client source resolves
 its imports from the component file, so both use one copy of the framework. Stylesheets that the build
-extracts, such as a stylesheet that a component imports, go into the client artifact, which injects them when it loads:
+extracts, such as Vue `<style>` blocks or a stylesheet that a component imports, go into the client
+artifact, which injects them when it loads:
 no document references an extracted file.
 
 A client-only renderer passes no markup, so `hydrate` means only that the container is not the custom
@@ -92,3 +93,40 @@ their versions, and `useHandoffVite()` makes the plugin import the Vite that run
    `zone.js`, and zoneless change detection otherwise. A render with the same inputs updates the
    component in place; a render that drops an input creates a new component. There is no server
    render, so the preview documents carry no markup and the component has no HTML view.
+
+## Vue previews
+
+`plugins/vue-render.ts` builds a Vue item with `clientRenderPlugin()`. The workspace supplies Vue 3.3 or
+later and `@vitejs/plugin-vue` 6, which is bound to the workspace `vue/compiler-sfc`. Handoff supplies
+`vue-component-meta`, unless the workspace has its own.
+
+1. `loadVueToolchain()` (`utils/vue.ts`) loads the tooling once per workspace, only when a Vue component
+   builds. A failure is not cached. `requireWorkspacePackages()` checks Vue and the plugin, and
+   `useHandoffVite()` makes the plugin use the Vite that runs the build.
+2. `findVueTsconfig()` picks the workspace TypeScript config. A solution-style `tsconfig.json` defers to
+   the referenced config whose files include the component. `tsconfigPathsPlugin()` resolves its `paths`
+   in script imports, including `.vue` targets.
+3. `readVueComponent()` reads the props of the default export with `vue-component-meta`: type-based and
+   runtime props, `withDefaults`, the Options API, and `defineModel()`. One checker per config holds a
+   language service; files that changed since the last read are read again, so `start` sees edits.
+   - Defaults are read from the source text as constants, including factory defaults such as
+     `() => ['a']`. Other defaults are left out.
+   - Before Vue 3.5, Vue's own types drop the JSDoc of type-based props. The JSDoc then comes from the
+     `defineProps<T>()` type argument and from the variable of each `defineModel()`.
+   - Before Vue 3.5, the checker reads a script without `lang` as TypeScript. In JavaScript, Vue's
+     `defineComponent` types infer the component instance as `any`, which has no props.
+   - When the checker reads no props but the compiler finds some, the build logs a warning that names
+     the component.
+   - A prop is a model when the component emits `update:<prop>`. The usage snippet writes `v-model`
+     for it.
+   - The watch files are the SFC and the files its blocks load with `src`. Script imports reach the
+     Rollup graph on their own.
+4. The Vite build compiles the SFC. Template syntax errors fail it; type errors do not, as with
+   `vite build`.
+   - Each mount point gets its own application with reactive props. The client mount reads the props
+     and models from the compiled component, as Vue normalizes its options, not from the build
+     metadata. It ignores other args and binds each model.
+   - A render updates only the args that changed, so the component keeps its state. A render that
+     drops an arg creates a new application.
+   - There is no server render yet. Vue SSR with hydration fits the same contract: a server bundle
+     renders `markup`, and the mount calls `createSSRApp` when `hydrate` is true.

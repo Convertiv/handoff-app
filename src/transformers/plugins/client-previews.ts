@@ -121,8 +121,8 @@ export type ClientRenderer = {
 const CLIENT_MODULE_ID = '\0handoff-client';
 
 /**
- * Moves the stylesheets that the build extracts, such as a stylesheet that a component
- * imports, into the client artifact. No document references an extracted
+ * Moves the stylesheets that the build extracts, such as the `<style>` blocks of a Vue component or a
+ * stylesheet that a component imports, into the client artifact. No document references an extracted
  * file, and the client artifact is the one file that publish and patterns know a component by.
  */
 const inlineStylesheets = (bundle: Rollup.OutputBundle, artifactFileName: string, componentId: string): void => {

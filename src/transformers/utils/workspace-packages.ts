@@ -84,7 +84,7 @@ export const requireWorkspacePackages = (renderer: string, packages: WorkspacePa
 /**
  * The real directory of an installed package, looked up the way Node looks up `node_modules` from each
  * of `searchDirs`. It does not resolve `<name>/package.json`, which fails for a package whose `exports`
- * leave that file out.
+ * leave that file out, such as `@vitejs/plugin-vue` 5.
  */
 const findPackageDir = (name: string, searchDirs: string[]): string | undefined => {
   for (const searchDir of searchDirs) {

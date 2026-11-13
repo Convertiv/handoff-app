@@ -486,6 +486,12 @@ so the workspace must have Angular 19 or later (`@angular/core` and
 the browser. See
 [RECIPES.md](RECIPES.md#angular-item).
 
+**Vue.** The implementation is a Vue 3 single-file component (`.vue`), from
+`handoff-app/vue`. The preview arguments are the component props. Handoff
+compiles the component with the Vue version of the workspace, so the workspace
+must have Vue 3.3 or later and `@vitejs/plugin-vue` 6. Vue previews render only
+in the browser. See [RECIPES.md](RECIPES.md#vue-item).
+
 **CSF.** A React item uses an existing story file with
 `implementation: fromCSF('./Card.stories.tsx')`. The story file does not
 change, and its named exports are the previews. The server renders a CSF
@@ -932,10 +938,11 @@ items, not component or pattern kinds.
 [Figma credentials](#figma-foundations) must be available.
 
 A catalog item uploads its declared files and every other text source file in
-its directory that its last build read, such as an imported file or an Angular
-template. A file of another catalog item travels with that item. Publish warns
-about every other file that the build read, such as an image or a file outside
-every catalog item directory. Files in a global entry directory get no warning.
+its directory that its last build read, such as an imported file, an Angular
+template, or a file that a Vue block loads with `src`. A file of another catalog
+item travels with that item. Publish warns about every other file that the build
+read, such as an image or a file outside every catalog item directory. Files in
+a global entry directory get no warning.
 
 Add one or more ids to publish only those entities:
 

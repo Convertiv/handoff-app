@@ -4,7 +4,7 @@
  */
 
 /** Add a renderer only with its preview support. */
-export type RendererKind = 'react' | 'handlebars' | 'angular';
+export type RendererKind = 'react' | 'handlebars' | 'angular' | 'vue';
 
 /** How an implementation file is written, independent of the renderer that renders it. */
 export type SourceFormat = 'csf';
@@ -90,6 +90,15 @@ export const RENDERERS: Record<RendererKind, RendererDefinition> = {
     checkoutImplementation: 'named-import',
     code: { label: 'Angular (TS)', language: 'typescript', usageLanguage: 'html' },
   },
+  vue: {
+    module: 'handoff-app/vue',
+    entryKey: 'component',
+    runtimePackages: ['vue', '@vue/*'],
+    // A single-file component is not JavaScript, so only the renderer's own build can load it.
+    loadsImplementation: false,
+    checkoutImplementation: 'import',
+    code: { label: 'Vue (SFC)', language: 'markup', usageLanguage: 'html' },
+  },
 };
 
 export const SOURCE_FORMATS: Record<SourceFormat, SourceFormatDefinition> = {
@@ -120,6 +129,7 @@ const SOURCE_SUFFIXES: Record<string, SourceClaim> = {
   // Angular CLI before v20 names every component this way. Newer projects drop the suffix, so a plain
   // `.ts` file stays unclaimed.
   '.component.ts': { renderers: ['angular'] },
+  '.vue': { renderers: ['vue'] },
 };
 
 /** Longest first, so `.stories.tsx` reads as a CSF source rather than a plain React source. */

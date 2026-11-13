@@ -102,12 +102,12 @@ export async function collectStyleImports(entryPath: string, handoff: any): Prom
  * Every file in the module graph of an entry, stylesheets included, or `null` when the graph does
  * not build.
  */
-export async function collectModuleInputs(entryPath: string, handoff: any): Promise<string[] | null> {
-  const metafile = await buildModuleGraph(entryPath, handoff);
+export async function collectModuleInputs(entryPath: string, handoff: any, external: string[] = []): Promise<string[] | null> {
+  const metafile = await buildModuleGraph(entryPath, handoff, external);
   return metafile ? Object.keys(metafile.inputs).map((input) => path.resolve(input)) : null;
 }
 
-async function buildModuleGraph(entryPath: string, handoff: any): Promise<esbuild.Metafile | null> {
+async function buildModuleGraph(entryPath: string, handoff: any, external: string[] = []): Promise<esbuild.Metafile | null> {
   const baseConfig: esbuild.BuildOptions = {
     ...DEFAULT_SSR_BUILD_CONFIG,
     entryPoints: [entryPath],
@@ -118,7 +118,8 @@ async function buildModuleGraph(entryPath: string, handoff: any): Promise<esbuil
   try {
     // The `empty` loader keeps stylesheets out of the JavaScript, and the metafile still records
     // them as inputs, so the graph carries the order.
-    const result = await esbuild.build({ ...withStyleLoaders(hookedConfig), metafile: true });
+    const config = withStyleLoaders(hookedConfig);
+    const result = await esbuild.build({ ...config, external: [...(config.external ?? []), ...external], metafile: true });
     return result.metafile ?? null;
   } catch {
     return null;
@@ -126,7 +127,7 @@ async function buildModuleGraph(entryPath: string, handoff: any): Promise<esbuil
 }
 
 /**
- * Imports an ES module. Framework tooling such as the Angular Vite plugin is ESM-only, and
+ * Imports an ES module. Framework tooling such as the Angular and Vue Vite plugins is ESM-only, and
  * tsc compiles `import()` to `require()` in this CommonJS package. A function body keeps a real
  * `import()`, as the Angular CLI does for the same reason.
  */
