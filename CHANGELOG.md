@@ -24,6 +24,17 @@ You install only the tooling for the frameworks you document, nothing more.
   cover signal, `model()`, and `@Input()` inputs.
 * `start` rebuilds a component when its template or stylesheet changes.
 
+### Vue
+
+* Added Vue catalog items from `handoff-app/vue`. The implementation is a Vue 3
+  single-file component, and the preview arguments are its props.
+* Handoff compiles each component with the Vue version of the workspace. The
+  workspace needs Vue 3.3 or later and `@vitejs/plugin-vue`.
+* Previews render in the browser. The properties table and the usage snippet
+  cover `<script setup>` props, the Options API, and `defineModel()`.
+* `start` rebuilds a component when its `.vue` file, or a file that a block
+  loads with `src`, changes.
+
 ### Other changes
 
 * A component that does not build, or a declaration that does not load, now
