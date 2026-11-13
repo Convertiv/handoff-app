@@ -120,6 +120,30 @@ export type ClientRenderer = {
 
 const CLIENT_MODULE_ID = '\0handoff-client';
 
+/**
+ * Moves the stylesheets that the build extracts, such as a stylesheet that a component
+ * imports, into the client artifact. No document references an extracted
+ * file, and the client artifact is the one file that publish and patterns know a component by.
+ */
+const inlineStylesheets = (bundle: Rollup.OutputBundle, artifactFileName: string, componentId: string): void => {
+  const artifact = bundle[artifactFileName];
+  const stylesheets = Object.values(bundle).filter(
+    (file): file is Rollup.OutputAsset => file.type === 'asset' && file.fileName.endsWith('.css')
+  );
+  if (!stylesheets.length || artifact?.type !== 'chunk') return;
+  const css = stylesheets
+    .map((file) => (typeof file.source === 'string' ? file.source : Buffer.from(file.source).toString('utf8')))
+    .join('\n');
+  for (const file of stylesheets) delete bundle[file.fileName];
+  artifact.code = `(() => {
+  const style = document.createElement('style');
+  style.setAttribute('data-handoff-styles', ${JSON.stringify(componentId)});
+  style.textContent = ${JSON.stringify(css)};
+  document.head.appendChild(style);
+})();
+${artifact.code}`;
+};
+
 export const clientRenderPlugin = (
   componentData: TransformComponentTokensResult,
   documentationComponents: DocumentationComponents,
@@ -154,7 +178,8 @@ export const clientRenderPlugin = (
     load(id) {
       if (id === CLIENT_MODULE_ID) return renderer.clientSource;
     },
-    async generateBundle() {
+    async generateBundle(_options, bundle) {
+      inlineStylesheets(bundle, clientArtifactFileName(componentData.id), componentData.id);
       componentData.properties = renderer.properties;
       await emitClientPreviews((file) => this.emitFile(file), {
         componentData,

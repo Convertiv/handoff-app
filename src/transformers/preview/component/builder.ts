@@ -26,6 +26,7 @@ import {
 import Handoff from '../../../index';
 import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
+import { logBuildError } from '../../utils/build-errors';
 import { ensureIds } from '../../utils/schema';
 import { ComponentListObject, ComponentType, OptionalPreviewRender, TransformComponentTokensResult } from '../types';
 import { readComponentApi, readComponentMetadataApi, writeComponentApi } from './api';
@@ -222,6 +223,8 @@ export async function processComponents(
 ): Promise<ComponentListObject[]> {
   const result: ComponentListObject[] = [];
   const failedIds: string[] = [];
+  // Every component of a renderer fails the same way on a setup problem, so its message prints once.
+  const reportedSetupErrors = new Set<string>();
 
   const documentationObject = await handoff.getDocumentationObject();
   const components = documentationObject?.components ?? ({} as CoreTypes.IDocumentationObject['components']);
@@ -435,7 +438,7 @@ export async function processComponents(
         data = await buildComponentCss(data, handoff, inputs);
       } catch (error) {
         inputs.failed = true;
-        Logger.error(`Style build failed for component "${runtimeComponentId}":`, error);
+        logBuildError(`Style build failed for component "${runtimeComponentId}"`, error);
       }
     }
     // Build previews (HTML, snapshots, etc) if needed.
@@ -451,6 +454,10 @@ export async function processComponents(
       );
     }
 
+    if (inputs.setupError && !reportedSetupErrors.has(inputs.setupError)) {
+      reportedSetupErrors.add(inputs.setupError);
+      Logger.error(inputs.setupError);
+    }
     if (inputs.failed) {
       failedIds.push(runtimeComponentId);
     } else if (runsViteBuildSteps) {

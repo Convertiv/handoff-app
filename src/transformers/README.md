@@ -12,7 +12,7 @@ transformers/
 │   └── types.ts        # Preview/component type definitions
 ├── plugins/            # Build plugins (React SSR render, Angular render, Handlebars previews, CSF render with per-preview/story usage generation); each also emits the custom preview render shell
 ├── docgen/             # React component documentation generation
-├── utils/              # Build utilities (handlebars, schema, HTML, SVG sprites, Vite logger, usage snippet helpers, render-shell.ts for the preview document, the custom preview shell and its postMessage protocol, frame-layout.ts for element frame layout and background, angular.ts for the Angular toolchain and input extraction, stylesheets.ts for the files a stylesheet loads)
+├── utils/              # Build utilities (handlebars, schema, HTML, SVG sprites, Vite logger, usage snippet helpers, render-shell.ts for the preview document, the custom preview shell and its postMessage protocol, frame-layout.ts for element frame layout and background, angular.ts for the Angular toolchain and input extraction, tsconfig-paths.ts for workspace `paths` imports, type-nodes.ts for the TypeScript-to-docgen type tree, stylesheets.ts for the files a stylesheet loads)
 ├── plugins.ts          # Barrel re-exports for plugins
 ├── vite-config.ts      # Shared Vite configuration
 └── types.ts            # Transformer-level type definitions
@@ -41,17 +41,39 @@ React (`plugins/ssr-render.ts`) bundles its client with esbuild and passes serve
 mount hydrates. A renderer that renders only in the browser uses `clientRenderPlugin()` instead. It
 supplies a `ClientRenderer` (the client source, the properties, a usage function, and its watch
 files) and adds its own Vite plugins. The preview build then bundles the client source as its entry. The client source resolves
-its imports from the component file, so both use one copy of the framework.
+its imports from the component file, so both use one copy of the framework. Stylesheets that the build
+extracts, such as a stylesheet that a component imports, go into the client artifact, which injects them when it loads:
+no document references an extracted file.
+
+A client-only renderer passes no markup, so `hydrate` means only that the container is not the custom
+preview shell. A renderer that adds a server render later passes `markup` to `emitClientPreviews()` and
+hydrates when `hydrate` is true, as React does in `plugins/ssr-render.ts`.
+
+## Framework tooling
+
+Handoff ships nothing that belongs to one framework. A renderer loads its framework and its Vite
+plugin from the workspace, lazily, only when one of its components builds. `utils/workspace-packages.ts`
+holds the shared parts:
+
+- `requireWorkspacePackages()` checks that each package exists in a supported version. One error lists
+  every missing or unsupported package, with the `npm install` command that fixes them.
+- `useHandoffVite()` makes a workspace Vite plugin import Handoff's Vite. The plugin is a peer of
+  Vite, so it would otherwise resolve the workspace's Vite, which can be a different copy. A Node
+  resolve hook redirects the plugin's `vite` imports.
+
+`package.json` declares each plugin as an optional peer dependency, so npm never installs it into a
+project that does not use the renderer, and warns about an unsupported version.
 
 ## Angular previews
 
 `plugins/angular-render.ts` builds an Angular item with `clientRenderPlugin()`. The workspace supplies
-Angular 19 or later; Handoff supplies only `@analogjs/vite-plugin-angular`, which drives the workspace
-`@angular/build` compiler.
+Angular 19 or later, `@angular/build`, and `@analogjs/vite-plugin-angular`, which drives the
+`@angular/build` compiler. `requireWorkspacePackages()` (`utils/workspace-packages.ts`) checks them and
+their versions, and `useHandoffVite()` makes the plugin import the Vite that runs the build.
 
 1. `utils/angular.ts` writes `.handoff/.cache/angular/<id>.tsconfig.json`. It extends the workspace
    config, lists only the component, and turns emit on, because an editor-only config often sets `noEmit`.
-   `tsconfigPathsPlugin()` resolves the workspace `paths` imports, which Vite does not read.
+   `tsconfigPathsPlugin()` (`utils/tsconfig-paths.ts`) resolves the workspace `paths` imports, which Vite does not read.
 2. `readAngularComponent()` reads the selector and the inputs from the compiler's resolved directive
    metadata, so aliases, required inputs, `model()` and inherited inputs follow Angular's rules. The
    TypeScript checker resolves each input type into the docgen `deepType` tree. Parsed library

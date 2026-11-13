@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react';
 import { Types as CoreTypes } from 'handoff-core';
+import path from 'path';
 import { InlineConfig, PluginOption, build as viteBuild } from 'vite';
 import { BuildInputs, withBuildInputs } from '../../../cache/build-inputs';
 import type { RendererKind, SourceFormat } from '../../../catalog/renderers';
@@ -7,7 +8,9 @@ import Handoff from '../../../index';
 import { Logger } from '../../../utils/logger';
 import { angularRenderPlugins, csfRenderPlugin, handlebarsPreviewsPlugin, ssrRenderPlugin } from '../../plugins';
 import viteBaseConfig from '../../vite-config';
+import { logBuildError } from '../../utils/build-errors';
 import { PREVIEW_ENTRY_ID } from '../../utils/render-shell';
+import { WorkspaceSetupError } from '../../utils/workspace-packages';
 import { getComponentOutputPath } from './api';
 import { TransformComponentTokensResult } from '../types';
 
@@ -96,7 +99,11 @@ export const buildPreviews = async (
     await viteBuild(withBuildInputs(viteConfig, inputs));
   } catch (error) {
     if (inputs) inputs.failed = true;
-    Logger.error(`Error building the previews of ${data.id} (${data.entries.template})`, error);
+    if (error instanceof WorkspaceSetupError && inputs) {
+      inputs.setupError = error.message;
+    } else {
+      logBuildError(`Error building the previews of ${data.id} (${path.relative(handoff.workingPath, data.entries.template)})`, error);
+    }
   } finally {
     // Restore the original NODE_ENV value after vite build completes
     // This prevents interference with Next.js app building/running processes

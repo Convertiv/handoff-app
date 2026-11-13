@@ -1,5 +1,6 @@
 import esbuild from 'esbuild';
 import path from 'path';
+import { pathToFileURL } from 'url';
 
 const STYLE_EXTENSIONS = ['.css', '.scss', '.sass'];
 
@@ -123,6 +124,17 @@ async function buildModuleGraph(entryPath: string, handoff: any): Promise<esbuil
     return null;
   }
 }
+
+/**
+ * Imports an ES module. Framework tooling such as the Angular Vite plugin is ESM-only, and
+ * tsc compiles `import()` to `require()` in this CommonJS package. A function body keeps a real
+ * `import()`, as the Angular CLI does for the same reason.
+ */
+export const importEsm = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
+
+/** Imports the ES module that `id` resolves to from the first of `searchDirs` that has it. */
+export const importResolved = (id: string, searchDirs: string[]): Promise<any> =>
+  importEsm(pathToFileURL(resolveModule(id, searchDirs)).href);
 
 /**
  * Resolves a module from multiple search directories

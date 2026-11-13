@@ -313,7 +313,11 @@ Notes:
 
 - The workspace supplies Angular. It needs Angular 19 or later, plus
   `@angular/compiler-cli` and `@angular/build`. An Angular CLI project already
-  has them.
+  has them. It also needs the Vite plugin that compiles the components:
+
+  ```bash
+  npm install -D @analogjs/vite-plugin-angular
+  ```
 - Handoff compiles each component with the workspace `tsconfig.json`. The
   config must set `experimentalDecorators`, as Angular CLI projects do.
 - Signal inputs, `model()` inputs, and `@Input()` properties are all

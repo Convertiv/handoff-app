@@ -48,8 +48,14 @@ A new renderer needs:
 - An entry point file, plus its `exports` and `typesVersions` entries in `package.json`
 - A `RENDERER_PLUGINS` row in `transformers/preview/component/html.ts`
 - A call to `this.addWatchFile()` in its preview plugin for each file the build reads outside the
-  import graph, such as an Angular `templateUrl`. The build cache, `start`, and `publish` then track
-  the file. Imported files need nothing
+  import graph, such as an Angular `templateUrl`. With `clientRenderPlugin()`, list them in
+  `watchFiles`. The build cache, `start`, and `publish` then track the file. Imported files need
+  nothing
+- The name of the entry point in `MISSING_RENDERER_HELP` (`define.ts`)
+- Framework tooling from the workspace, never from Handoff's `dependencies`: check it with
+  `requireWorkspacePackages()` and declare its Vite plugin as an optional peer dependency (see
+  `transformers/README.md`, "Framework tooling"). A project then installs only the tooling of the
+  renderers it uses
 
 `RENDERERS` and `RENDERER_PLUGINS` are `Record<RendererKind, …>` with required fields, so the build
 fails until the renderer is complete. No existing renderer file changes.

@@ -4,9 +4,10 @@ import { PluginOption, normalizePath } from 'vite';
 import Handoff from '../..';
 import { Logger } from '../../utils/logger';
 import { TransformComponentTokensResult } from '../preview/types';
-import { AngularComponentInfo, loadAngularToolchain, readAngularComponent, tsconfigPathsPlugin, writeCompilationTsconfig } from '../utils/angular';
+import { AngularComponentInfo, loadAngularToolchain, readAngularComponent, writeCompilationTsconfig } from '../utils/angular';
 import { resolveModule } from '../utils/build';
 import { CLIENT_RENDER_RUNTIME_SOURCE } from '../utils/render-shell';
+import { tsconfigPathsPlugin } from '../utils/tsconfig-paths';
 import { generateAngularUsageSnippet, parseSelector } from '../utils/usage';
 import { clientRenderPlugin } from './client-previews';
 
@@ -19,7 +20,12 @@ import { clientRenderPlugin } from './client-previews';
  */
 const generateClientSource = (componentId: string, entry: string, info: AngularComponentInfo, useZone: boolean): string => {
   const { tag, attributes } = parseSelector(info.selector);
-  const inputs = Object.fromEntries(info.inputs.flatMap(({ key, binding }) => [[binding, binding], [key, binding]]));
+  const inputs = Object.fromEntries(
+    info.inputs.flatMap(({ key, binding }) => [
+      [binding, binding],
+      [key, binding],
+    ])
+  );
   const classKeys = info.inputs.map(({ key }) => key);
   const changeDetection = useZone ? 'provideZoneChangeDetection({ eventCoalescing: true })' : `${info.zonelessProvider}()`;
   const importClause = info.exportName === 'default' ? 'Component' : `{ ${info.exportName} as Component }`;
@@ -99,29 +105,25 @@ const createAngularPlugins = async (
   handoff: Handoff
 ): Promise<PluginOption[]> => {
   const entry = path.resolve(componentData.entries.template);
-  try {
-    const toolchain = await loadAngularToolchain(handoff);
-    const tsconfig = writeCompilationTsconfig(handoff, componentData.id, entry);
-    const info = readAngularComponent(toolchain, entry, tsconfig, componentData.componentExport);
-    const useZone = hasZoneJs(entry, handoff.workingPath);
-    Logger.debug(`Angular component "${info.exportName}" (${info.selector}) for ${componentData.id}${useZone ? ' with zone.js' : ''}`);
-    return [
-      tsconfigPathsPlugin(toolchain, tsconfig),
-      // Type checking reports template errors with their location, as `ng build` does.
-      ...toolchain.vitePlugin({ tsconfig, workspaceRoot: handoff.workingPath, disableTypeChecking: false }),
-      clientRenderPlugin(componentData, documentationComponents, handoff, {
-        format: 'angular',
-        entry,
-        clientSource: generateClientSource(componentData.id, entry, info, useZone),
-        properties: info.properties,
-        usage: (previewValues) =>
-          generateAngularUsageSnippet({ selector: info.selector, inputs: info.inputs, properties: info.properties, previewValues }),
-        watchFiles: info.resourceFiles,
-      }),
-    ];
-  } catch (error) {
-    throw new Error(`Angular component "${componentData.id}": ${error instanceof Error ? error.message : String(error)}`, { cause: error });
-  }
+  const toolchain = await loadAngularToolchain(handoff);
+  const tsconfig = writeCompilationTsconfig(handoff, componentData.id, entry);
+  const info = readAngularComponent(toolchain, entry, tsconfig, componentData.componentExport);
+  const useZone = hasZoneJs(entry, handoff.workingPath);
+  Logger.debug(`Angular component "${info.exportName}" (${info.selector}) for ${componentData.id}${useZone ? ' with zone.js' : ''}`);
+  return [
+    tsconfigPathsPlugin(toolchain.ts, toolchain.compilerCli.readConfiguration(tsconfig).options, path.dirname(tsconfig)),
+    // Type checking reports template errors with their location, as `ng build` does.
+    ...toolchain.vitePlugin({ tsconfig, workspaceRoot: handoff.workingPath, disableTypeChecking: false }),
+    clientRenderPlugin(componentData, documentationComponents, handoff, {
+      format: 'angular',
+      entry,
+      clientSource: generateClientSource(componentData.id, entry, info, useZone),
+      properties: info.properties,
+      usage: (previewValues) =>
+        generateAngularUsageSnippet({ selector: info.selector, inputs: info.inputs, properties: info.properties, previewValues }),
+      watchFiles: info.resourceFiles,
+    }),
+  ];
 };
 
 /**

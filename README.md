@@ -479,8 +479,9 @@ declaration that holds JSX must use the `.handoff.tsx` extension.
 **Angular.** The implementation is a standalone component class, from
 `handoff-app/angular`. The preview arguments are the component inputs. Handoff
 compiles the component ahead of time with the Angular version of the workspace,
-so the workspace must have Angular 19 or later, `@angular/compiler-cli`, and
-`@angular/build`. Angular previews render only in the browser. See
+so the workspace must have Angular 19 or later, `@angular/compiler-cli`,
+`@angular/build`, and `@analogjs/vite-plugin-angular` 2.9 or later. Angular
+previews render only in the browser. See
 [RECIPES.md](RECIPES.md#angular-item).
 
 **CSF.** A React item uses an existing story file with

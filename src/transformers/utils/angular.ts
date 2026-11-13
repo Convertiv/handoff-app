@@ -1,35 +1,28 @@
 import fs from 'fs-extra';
-import type { TypeNode } from 'handoff-docgen';
 import path from 'path';
 import type * as TS from 'typescript';
-import { pathToFileURL } from 'url';
-import type { Plugin, PluginOption } from 'vite';
+import type { PluginOption } from 'vite';
 import { toSlotMetadata } from '../docgen';
 import type { SlotMetadata } from '../preview/component';
-import { resolveModule } from './build';
+import { importResolved, resolveModule } from './build';
+import { DOCGEN_TYPE_BY_KIND, toTypeNode } from './type-nodes';
+import { requireWorkspacePackages, useHandoffVite, type WorkspacePackage } from './workspace-packages';
+
+const ANALOG_PLUGIN = '@analogjs/vite-plugin-angular';
 
 /**
- * Angular comes from the workspace, never from Handoff, so a project keeps its own Angular version.
- * `@angular/build` supplies the compiler that the Vite plugin drives.
+ * Angular and its build tooling come from the workspace, so a project keeps its own Angular version.
+ * `@angular/build` supplies the compiler that the Analog Vite plugin drives. Angular 19 is the floor
+ * because Handoff needs TypeScript 5.6 or later, which Angular 18 does not accept. The compiler APIs
+ * that Handoff reads are checked where they are used.
  */
-const WORKSPACE_PACKAGES = ['@angular/core', '@angular/platform-browser', '@angular/compiler-cli', '@angular/build'];
-
-/**
- * Handoff needs TypeScript 5.6 or later, which Angular 18 does not accept. The compiler APIs that
- * Handoff reads are checked where they are used.
- */
-const MIN_ANGULAR_MAJOR = 19;
-
-/** Stops the type walk on deeply nested or recursive input types. */
-const MAX_TYPE_DEPTH = 4;
-
-/**
- * The Angular tooling is ESM-only, and tsc compiles `import()` to `require()` in this CommonJS
- * package. A function body keeps a real `import()`, as the Angular CLI does for the same reason.
- */
-const importEsm = new Function('specifier', 'return import(specifier)') as (specifier: string) => Promise<any>;
-
-const importResolved = (id: string, searchDirs: string[]): Promise<any> => importEsm(pathToFileURL(resolveModule(id, searchDirs)).href);
+const WORKSPACE_PACKAGES: WorkspacePackage[] = [
+  { name: '@angular/core', min: '19.0' },
+  { name: '@angular/platform-browser' },
+  { name: '@angular/compiler-cli', dev: true },
+  { name: '@angular/build', dev: true },
+  { name: ANALOG_PLUGIN, min: '2.9', maxMajor: 2, dev: true },
+];
 
 type HandoffContext = { workingPath: string; modulePath: string };
 
@@ -47,30 +40,13 @@ export type AngularToolchain = {
 
 const toolchains = new Map<string, Promise<AngularToolchain>>();
 
-const findMissingPackages = (workingPath: string): string[] =>
-  WORKSPACE_PACKAGES.filter((name) => {
-    try {
-      resolveModule(`${name}/package.json`, [workingPath]);
-      return false;
-    } catch {
-      return true;
-    }
-  });
-
 const loadToolchain = async (handoff: HandoffContext): Promise<AngularToolchain> => {
-  const missing = findMissingPackages(handoff.workingPath);
-  if (missing.length) {
-    throw new Error(`Angular previews need these packages in the workspace: ${missing.join(', ')}. Run: npm install -D ${missing.join(' ')}`);
-  }
-
-  const { version } = fs.readJsonSync(resolveModule('@angular/core/package.json', [handoff.workingPath]));
-  if (Number.parseInt(version, 10) < MIN_ANGULAR_MAJOR) {
-    throw new Error(`Angular previews need Angular ${MIN_ANGULAR_MAJOR} or later. The workspace has Angular ${version}.`);
-  }
+  requireWorkspacePackages('Angular', WORKSPACE_PACKAGES, handoff.workingPath);
+  useHandoffVite(ANALOG_PLUGIN, handoff.workingPath, handoff.modulePath);
 
   const compilerCliPath = resolveModule('@angular/compiler-cli/package.json', [handoff.workingPath]);
   const [plugin, compilerCli] = await Promise.all([
-    importResolved('@analogjs/vite-plugin-angular', [handoff.modulePath, handoff.workingPath]),
+    importResolved(ANALOG_PLUGIN, [handoff.workingPath]),
     importResolved('@angular/compiler-cli', [handoff.workingPath]),
   ]);
   // The compiler and the type walk must share one TypeScript instance, so resolve it the way the compiler does.
@@ -123,27 +99,6 @@ export const writeCompilationTsconfig = (handoff: HandoffContext, componentId: s
   return file;
 };
 
-/**
- * Resolves the workspace's TypeScript `paths` (and `baseUrl`) imports, which Vite does not read. Only
- * a workspace source file resolves this way; a package import stays with Vite.
- */
-export const tsconfigPathsPlugin = (toolchain: AngularToolchain, tsconfig: string): Plugin => {
-  const { ts, compilerCli } = toolchain;
-  const { options } = compilerCli.readConfiguration(tsconfig);
-  const cache = ts.createModuleResolutionCache(path.dirname(tsconfig), (fileName) => fileName, options);
-  return {
-    name: 'handoff:tsconfig-paths',
-    enforce: 'pre',
-    resolveId(source, importer) {
-      if (!importer || source.startsWith('.') || source.startsWith('\0') || path.isAbsolute(source)) return null;
-      if (!/\.[cm]?tsx?$/.test(importer) || importer.split(/[\\/]/).includes('node_modules')) return null;
-      const { resolvedModule } = ts.resolveModuleName(source, importer, options, ts.sys, cache);
-      if (!resolvedModule || resolvedModule.isExternalLibraryImport || resolvedModule.resolvedFileName.endsWith('.d.ts')) return null;
-      return resolvedModule.resolvedFileName;
-    },
-  };
-};
-
 /** `key` is the class property name, which preview args use; `binding` is the name a template binds. */
 export type AngularInput = { key: string; binding: string };
 
@@ -175,61 +130,6 @@ const inputValueType = (ts: typeof TS, checker: TS.TypeChecker, type: TS.Type): 
   const typeArguments =
     type.aliasTypeArguments ?? (type.flags & ts.TypeFlags.Object ? checker.getTypeArguments(type as TS.TypeReference) : undefined);
   return typeArguments?.[0] ?? type;
-};
-
-/** Maps a TypeScript type to the docgen type tree that the properties table and the preview editor read. */
-const toTypeNode = (ts: typeof TS, checker: TS.TypeChecker, type: TS.Type, depth = 0): TypeNode => {
-  const display = checker.typeToString(type);
-  if (depth > MAX_TYPE_DEPTH) return { kind: 'unknown', display, truncated: true };
-  if (type.flags & (ts.TypeFlags.StringLike | ts.TypeFlags.NumberLike | ts.TypeFlags.BooleanLike) && !type.isUnion()) {
-    return { kind: 'primitive', display };
-  }
-  if (type.flags & ts.TypeFlags.Boolean) return { kind: 'primitive', display: 'boolean' };
-  if (type.flags & (ts.TypeFlags.Any | ts.TypeFlags.Unknown)) return { kind: 'unknown', display };
-
-  if (type.isUnion()) {
-    const members = type.types.filter((member) => !(member.flags & (ts.TypeFlags.Undefined | ts.TypeFlags.Null | ts.TypeFlags.Void)));
-    if (members.length && members.every((member) => member.flags & ts.TypeFlags.BooleanLiteral)) {
-      return { kind: 'primitive', display: 'boolean' };
-    }
-    // A string or numeric enum is a union of its member literals, so it lists the values, not the member names.
-    if (members.length > 1 && members.every((member) => member.isStringLiteral() || member.isNumberLiteral())) {
-      return { kind: 'enum', display, members: members.map((member) => JSON.stringify((member as TS.LiteralType).value)) };
-    }
-    if (members.length === 1) return toTypeNode(ts, checker, members[0], depth);
-    return { kind: 'union', display, children: members.map((member) => toTypeNode(ts, checker, member, depth + 1)) };
-  }
-
-  if (checker.isArrayType(type)) {
-    const [elementType] = checker.getTypeArguments(type as TS.TypeReference);
-    return { kind: 'array', display, elementType: elementType ? toTypeNode(ts, checker, elementType, depth + 1) : undefined };
-  }
-  if (type.getCallSignatures().length) return { kind: 'function', display };
-  if (type.flags & ts.TypeFlags.Object) {
-    return {
-      kind: 'object',
-      display,
-      properties: checker.getPropertiesOfType(type).map((property) => {
-        const declaration = property.valueDeclaration ?? property.declarations?.[0];
-        const propertyType = declaration ? checker.getTypeOfSymbolAtLocation(property, declaration) : checker.getAnyType();
-        return {
-          name: property.getName(),
-          optional: !!(property.flags & ts.SymbolFlags.Optional),
-          type: toTypeNode(ts, checker, propertyType, depth + 1),
-          description: ts.displayPartsToString(property.getDocumentationComment(checker)) || undefined,
-        };
-      }),
-    };
-  }
-  return { kind: 'unknown', display };
-};
-
-const DOCGEN_TYPE_BY_KIND: Partial<Record<TypeNode['kind'], string>> = {
-  enum: 'enum',
-  array: 'array',
-  object: 'object',
-  function: 'function',
-  unknown: 'unknown',
 };
 
 /** The value of a default that the source states as a constant, such as `'md'`, `[]` or `Tone.Info`; else `undefined`. */
@@ -310,7 +210,12 @@ const exportedClass = (ts: typeof TS, checker: TS.TypeChecker, symbol: TS.Symbol
  * directive metadata, so aliases, required inputs, `model()` and inherited inputs follow Angular's
  * rules. `exportName` picks the component when the file exports more than one.
  */
-export const readAngularComponent = (toolchain: AngularToolchain, entry: string, tsconfig: string, exportName?: string): AngularComponentInfo => {
+export const readAngularComponent = (
+  toolchain: AngularToolchain,
+  entry: string,
+  tsconfig: string,
+  exportName?: string
+): AngularComponentInfo => {
   const { compilerCli, ts } = toolchain;
   const { options, rootNames, errors } = compilerCli.readConfiguration(tsconfig);
   if (errors?.length) {
