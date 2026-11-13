@@ -318,8 +318,9 @@ Notes:
   ```bash
   npm install -D @analogjs/vite-plugin-angular
   ```
-- Handoff compiles each component with the workspace `tsconfig.json`. The
-  config must set `experimentalDecorators`, as Angular CLI projects do.
+
+- Handoff compiles each component with the workspace `tsconfig.json`, so its
+  `paths` and compiler options apply.
 - Signal inputs, `model()` inputs, and `@Input()` properties are all
   arguments. `Preview<typeof item>` types a signal input by the value it
   accepts, so `input(false, { transform: booleanAttribute })` accepts any
