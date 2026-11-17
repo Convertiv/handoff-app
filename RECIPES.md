@@ -313,10 +313,11 @@ Notes:
 
 - The workspace supplies Angular. It needs Angular 19 or later, plus
   `@angular/compiler-cli` and `@angular/build`. An Angular CLI project already
-  has them. It also needs the Vite plugin that compiles the components:
+  has them. It also needs the Vite plugin that compiles the components,
+  version 2.9 or a later 2.x:
 
   ```bash
-  npm install -D @analogjs/vite-plugin-angular
+  npm install -D @analogjs/vite-plugin-angular@^2.9
   ```
 
 - Handoff compiles each component with the workspace `tsconfig.json`, so its
@@ -392,11 +393,12 @@ export const Primary = {
 
 Notes:
 
-- The workspace supplies Vue. It needs Vue 3.3 or later, plus the Vite
-  plugin that compiles the components. A `create-vue` project already has it:
+- The workspace supplies Vue. It needs Vue 3.3 or a later 3.x, plus version 6
+  of the Vite plugin that compiles the components. A `create-vue` project
+  already has it:
 
   ```bash
-  npm install -D @vitejs/plugin-vue
+  npm install -D @vitejs/plugin-vue@^6
   ```
 
 - Handoff compiles the component with the `vue/compiler-sfc` of the

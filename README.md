@@ -421,8 +421,8 @@ variable directly.
 
 Every documented UI entry is a catalog item. An item declares one of these:
 
-- An `implementation`, which names a renderer: React, Angular, Handlebars, or
-  CSF.
+- An `implementation`, which names a renderer: React, Angular, Vue,
+  Handlebars, or CSF.
   The registry stores the item as a component.
 - A `composition` of other items. The registry stores the item as a pattern.
 
@@ -482,15 +482,14 @@ declaration that holds JSX must use the `.handoff.tsx` extension.
 compiles the component ahead of time with the Angular version of the workspace,
 so the workspace must have Angular 19 or later (`@angular/core` and
 `@angular/platform-browser`), `@angular/compiler-cli`, `@angular/build`, and
-`@analogjs/vite-plugin-angular` 2.9 or later. Angular previews render only in
-the browser. See
-[RECIPES.md](RECIPES.md#angular-item).
+`@analogjs/vite-plugin-angular` 2.9 or a later 2.x. Angular previews render
+only in the browser. See [RECIPES.md](RECIPES.md#angular-item).
 
 **Vue.** The implementation is a Vue 3 single-file component (`.vue`), from
 `handoff-app/vue`. The preview arguments are the component props. Handoff
 compiles the component with the Vue version of the workspace, so the workspace
-must have Vue 3.3 or later and `@vitejs/plugin-vue` 6. Vue previews render only
-in the browser. See [RECIPES.md](RECIPES.md#vue-item).
+must have Vue 3.3 or a later 3.x, and `@vitejs/plugin-vue` 6. Vue previews
+render only in the browser. See [RECIPES.md](RECIPES.md#vue-item).
 
 **CSF.** A React item uses an existing story file with
 `implementation: fromCSF('./Card.stories.tsx')`. The story file does not

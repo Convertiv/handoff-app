@@ -9,7 +9,7 @@ and this project adheres to
 ## \[2.2.0] - 2026-11-17
 
 This release is all about meeting your components where they live. Handoff now
-documents components from more frameworks, and it builds every preview with the
+documents Angular and Vue components, and it builds their previews with the
 framework version your project already uses, so the docs show what you ship.
 You install only the tooling for the frameworks you document, nothing more.
 
@@ -19,7 +19,7 @@ You install only the tooling for the frameworks you document, nothing more.
   a standalone component class, and the preview arguments are its inputs.
 * Handoff compiles each component with the Angular version of the workspace.
   The workspace needs Angular 19 or later, `@angular/compiler-cli`,
-  `@angular/build`, and `@analogjs/vite-plugin-angular`.
+  `@angular/build`, and `@analogjs/vite-plugin-angular` 2.9 or a later 2.x.
 * Previews render in the browser. The properties table and the usage snippet
   cover signal, `model()`, and `@Input()` inputs.
 * `start` rebuilds a component when its template or stylesheet changes.
@@ -29,7 +29,7 @@ You install only the tooling for the frameworks you document, nothing more.
 * Added Vue catalog items from `handoff-app/vue`. The implementation is a Vue 3
   single-file component, and the preview arguments are its props.
 * Handoff compiles each component with the Vue version of the workspace. The
-  workspace needs Vue 3.3 or later and `@vitejs/plugin-vue`.
+  workspace needs Vue 3.3 or a later 3.x, and `@vitejs/plugin-vue` 6.
 * Previews render in the browser. The properties table and the usage snippet
   cover `<script setup>` props, the Options API, and `defineModel()`.
 * `start` rebuilds a component when its `.vue` file, or a file that a block
