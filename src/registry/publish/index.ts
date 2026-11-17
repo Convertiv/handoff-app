@@ -13,7 +13,7 @@
 import Handoff from '../../index';
 import { buildMainCss } from '../../transformers/preview/component/css';
 import { buildMainJS } from '../../transformers/preview/component/javascript';
-import processComponents from '../../transformers/preview/component/builder';
+import processComponents, { ComponentBuildError } from '../../transformers/preview/component/builder';
 import { processPatterns } from '../../transformers/preview/pattern/builder';
 import { Logger } from '../../utils/logger';
 import { createRegistryClient, RegistryClientError, type RegistryClient } from '../client';
@@ -200,7 +200,7 @@ const runTargetedBuild = async (handoff: Handoff, kind: TransferEntityKind, id: 
     if (!handoff.runtimeConfig?.entities.components[id]) {
       throw new PublishPackageError(`Component "${id}" is not declared in this workspace.`);
     }
-    await processComponents(handoff, id);
+    await processComponents(handoff, id, undefined, { failOnError: true });
     return;
   }
 
@@ -213,7 +213,7 @@ const runTargetedBuild = async (handoff: Handoff, kind: TransferEntityKind, id: 
   const referencedComponentIds = new Set(pattern.components.map((ref) => ref.id));
   for (const componentId of Array.from(referencedComponentIds)) {
     if (handoff.runtimeConfig?.entities.components[componentId]) {
-      await processComponents(handoff, componentId);
+      await processComponents(handoff, componentId, undefined, { failOnError: true });
     }
   }
   await processPatterns(handoff, { onlyPatternIds: new Set([id]) });
@@ -261,21 +261,64 @@ export const publishEntity = async (handoff: Handoff, kind: TransferEntityKind, 
 /** The published-content hash a bulk publish compares for skip-unchanged (artifact for rendered kinds, source for pages). */
 const entityHash = (value: { artifactHash?: string; sourceHash?: string }): string | undefined => value.artifactHash ?? value.sourceHash;
 
+/** What a bulk build could not build. Those entities are reported as failed and never uploaded. */
+type BuildFailures = {
+  componentIds: Set<string>;
+  /** Declarations that did not load, relative to the working directory. */
+  invalidDeclarations: string[];
+};
+
+const NO_BUILD_FAILURES: BuildFailures = { componentIds: new Set(), invalidDeclarations: [] };
+
+/**
+ * A declaration that did not load has no id, so only a run that publishes every entity counts it. A
+ * run with ids names an undeclared id as unknown instead.
+ */
+const countInvalidDeclarations = (failures: BuildFailures, ids: string[] | undefined): number => {
+  if (ids) return 0;
+  for (const declaration of failures.invalidDeclarations) {
+    Logger.error(`  - ${declaration}: the declaration did not load. The warning above gives the cause.`);
+  }
+  return failures.invalidDeclarations.length;
+};
+
 /**
  * Run one build covering every entity of the kind, so a bulk publish builds once instead of per id.
  * Pages carry no rendered artifacts. Components need the global artifacts + all components; patterns
  * additionally need all patterns composed (each references pre-built component HTML).
+ *
+ * A component that fails does not stop the run, so the entities that built still publish.
  */
-const runBulkBuild = async (handoff: Handoff, kind: TransferEntityKind): Promise<void> => {
+const runBulkBuild = async (handoff: Handoff, kind: TransferEntityKind): Promise<BuildFailures> => {
   if (kind === 'page') {
-    return;
+    return NO_BUILD_FAILURES;
   }
   await buildMainJS(handoff);
   await buildMainCss(handoff);
-  await processComponents(handoff);
+  let failures = NO_BUILD_FAILURES;
+  try {
+    await processComponents(handoff, undefined, undefined, { failOnError: true });
+  } catch (error) {
+    if (!(error instanceof ComponentBuildError)) throw error;
+    failures = { componentIds: new Set(error.componentIds), invalidDeclarations: error.invalidDeclarations };
+  }
   if (kind === 'pattern') {
     await processPatterns(handoff);
   }
+  return failures;
+};
+
+const buildFailureOf = (handoff: Handoff, kind: TransferEntityKind, id: string, failures: BuildFailures): string | undefined => {
+  if (kind === 'component') {
+    return failures.componentIds.has(id) ? 'The component did not build. The errors above give the cause.' : undefined;
+  }
+  if (kind === 'pattern') {
+    const broken = (handoff.runtimeConfig?.entities.patterns[id]?.components ?? [])
+      .map((ref) => ref.id)
+      .filter((componentId) => failures.componentIds.has(componentId));
+    return broken.length ? `It composes components that did not build: ${Array.from(new Set(broken)).join(', ')}.` : undefined;
+  }
+  return undefined;
 };
 
 /** List every declared entity id of the kind from the workspace store. */
@@ -310,7 +353,13 @@ const selectEntityIds = (available: string[], requested: string[] | undefined, k
  * A per-entity failure is collected and never aborts the rest. Failures are reported here, and the
  * count is returned so the caller raises one error for the whole run.
  */
-const uploadEntities = async (handoff: Handoff, transport: PublishTransport, kind: TransferEntityKind, ids?: string[]): Promise<number> => {
+const uploadEntities = async (
+  handoff: Handoff,
+  transport: PublishTransport,
+  kind: TransferEntityKind,
+  ids: string[] | undefined,
+  buildFailures: BuildFailures = NO_BUILD_FAILURES
+): Promise<number> => {
   const { client, url } = transport;
   const targets = selectEntityIds(await listWorkspaceEntityIds(handoff, kind), ids, kind);
   if (targets.length === 0) {
@@ -335,6 +384,11 @@ const uploadEntities = async (handoff: Handoff, transport: PublishTransport, kin
   const failed: { id: string; message: string }[] = [];
 
   for (const id of targets) {
+    const buildFailure = buildFailureOf(handoff, kind, id, buildFailures);
+    if (buildFailure) {
+      failed.push({ id, message: buildFailure });
+      continue;
+    }
     try {
       const pkg = await buildPublishPackage(handoff, kind, id);
       assertRequiredArtifactsPresent(pkg);
@@ -378,12 +432,13 @@ export const publishEntities = async (handoff: Handoff, kind: TransferEntityKind
   if (isCatalogLane(kind)) assertUniqueCatalogIds(handoff);
   const transport = await resolveTransport(handoff);
 
+  let buildFailures = NO_BUILD_FAILURES;
   if (!handoff.skipBuild) {
     Logger.info(`Building ${kind}s for publish…`);
-    await runBulkBuild(handoff, kind);
+    buildFailures = await runBulkBuild(handoff, kind);
   }
 
-  const failed = await uploadEntities(handoff, transport, kind, ids);
+  const failed = (await uploadEntities(handoff, transport, kind, ids, buildFailures)) + countInvalidDeclarations(buildFailures, ids);
   if (failed > 0) {
     throw new PublishError(`${failed} ${kind}(s) failed to publish.`);
   }
@@ -435,15 +490,16 @@ export const publishCatalog = async (handoff: Handoff, ids?: string[]): Promise<
   const transport = await resolveTransport(handoff);
   const lanes = await resolveCatalogLanes(handoff, ids);
 
+  let buildFailures = NO_BUILD_FAILURES;
   if (!handoff.skipBuild) {
     Logger.info('Building catalog items for publish…');
     // The pattern build runs the component build first, so one call covers both lanes.
-    await runBulkBuild(handoff, 'pattern');
+    buildFailures = await runBulkBuild(handoff, 'pattern');
   }
 
-  let failed = 0;
+  let failed = countInvalidDeclarations(buildFailures, ids);
   for (const lane of lanes) {
-    failed += await uploadEntities(handoff, transport, lane.kind, lane.ids);
+    failed += await uploadEntities(handoff, transport, lane.kind, lane.ids, buildFailures);
   }
   if (failed > 0) {
     throw new PublishError(`${failed} catalog item(s) failed to publish.`);

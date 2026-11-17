@@ -7,10 +7,10 @@ import type { ComponentArtifactPresence, SharedArtifactPresence } from '../compo
 /**
  * Composes multiple component preview HTML documents into a single-page HTML.
  *
- * Each component preview may be a React SSR document (server-rendered markup plus a `#root` /
- * `#__APP_PROPS__` pair) or a static Handlebars document.
+ * Each component preview may be a client-rendered document (a `#root` / `#__APP_PROPS__` pair, with
+ * server-rendered markup for React and none for Angular) or a static Handlebars document.
  *
- * React client/hydration bundles are component-owned artifacts (`component/<id>.client.js`). This
+ * Client bundles are component-owned artifacts (`component/<id>.client.js`). This
  * composer copies no per-fragment bundle: it namespaces each fragment's root/props so multiple
  * instances coexist, marks each root with the `data-handoff-component`/`data-handoff-props`
  * attributes the component bundle hydrates by, and references each unique component's client artifact
@@ -63,7 +63,7 @@ export const composePatternHtml = (
     const namespacedRootId = `root${suffix}`;
     const namespacedPropsId = `__APP_PROPS__${suffix}`;
 
-    // -- Extract props JSON (React SSR) ------------------------------------
+    // -- Extract props JSON (client-rendered) -------------------------------
     const propsScript = doc.querySelector('#__APP_PROPS__');
     let propsContent: string | null = null;
     if (propsScript) {
@@ -88,13 +88,13 @@ export const composePatternHtml = (
       }
     }
 
-    // -- Namespace the root element (React SSR) ----------------------------
-    // A React fragment exposes its mount point to the component bundle via stable data attributes.
+    // -- Namespace the root element (client-rendered) ----------------------
+    // A client-rendered fragment exposes its mount point to the component bundle via stable data attributes.
     const rootEl = doc.querySelector('#root');
-    const isReactFragment = !!rootEl && propsContent !== null;
+    const isClientFragment = !!rootEl && propsContent !== null;
     if (rootEl) {
       rootEl.setAttribute('id', namespacedRootId);
-      if (isReactFragment) {
+      if (isClientFragment) {
         rootEl.setAttribute('data-handoff-component', componentId);
         rootEl.setAttribute('data-handoff-props', namespacedPropsId);
         clientArtifactHrefs.add(buildArtifactUrl(`component/${componentId}.client.js`, basePath));

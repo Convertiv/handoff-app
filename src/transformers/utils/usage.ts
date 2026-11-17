@@ -315,3 +315,130 @@ function inferSlotType(value: unknown): SlotType {
   if (typeof value === 'object' && value !== null) return SlotType.OBJECT;
   return SlotType.TEXT;
 }
+
+/** A value as a template expression: single-quoted strings, so it fits a double-quoted attribute. */
+function toTemplateExpression(value: unknown): string {
+  if (typeof value === 'string') return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+  if (Array.isArray(value)) return `[${value.map(toTemplateExpression).join(', ')}]`;
+  if (value && typeof value === 'object') {
+    const entries = Object.entries(value).map(([key, entry]) => `${isValidIdentifier(key) ? key : toTemplateExpression(key)}: ${toTemplateExpression(entry)}`);
+    return entries.length ? `{ ${entries.join(', ')} }` : '{}';
+  }
+  return String(value);
+}
+
+const escapeAttribute = (value: string): string => value.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+
+/**
+ * The element and static attributes that match the first part of an Angular selector, such as
+ * `demo-button`, `button[demoButton]`, `[demoTooltip]` or `demo-card.compact`. A selector without an
+ * element goes on a `div`.
+ */
+export function parseSelector(selector: string): { tag: string; attributes: [string, string][] } {
+  const first = selector.split(',')[0].replace(/:not\([^)]*\)/g, '').trim();
+  const tag = first.match(/^[a-zA-Z][\w-]*/)?.[0] ?? 'div';
+  const attributes: [string, string][] = Array.from(first.matchAll(/\[([^\]=]+)(?:=["']?([^\]"']*)["']?)?\]/g)).map(([, name, value]) => [
+    name.trim(),
+    value ?? '',
+  ]);
+  const classes = Array.from(first.replace(/\[[^\]]*\]/g, '').matchAll(/\.([\w-]+)/g)).map(([, name]) => name);
+  if (classes.length) attributes.push(['class', classes.join(' ')]);
+  return { tag, attributes };
+}
+
+export interface GenerateAngularUsageSnippetOptions {
+  selector: string;
+  /** Maps each input's class property name to the input name that a template binds. */
+  inputs: { key: string; binding: string }[];
+  /** Keyed by class property name. */
+  properties: Record<string, SlotMetadata>;
+  /** Keyed by class property name or by public input name; the class property name wins when both are given. */
+  previewValues: Record<string, any>;
+}
+
+/**
+ * Generates an Angular template snippet for a component with the given preview values. A string input
+ * is a static attribute; any other value, or a string that Angular would read as interpolation, is a
+ * property binding. Like the JSX snippet, it omits values that match their default and adds required
+ * inputs that the preview leaves out.
+ */
+export function generateAngularUsageSnippet({ selector, inputs, properties, previewValues }: GenerateAngularUsageSnippetOptions): string {
+  const { tag, attributes } = parseSelector(selector);
+  const bindings = attributes.map(([name, value]) => (value ? `${name}="${escapeAttribute(value)}"` : name));
+  const bindingFor = new Map(inputs.map(({ key, binding }) => [key, binding]));
+  // Same rule as the client mount: a class property name wins over a public name.
+  const keyFor = new Map(inputs.map(({ key, binding }) => [binding, key]));
+  for (const { key } of inputs) keyFor.set(key, key);
+  const given = new Map<string, unknown>();
+  for (const name of Object.keys(previewValues)) if (!bindingFor.has(name) && keyFor.has(name)) given.set(keyFor.get(name)!, previewValues[name]);
+  for (const name of Object.keys(previewValues)) if (bindingFor.has(name)) given.set(name, previewValues[name]);
+  const previewKeys = Object.keys(previewValues).flatMap((name) => (keyFor.has(name) ? [keyFor.get(name)!] : []));
+
+  for (const key of Array.from(new Set([...previewKeys, ...Object.keys(properties)]))) {
+    const binding = bindingFor.get(key);
+    if (!binding) continue;
+    const slot = properties[key];
+    const value = given.has(key) ? given.get(key) : resolveSchemaValue(slot);
+    if (value === undefined || value === null) continue;
+    if (slot && matchesDefault(value, slot.default)) continue;
+    bindings.push(
+      typeof value === 'string' && !value.includes('{{')
+        ? `${binding}="${escapeAttribute(value)}"`
+        : `[${binding}]="${escapeAttribute(toTemplateExpression(value))}"`
+    );
+  }
+
+  const oneLine = `<${tag}${bindings.map((binding) => ` ${binding}`).join('')}></${tag}>`;
+  if (bindings.length <= 3 && oneLine.length <= 80) return oneLine;
+  return [`<${tag}`, ...bindings.map((binding) => `${INDENT}${binding}`), `></${tag}>`].join('\n');
+}
+
+const toKebabCase = (name: string): string => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
+
+const toCamelCase = (name: string): string => name.replace(/-([a-z0-9])/g, (_, letter: string) => letter.toUpperCase());
+
+export interface GenerateVueUsageSnippetOptions {
+  /** The component name a template uses, in PascalCase. */
+  tag: string;
+  /** Declared props in camelCase; `model` marks a prop that a parent binds with `v-model`. */
+  props: { name: string; model: boolean }[];
+  properties: Record<string, SlotMetadata>;
+  /** Keyed by prop name, in camelCase or kebab-case. Args that name no prop are left out. */
+  previewValues: Record<string, any>;
+}
+
+/**
+ * Generates a Vue template snippet for a component with the given preview values. Attributes are in
+ * kebab-case. A string is a static attribute, `true` is a bare boolean attribute, and any other value
+ * is a `:prop` binding. A model prop is a `v-model` binding to a variable of the same name. Like the
+ * JSX snippet, it omits values that match their default and adds required props that the preview leaves out.
+ */
+export function generateVueUsageSnippet({ tag, props, properties, previewValues }: GenerateVueUsageSnippetOptions): string {
+  const declared = new Map(props.map((prop) => [prop.name, prop]));
+  const given = new Map<string, unknown>();
+  for (const [name, value] of Object.entries(previewValues)) {
+    const key = declared.has(name) ? name : toCamelCase(name);
+    if (declared.has(key)) given.set(key, value);
+  }
+
+  const bindings: string[] = [];
+  for (const key of Array.from(new Set([...given.keys(), ...props.map((prop) => prop.name)]))) {
+    const attribute = toKebabCase(key);
+    if (declared.get(key)?.model) {
+      bindings.push(key === 'modelValue' ? 'v-model="modelValue"' : `v-model:${attribute}="${key}"`);
+      continue;
+    }
+    const slot = properties[key];
+    const value = given.has(key) ? given.get(key) : resolveSchemaValue(slot);
+    if (value === undefined || value === null) continue;
+    if (slot && matchesDefault(value, slot.default)) continue;
+    if (typeof value === 'string') bindings.push(`${attribute}="${escapeAttribute(value)}"`);
+    else if (value === true && slot?.type === SlotType.BOOLEAN) bindings.push(attribute);
+    else if (value === false && slot?.type === SlotType.BOOLEAN && slot.default === undefined) continue;
+    else bindings.push(`:${attribute}="${escapeAttribute(toTemplateExpression(value))}"`);
+  }
+
+  const oneLine = `<${tag}${bindings.map((binding) => ` ${binding}`).join('')} />`;
+  if (bindings.length <= 3 && oneLine.length <= 80) return oneLine;
+  return [`<${tag}`, ...bindings.map((binding) => `${INDENT}${binding}`), '/>'].join('\n');
+}

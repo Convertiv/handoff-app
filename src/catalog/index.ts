@@ -1,6 +1,8 @@
 export { createCatalogItem, validateCatalogItem } from './define';
 export {
+  createImplementationPlaceholder,
   findSiblingComponentFile,
+  implementationToSkip,
   isInsideDirectory,
   resolveModulePath,
   resolvePropertySource,

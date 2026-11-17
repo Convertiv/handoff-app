@@ -100,6 +100,10 @@ in the current working root
 This method will throw an error if the `exported` directory or the `tokens.json`
 files do not exist
 
+It also throws an error if a component does not build or its declaration does
+not load. The other components build first, and the error message lists every
+item that failed.
+
 ### integration
 
 ```js

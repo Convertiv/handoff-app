@@ -1,6 +1,6 @@
 import { CommandModule } from 'yargs';
 import { SharedArgs } from '../types';
-import { createHandoff, getSharedOptions } from '../utils';
+import { createHandoff, getSharedOptions, runBuildCommand } from '../utils';
 
 export interface BuildComponentsArgs extends SharedArgs {
   component?: string;
@@ -17,7 +17,7 @@ const command: CommandModule<{}, BuildComponentsArgs> = {
   },
   handler: async (args: BuildComponentsArgs) => {
     const handoff = createHandoff(args);
-    await handoff.component(args.component);
+    await runBuildCommand(() => handoff.component(args.component));
   },
 };
 

@@ -85,7 +85,9 @@ handoff-app start
 
 Starts the workspace documentation server and the Handoff file watchers. While
 the command runs, Handoff rebuilds changed files and updates the
-documentation.
+documentation. If a component does not build, the error is logged and the
+server keeps running. A declaration that does not load loads again when you save
+it.
 
 ### dev
 
@@ -114,6 +116,11 @@ Builds the documentation.
 
 `--package` never changes the target.
 
+If a component does not build, or its declaration does not load, the build
+continues with the other components. It then stops before the documentation
+application and exits with code 1. The log shows each error and the list of
+items that failed.
+
 ### build:app
 
 ```bash
@@ -129,7 +136,8 @@ handoff-app build:components [component]
 ```
 
 Builds the catalog items without the documentation application. A name builds
-only that item.
+only that item. The command exits with code 1 if a component does not build or
+its declaration does not load.
 
 ### validate:components
 
@@ -252,7 +260,12 @@ handoff-app publish <catalog|pages|tokens|assets|all> [id...] [--dry-run] [--no-
 Builds the content and publishes it to the connected registry. `all` publishes
 every kind in dependency order. One or more ids limit the publish to those
 entities: catalog item ids, page ids, token set ids, or asset collections.
-`tokens` and `assets` run the Figma pipeline first.
+`tokens` and `assets` run the Figma pipeline first. A catalog item uploads its
+declared files and the other files in its directory that its last build read.
+Such a file outside every catalog item directory is skipped with a warning. A
+component that does not build is not published, and neither is a pattern that
+composes it. The other items are published, and the command then exits with
+code 1. A publish of every item also fails on a declaration that does not load.
 
 | Option | Description |
 | --- | --- |

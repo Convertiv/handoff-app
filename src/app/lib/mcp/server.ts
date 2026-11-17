@@ -1,9 +1,9 @@
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { AjvJsonSchemaValidator } from '@modelcontextprotocol/sdk/validation/ajv';
+import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 import { componentTools } from './components';
 import { customPreviewTools } from './custom-previews';
-import { getServerRuntimeConfig } from '../docs-api/runtime-config';
 import { pageTools } from './pages';
 import { fail } from './result';
 import { tokenTools } from './tokens';
@@ -26,7 +26,7 @@ import type { McpPrincipal, McpTool } from './tool';
  */
 
 /** Version of the MCP surface itself, reported in `initialize`. Bump when a tool contract changes. */
-const MCP_SERVER_VERSION = '2.1.0';
+const MCP_SERVER_VERSION = '2.2.0';
 
 const tools = [...componentTools, ...customPreviewTools, ...tokenTools, ...pageTools];
 

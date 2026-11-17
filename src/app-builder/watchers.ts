@@ -2,6 +2,7 @@ import chokidar from 'chokidar';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '..';
+import { getComponentSourcesPath, getGlobalEntryDirectories } from '../cache';
 import { buildPatterns } from '../pipeline/patterns';
 import processComponents, { ComponentSegment } from '../transformers/preview/component/builder';
 import { buildMainCss } from '../transformers/preview/component/css';
@@ -9,12 +10,13 @@ import { buildMainJS } from '../transformers/preview/component/javascript';
 import { Logger } from '../utils/logger';
 import { isPathInside, normalizePathForCompare } from '../utils/path';
 import { persistClientConfig } from './client-config';
-import { getStrategy, runAllFinalizers, type FinalizeContext } from './config-diff';
+import { getStrategy, runAllFinalizers } from './config-diff';
 import { syncPublicFiles } from './paths';
 import {
+  getComponentSourceReaders,
   getRuntimeComponentsPathsToWatch,
   mapEntryTypeToSegment,
-  resolveComponentIdForChangedFile,
+  resolveEntryOwner,
   RuntimeComponentEntryType,
 } from './watchers/component';
 import { scheduleHandler, WatcherState } from './watchers/utils';
@@ -118,7 +120,16 @@ export const watchGlobalEntries = (handoff: Handoff, state: WatcherState, chokid
   const pathsToWatch = [...scssPathsToWatch, ...jsPathsToWatch];
   if (pathsToWatch.length === 0) return;
 
-  chokidar.watch(pathsToWatch, chokidarConfig).on('all', async (event, file) => {
+  // A global entry in the root of the working directory puts the whole workspace under this watcher.
+  // Every component build writes to `public/api`, so without this a build would trigger the next one.
+  const generatedDirectory = path.resolve(handoff.workingPath, 'public', 'api');
+  const baseIgnored = chokidarConfig.ignored;
+  const ignored = (file: string) =>
+    (baseIgnored instanceof RegExp && baseIgnored.test(file)) ||
+    file.split(path.sep).includes('node_modules') ||
+    isPathInside(file, generatedDirectory);
+
+  chokidar.watch(pathsToWatch, { ...chokidarConfig, ignored }).on('all', async (event, file) => {
     switch (event) {
       case 'add':
       case 'change':
@@ -149,8 +160,18 @@ export const watchGlobalEntries = (handoff: Handoff, state: WatcherState, chokid
   });
 };
 
+const changedComponentFiles = new WeakMap<WatcherState, Set<string>>();
+
 /**
- * Watches runtime components for changes.
+ * Watches runtime components for changes: their entry files, and every other file their last build
+ * read (`.handoff/.cache/component-sources.json`). An entry change rebuilds the segment that the entry
+ * feeds. Any other change rebuilds every component that read the file, in full, because the watcher
+ * cannot tell which segment read it. Changes that arrive during a build are rebuilt together after it,
+ * so each component builds once.
+ *
+ * The watcher follows the record: every build that writes it, from any watcher, adds the files it read
+ * for the first time, such as a new import. A file that no build reads any more stays watched, and its
+ * changes are ignored.
  */
 export const watchRuntimeComponents = (
   handoff: Handoff,
@@ -161,53 +182,93 @@ export const watchRuntimeComponents = (
     state.runtimeComponentsWatcher.close();
   }
 
-  if (runtimeComponentPathsToWatch.size > 0) {
-    const pathsToWatch = Array.from(runtimeComponentPathsToWatch.keys());
-    const runtimeComponentEntryTypeByPath = new Map<string, RuntimeComponentEntryType>(
-      Array.from(runtimeComponentPathsToWatch.entries()).map(([watchPath, entryType]) => [normalizePathForCompare(watchPath), entryType])
-    );
-    const configFileSet = new Set(handoff.getConfigFilePaths().map((configPath) => normalizePathForCompare(configPath)));
+  const sourcesFile = getComponentSourcesPath(handoff.workingPath);
+  const sourcesFileKey = normalizePathForCompare(sourcesFile);
+  const configFiles = new Set(handoff.getConfigFilePaths().map((configPath) => normalizePathForCompare(configPath)));
+  const watcher = chokidar.watch([...runtimeComponentPathsToWatch.keys(), sourcesFile], { ignoreInitial: true });
+  state.runtimeComponentsWatcher = watcher;
 
-    state.runtimeComponentsWatcher = chokidar.watch(pathsToWatch, {
-      ignoreInitial: true,
-    });
-    state.runtimeComponentsWatcher.on('all', async (event, file) => {
-      const normalizedFile = normalizePathForCompare(file);
-      if (configFileSet.has(normalizedFile)) {
-        return;
+  const watchedSources = new Set<string>();
+  const watchRecordedSources = () => {
+    const added = Array.from(getComponentSourceReaders(handoff).values(), ({ file }) => file).filter((file) => !watchedSources.has(file));
+    for (const file of added) watchedSources.add(file);
+    if (added.length > 0) watcher.add(added);
+  };
+  watchRecordedSources();
+
+  // Shared by every watcher of this state: a reload replaces the pending handler, and the new one
+  // must still rebuild the files that the old one collected.
+  const changedFiles = changedComponentFiles.get(state) ?? new Set<string>();
+  changedComponentFiles.set(state, changedFiles);
+  const rebuildChangedFiles = async () => {
+    const files = Array.from(changedFiles);
+    changedFiles.clear();
+    if (files.length === 0) return;
+
+    try {
+      // A file in a global entry directory that is not an entry belongs to the global entries watcher,
+      // which rebuilds every component.
+      const globalDirectories = getGlobalEntryDirectories(handoff);
+      const readers = getComponentSourceReaders(handoff);
+      const segmentsById = new Map<string, Set<ComponentSegment>>();
+      const fullBuildIds = new Set<string>();
+
+      for (const file of files) {
+        const owner = resolveEntryOwner(handoff, file);
+        const segment = owner ? mapEntryTypeToSegment(owner.entryType) : undefined;
+        if (owner && segment) {
+          segmentsById.set(owner.componentId, (segmentsById.get(owner.componentId) ?? new Set()).add(segment));
+        } else if (owner) {
+          fullBuildIds.add(owner.componentId);
+        } else if (globalDirectories.some((directory) => isPathInside(file, directory))) {
+          continue;
+        }
+        for (const componentId of readers.get(normalizePathForCompare(file))?.componentIds ?? []) {
+          if (componentId !== owner?.componentId) fullBuildIds.add(componentId);
+        }
       }
 
-      switch (event) {
-        case 'add':
-        case 'change':
-        case 'unlink':
-          await scheduleHandler(state, `runtimeComponent:${normalizedFile}`, async () => {
-            try {
-              const entryType = runtimeComponentEntryTypeByPath.get(normalizedFile);
-              const segmentToUpdate: ComponentSegment | undefined = entryType ? mapEntryTypeToSegment(entryType) : undefined;
-              const componentId = resolveComponentIdForChangedFile(handoff, file);
-
-              const skipPatterns =
-                segmentToUpdate === ComponentSegment.JavaScript ||
-                segmentToUpdate === ComponentSegment.Style;
-
-              let finalizeContext: FinalizeContext | undefined;
-              if (skipPatterns) {
-                finalizeContext = { skipPatternFinalizer: true };
-              } else if (componentId) {
-                finalizeContext = { patternRebuildComponentIds: [componentId] };
-              }
-
-              await processComponents(handoff, componentId, segmentToUpdate);
-              await runAllFinalizers(handoff, finalizeContext);
-            } catch (e) {
-              Logger.error('Error processing component:', e);
-            }
-          });
-          break;
+      // One component that fails to build must not keep the others stale.
+      const build = async (componentId: string, segment?: ComponentSegment) => {
+        try {
+          await processComponents(handoff, componentId, segment);
+        } catch (e) {
+          Logger.error(`Error processing component "${componentId}":`, e);
+        }
+      };
+      for (const componentId of fullBuildIds) {
+        segmentsById.delete(componentId);
+        await build(componentId);
       }
-    });
-  }
+      for (const [componentId, segments] of segmentsById) {
+        for (const segment of segments) await build(componentId, segment);
+      }
+
+      const rebuiltIds = [...fullBuildIds, ...segmentsById.keys()];
+      if (rebuiltIds.length === 0) return;
+      const previewsUnchanged =
+        fullBuildIds.size === 0 &&
+        Array.from(segmentsById.values()).every((segments) =>
+          Array.from(segments).every((segment) => segment === ComponentSegment.JavaScript || segment === ComponentSegment.Style)
+        );
+      await runAllFinalizers(handoff, previewsUnchanged ? { skipPatternFinalizer: true } : { patternRebuildComponentIds: rebuiltIds });
+    } catch (e) {
+      Logger.error('Error processing component:', e);
+    }
+  };
+
+  watcher.on('all', async (event, file) => {
+    if (event !== 'add' && event !== 'change' && event !== 'unlink') return;
+    const normalizedFile = normalizePathForCompare(file);
+    if (normalizedFile === sourcesFileKey) {
+      if (event !== 'unlink' && state.runtimeComponentsWatcher === watcher) watchRecordedSources();
+      return;
+    }
+    if (configFiles.has(normalizedFile)) return;
+
+    changedFiles.add(file);
+    await scheduleHandler(state, 'runtimeComponents', rebuildChangedFiles);
+  });
 };
 
 const rebuildPatternComponentPreviews = async (handoff: Handoff, patternId: string) => {

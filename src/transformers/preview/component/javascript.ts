@@ -5,8 +5,9 @@ import { BuildInputs, withBuildInputs } from '../../../cache/build-inputs';
 import Handoff from '../../../index';
 import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
+import { logBuildError } from '../../utils/build-errors';
 import viteBaseConfig from '../../vite-config';
-import { getComponentOutputPath } from '../component';
+import { getComponentOutputPath } from './api';
 import { TransformComponentTokensResult } from '../types';
 
 export const MAIN_COMPONENT_JS_FILE = 'main.js';
@@ -123,7 +124,7 @@ export const buildComponentJs = async (
       );
     } catch (e) {
       if (inputs) inputs.failed = true;
-      Logger.error(`Failed to bundle JS for component "${id}" (${id}.js):`, e);
+      logBuildError(`Failed to bundle JS for component "${id}" (${id}.js)`, e);
       return data;
     }
 
@@ -136,7 +137,7 @@ export const buildComponentJs = async (
     }
   } catch (e) {
     if (inputs) inputs.failed = true;
-    Logger.error(`JS build failed for component "${id}":`, e);
+    logBuildError(`JS build failed for component "${id}"`, e);
   }
 
   return data;

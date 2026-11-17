@@ -4,6 +4,8 @@ import fs from 'fs-extra';
 import { createRequire } from 'module';
 import path from 'path';
 import {
+  createImplementationPlaceholder,
+  implementationToSkip,
   isInsideDirectory,
   normalizeCatalogItem,
   orderPreviews,
@@ -11,6 +13,7 @@ import {
   resolvePropertySource,
   type CatalogNormalizeResult,
 } from '../catalog';
+import { RUNTIME_PACKAGES } from '../catalog/renderers';
 import { HOME_PAGE_ID, HOME_PAGE_PATH } from '../registry/content-kinds';
 import { ComponentListObject } from '../transformers/preview/types';
 import { createCsfStoryPreviews } from '../transformers/utils/csf';
@@ -66,16 +69,22 @@ export const resolveComponentDeclaration = (componentDir: string, componentBaseN
 };
 
 const evaluateDeclaration = (filePath: string, handoffModulePath: string): any => {
+  const directory = path.dirname(filePath);
+  const skipped = implementationToSkip(filePath);
   const buildResult = esbuild.buildSync({
     entryPoints: [filePath],
     bundle: true,
     write: false,
+    // External file paths are written relative to `outdir`, so `require` below can match them.
+    outdir: directory,
     platform: 'node',
     format: 'cjs',
     target: 'node22',
     logLevel: 'silent',
     jsx: 'automatic',
-    external: ['react', 'react-dom', 'handoff-app'],
+    // esbuild matches an external file path against the resolved import, so every specifier that
+    // reaches the file stays out of the bundle, and so do the modules only that file imports.
+    external: [...RUNTIME_PACKAGES, 'handoff-app', ...(skipped ? [skipped] : [])],
     loader: STYLE_IMPORT_LOADERS,
   });
 
@@ -87,7 +96,11 @@ const evaluateDeclaration = (filePath: string, handoffModulePath: string): any =
   const mod: any = { exports: {} };
   const localRequire = createRequire(filePath);
   const handoffRequire = createRequire(path.resolve(handoffModulePath, 'package.json'));
+  const skippedKey = skipped && normalizePathForCompare(skipped);
   const runtimeRequire = (id: string) => {
+    if (skippedKey && id.startsWith('.') && normalizePathForCompare(path.resolve(directory, id)) === skippedKey) {
+      return createImplementationPlaceholder();
+    }
     try {
       return localRequire(id);
     } catch {
@@ -95,7 +108,7 @@ const evaluateDeclaration = (filePath: string, handoffModulePath: string): any =
     }
   };
   const evaluator = new Function('require', 'module', 'exports', '__filename', '__dirname', code);
-  evaluator(runtimeRequire, mod, mod.exports, filePath, path.dirname(filePath));
+  evaluator(runtimeRequire, mod, mod.exports, filePath, directory);
   return mod.exports;
 };
 
@@ -200,6 +213,7 @@ export const initRuntimeConfig = (
       pages: {},
     },
     duplicateCatalogIds: [],
+    invalidDeclarations: [],
   };
 
   // The id addresses artifacts, transfer routes and docs URLs, so it has to resolve to one item.
@@ -241,6 +255,7 @@ export const initRuntimeConfig = (
       Logger.warn(`${message}: ${declarationPath}${detail}`);
       Logger.debug('Declaration parse detail:', error);
       configFileIndex.set(indexKey, { kind: 'unknown', entityId: itemBaseName });
+      result.invalidDeclarations.push({ entityId: itemBaseName, path: declarationPath, message: detail.replace(/^ — /, '') || message });
     };
 
     let classified: CatalogNormalizeResult;

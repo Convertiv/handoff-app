@@ -266,7 +266,7 @@ class Handoff {
 
     if (name) {
       name = name.replace('.hbs', '');
-      await processComponents(this, name);
+      await processComponents(this, name, undefined, { failOnError: true });
     } else {
       await buildComponents(this);
     }

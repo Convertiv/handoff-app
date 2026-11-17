@@ -15,6 +15,7 @@ import { resolveTokenTransformers, tokenArtifactPathsForSet } from '../pipeline/
 import { deriveTokenSets, isComponentSet, setNameForId } from '../registry/tokens/sets';
 import type { ComponentListObject, PageListObject, PatternListObject } from '../transformers/preview/types';
 import type { ResolvedConfig, RuntimeConfig } from '../types/config';
+import { readComponentSources } from '../cache/component-sources';
 import { getRelatedSourceFilesForRecord, sourceContentTypeForPath } from './source-files';
 import type {
   ComponentStore,
@@ -89,7 +90,8 @@ export class FilesystemComponentStore implements ComponentStore {
   getRelatedSourceFiles(id: string): TextFileResource[] {
     const record = this.records[id];
     if (!record) return [];
-    return getRelatedSourceFilesForRecord(record);
+    const sourceFiles = this.context.workingPath ? readComponentSources(this.context.workingPath)[id] : undefined;
+    return getRelatedSourceFilesForRecord(record, sourceFiles);
   }
 }
 

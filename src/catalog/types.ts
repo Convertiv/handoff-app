@@ -12,7 +12,6 @@ export type SourceDescriptor<TFormat extends string = string> = {
 
 export type CsfSource = SourceDescriptor<'csf'>;
 
-
 /** The loader recovers the file for an imported component in `value` from the declaration source. */
 export type NormalizedImplementation = {
   renderer: RendererKind;
@@ -28,7 +27,10 @@ export type CatalogItemEntries = Pick<NonNullable<ComponentObject['entries']>, '
  * accepts any other term, such as `atom`.
  */
 export type CatalogItemMeta = Partial<
-  Omit<ComponentObject, 'previews' | 'previewOrder' | 'entries' | 'title' | 'should_do' | 'should_not_do' | 'renderer' | 'sourceFormat' | 'componentExport'>
+  Omit<
+    ComponentObject,
+    'previews' | 'previewOrder' | 'entries' | 'title' | 'should_do' | 'should_not_do' | 'renderer' | 'sourceFormat' | 'componentExport'
+  >
 > & {
   id?: string;
   name?: string;
@@ -63,6 +65,9 @@ export type CatalogPreview<TArgs = Record<string, unknown>> = {
   render?: (args: TArgs) => unknown;
 };
 
+/** Preview of a renderer that never calls `render`, so declaring one is an error, not a no-op. */
+export type DataPreview<TArgs = Record<string, unknown>> = Omit<CatalogPreview<TArgs>, 'render'> & { render?: never };
+
 /**
  * `__args` exists only in the type system so `Preview<typeof item>` can infer the preview argument type.
  */
@@ -74,6 +79,9 @@ export type CatalogItem<TArgs = Record<string, unknown>> = CatalogItemMeta & {
 
 /** Preview type for a catalog item, with its argument type applied. */
 export type Preview<TItem> = TItem extends { readonly __args?: infer TArgs } ? CatalogPreview<Partial<NonNullable<TArgs>>> : never;
+
+/** `Preview` for a renderer whose previews carry data only. */
+export type DataPreviewOf<TItem> = TItem extends { readonly __args?: infer TArgs } ? DataPreview<Partial<NonNullable<TArgs>>> : never;
 
 /** Input accepted by every `defineCatalogItem` entry point. */
 export type CatalogItemInput = CatalogItemMeta & {

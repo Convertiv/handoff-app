@@ -267,6 +267,174 @@ Notes:
 - `npx handoff-app make:component badge` creates a Handlebars item with a
   CommonJS declaration.
 
+### Angular item
+
+The implementation is a standalone Angular component. Import the class, and
+Handoff finds its file from the import. The preview arguments are the component
+inputs.
+
+```ts
+// components/button/button.component.ts
+import { Component, input } from '@angular/core';
+
+@Component({
+  selector: 'demo-button',
+  templateUrl: './button.component.html',
+  styleUrl: './button.component.scss',
+})
+export class ButtonComponent {
+  /** Text inside the button. */
+  readonly label = input('Button');
+  readonly variant = input<'primary' | 'secondary'>('primary');
+}
+```
+
+```ts
+// components/button/button.handoff.ts
+import { defineCatalogItem, type Preview } from 'handoff-app/angular';
+import { ButtonComponent } from './button.component';
+
+const item = defineCatalogItem({
+  id: 'button',
+  name: 'Button',
+  implementation: ButtonComponent,
+});
+
+export default item;
+
+type ButtonPreview = Preview<typeof item>;
+
+export const Primary = {
+  args: { label: 'Save', variant: 'primary' },
+} satisfies ButtonPreview;
+```
+
+Notes:
+
+- The workspace supplies Angular. It needs Angular 19 or later, plus
+  `@angular/compiler-cli` and `@angular/build`. An Angular CLI project already
+  has them. It also needs the Vite plugin that compiles the components,
+  version 2.9 or a later 2.x:
+
+  ```bash
+  npm install -D @analogjs/vite-plugin-angular@^2.9
+  ```
+
+- Handoff compiles each component with the workspace `tsconfig.json`, so its
+  `paths` and compiler options apply.
+- Signal inputs, `model()` inputs, and `@Input()` properties are all
+  arguments. `Preview<typeof item>` types a signal input by the value it
+  accepts, so `input(false, { transform: booleanAttribute })` accepts any
+  value.
+- `Preview<typeof item>` keys inputs by their class property names, and also
+  accepts other public properties. `args` also accepts the `alias` of an input.
+  If `args` gives both names, the class property name wins. The usage snippet
+  and the properties table show the alias.
+- Handoff does not run the component file when it reads the declaration. A
+  value that the declaration imports from that file is a placeholder. Keep
+  preview data in another file.
+- Inputs that the arguments leave out keep their defaults. A missing required
+  input is a render error.
+- The browser renders the previews, so the component has no HTML code view.
+- A preview cannot declare `render`. Wrap the component in a demo component to
+  show content projection.
+- `start` and the build cache track the `templateUrl` and `styleUrl` files and
+  the Sass partials that they load. `publish` uploads only the files inside the
+  item directory, so keep templates and styles there.
+
+### Vue item
+
+The implementation is a Vue 3 single-file component. Import it by a relative
+path, and Handoff finds its file from the import. The preview arguments are the
+component props.
+
+```vue
+<!-- components/button/Button.vue -->
+<script setup lang="ts">
+withDefaults(
+  defineProps<{
+    /** Text inside the button. */
+    label: string;
+    /** Visual style of the button. */
+    variant?: 'primary' | 'secondary';
+  }>(),
+  { variant: 'primary' }
+);
+</script>
+
+<template>
+  <button :class="`btn btn--${variant}`">{{ label }}</button>
+</template>
+
+<style scoped>
+.btn--primary { background: #2563eb; color: #fff; }
+</style>
+```
+
+```ts
+// components/button/button.handoff.ts
+import { defineCatalogItem, type Preview } from 'handoff-app/vue';
+import Button from './Button.vue';
+
+const item = defineCatalogItem({
+  id: 'button',
+  name: 'Button',
+  implementation: Button,
+});
+
+export default item;
+
+type ButtonPreview = Preview<typeof item>;
+
+export const Primary = {
+  args: { label: 'Save', variant: 'primary' },
+} satisfies ButtonPreview;
+```
+
+Notes:
+
+- The workspace supplies Vue. It needs Vue 3.3 or a later 3.x, plus version 6
+  of the Vite plugin that compiles the components. A `create-vue` project
+  already has it:
+
+  ```bash
+  npm install -D @vitejs/plugin-vue@^6
+  ```
+
+- Handoff compiles the component with the `vue/compiler-sfc` of the
+  workspace.
+- Handoff reads the props with `vue-component-meta` and the workspace
+  `tsconfig.json`. A solution-style config with `references`, as `create-vue`
+  writes, works: the referenced config that includes the component applies.
+  Put the JSDoc comment of each prop on its own line above the prop.
+- `<script setup>` with `defineProps<T>()` and `withDefaults`, runtime
+  `props`, the Options API, and `defineModel()` all give arguments. Emits do
+  not.
+- `Preview<typeof item>` types the arguments only when TypeScript knows the
+  real type of the `.vue` import, as Volar (`vue-tsc` or the Vue editor
+  extension) does. With a `*.vue` module shim, `args` accepts any value. With
+  a file path implementation, pass the type: `defineCatalogItem<ButtonArgs>`.
+- Arguments that name no prop are ignored. Props that the arguments leave out
+  keep their defaults. The preview binds each model prop like `v-model`, so
+  the component can change its own value.
+- Scoped styles, CSS modules, and `lang="scss"` work. Handoff puts the styles
+  in the client artifact of the component.
+- tsconfig `paths`, such as `@/*`, work in script imports. Sass `@use` in a
+  style block does not read them. Use a relative path there.
+- Handoff finds the component file from the import and never runs it. A
+  declaration that imports the component through an alias, such as `@/`,
+  cannot be read.
+- The build compiles templates and fails on their syntax errors, but it does
+  not type-check them. Run `vue-tsc` for type errors.
+- The browser renders the previews, so the component has no HTML code view.
+  Handoff has no server rendering for Vue yet.
+- A preview cannot declare `render`, and it has no app setup, such as Pinia
+  or a router. Wrap the component in a demo component to pass slot content or
+  to provide values.
+- `start` and the build cache track the SFC, the files its blocks load with
+  `src`, its imports, and the Sass partials that its styles load. `publish`
+  uploads only the files inside the item directory.
+
 ### CSF stories
 
 A React item can use an existing CSF story file. The story file does not

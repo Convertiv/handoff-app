@@ -75,6 +75,9 @@ export const getAPIPath = (handoff: Handoff) => {
   return apiPath;
 };
 
+export const getComponentOutputPath = (handoff: Handoff) => path.resolve(getAPIPath(handoff), 'component');
+
+
 export const writeComponentApi = async (
   id: string,
   component: TransformComponentTokensResult,

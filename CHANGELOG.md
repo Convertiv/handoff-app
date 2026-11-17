@@ -6,6 +6,57 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[2.2.0] - 2026-11-17
+
+This release is all about meeting your components where they live. Handoff now
+documents Angular and Vue components, and it builds their previews with the
+framework version your project already uses, so the docs show what you ship.
+You install only the tooling for the frameworks you document, nothing more.
+
+### Angular
+
+* Added Angular catalog items from `handoff-app/angular`. The implementation is
+  a standalone component class, and the preview arguments are its inputs.
+* Handoff compiles each component with the Angular version of the workspace.
+  The workspace needs Angular 19 or later, `@angular/compiler-cli`,
+  `@angular/build`, and `@analogjs/vite-plugin-angular` 2.9 or a later 2.x.
+* Previews render in the browser. The properties table and the usage snippet
+  cover signal, `model()`, and `@Input()` inputs.
+* `start` rebuilds a component when its template or stylesheet changes.
+
+### Vue
+
+* Added Vue catalog items from `handoff-app/vue`. The implementation is a Vue 3
+  single-file component, and the preview arguments are its props.
+* Handoff compiles each component with the Vue version of the workspace. The
+  workspace needs Vue 3.3 or a later 3.x, and `@vitejs/plugin-vue` 6.
+* Previews render in the browser. The properties table and the usage snippet
+  cover `<script setup>` props, the Options API, and `defineModel()`.
+* `start` rebuilds a component when its `.vue` file, or a file that a block
+  loads with `src`, changes.
+
+### Other changes
+
+* A component that does not build, or a declaration that does not load, now
+  fails the build with exit code 1. Handoff still builds the rest first and
+  lists what failed, and `publish` uploads everything else. `start` logs the
+  error and keeps running.
+* `start` and `publish` now follow every file that a component's last build
+  read, such as an imported file. `start` rebuilds when one changes, and
+  `publish` uploads the text files in the item directory.
+
+### Smaller changes
+
+* Build errors show the message and location. The stack trace shows only with
+  `--debug`.
+* `start` no longer rebuilds in a loop when a global entry is in the project
+  root.
+
+### Upgrade
+
+* If a component in your project does not build, CI now fails where it passed
+  before. Fix the components that the build lists.
+
 ## \[2.1.0] - 2026-11-09
 
 This release adds custom previews to the registry. Readers, coding agents, and

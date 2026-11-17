@@ -1,6 +1,6 @@
 {
   "name": "handoff-app",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "description": "Automated documentation toolchain for building client side documentation from figma",
   "author ": {
     "name": "Convertiv",
@@ -32,6 +32,14 @@
       "types": "./dist/react.d.ts",
       "default": "./dist/react.js"
     },
+    "./angular": {
+      "types": "./dist/angular.d.ts",
+      "default": "./dist/angular.js"
+    },
+    "./vue": {
+      "types": "./dist/vue.d.ts",
+      "default": "./dist/vue.js"
+    },
     "./handlebars": {
       "types": "./dist/handlebars.d.ts",
       "default": "./dist/handlebars.js"
@@ -51,6 +59,12 @@
     "*": {
       "react": [
         "./dist/react.d.ts"
+      ],
+      "angular": [
+        "./dist/angular.d.ts"
+      ],
+      "vue": [
+        "./dist/vue.d.ts"
       ],
       "handlebars": [
         "./dist/handlebars.d.ts"
@@ -166,11 +180,14 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
     "vite": "^6.3.5",
+    "vue-component-meta": "^3.3.14",
     "ws": "^8.18.3",
     "yargs": "^17.7.2"
   },
   "peerDependencies": {
-    "typescript": ">=5.6 <7"
+    "typescript": ">=5.6 <7",
+    "@analogjs/vite-plugin-angular": "^2.9.0",
+    "@vitejs/plugin-vue": "^6.0.0"
   },
   "devDependencies": {
     "@types/archiver": "^5.3.1",
@@ -188,5 +205,13 @@
     "prettier-plugin-tailwindcss": "^0.7.0",
     "sass-embedded": "^1.89.0",
     "typescript": "5.6.3"
+  },
+  "peerDependenciesMeta": {
+    "@analogjs/vite-plugin-angular": {
+      "optional": true
+    },
+    "@vitejs/plugin-vue": {
+      "optional": true
+    }
   }
 }

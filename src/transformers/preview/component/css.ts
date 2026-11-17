@@ -7,7 +7,7 @@ import { formatDurationMs } from '../../../utils/duration';
 import { Logger } from '../../../utils/logger';
 import { collectStyleImports } from '../../utils/build';
 import viteBaseConfig from '../../vite-config';
-import { getComponentOutputPath } from '../component';
+import { getComponentOutputPath } from './api';
 import { TransformComponentTokensResult } from '../types';
 const { pathToFileURL } = require('url');
 

@@ -26,6 +26,16 @@ import { DEFAULT_CLIENT_BUILD_CONFIG, createReactResolvePlugin, withStyleLoaders
 
 const ROOT_ELEMENT_ID = 'root';
 
+/** Holds a preview's args in its document. `composePatternHtml` finds client-rendered fragments by it. */
+export const PREVIEW_PROPS_SCRIPT_ID = '__APP_PROPS__';
+
+/** The input of every preview build. A client-rendered renderer resolves it to its client artifact source. */
+export const PREVIEW_ENTRY_ID = 'script';
+
+/** A preview's document; `-inspect` names its inspect-mode twin, which the docs app loads for its inspect toggle. */
+export const previewFileName = (componentId: string, previewKey: string, inspect = false): string =>
+  `${componentId}-${previewKey}${inspect ? '-inspect' : ''}.html`;
+
 export const renderShellFileName = (componentId: string): string => `${componentId}${RENDER_SHELL_SUFFIX}`;
 
 export const renderShellArtifactPath = (componentId: string): string => `component/${renderShellFileName(componentId)}`;
@@ -81,9 +91,42 @@ const startClientRender = (render) => {
   run(initial);
   __handoffNotify({ type: 'handoff:ready' });
 };
+
+const __handoffReadProps = (propsId) => {
+  try {
+    return JSON.parse((propsId && document.getElementById(propsId)?.textContent) || '{}') || {};
+  } catch (_) {
+    return {};
+  }
+};
+
+/**
+ * Renders every mount point of the component in this document: the custom preview shell, the
+ * standalone preview root with its props script, and each pattern mount. mount(container, { hydrate })
+ * returns a render(args) function; hydrate is true when the container holds server-rendered markup.
+ */
+const mountPreviews = (componentId, mount) => {
+  const root = document.getElementById('${ROOT_ELEMENT_ID}');
+  if (root && root.getAttribute('data-handoff-render') === 'client') {
+    startClientRender(mount(root, { hydrate: false }));
+  } else if (root && !root.hasAttribute('data-handoff-component')) {
+    try {
+      mount(root, { hydrate: true })(__handoffReadProps('${PREVIEW_PROPS_SCRIPT_ID}'));
+    } catch (error) {
+      reportRenderError(error);
+    }
+  }
+  document.querySelectorAll('[data-handoff-component=' + JSON.stringify(componentId) + ']').forEach((container) => {
+    try {
+      mount(container, { hydrate: true })(__handoffReadProps(container.getAttribute('data-handoff-props')));
+    } catch (error) {
+      console.error(error);
+    }
+  });
+};
 `;
 
-/** Needs `React` and `createRoot` in scope. */
+/** Needs `React` and `createRoot` in scope, and CLIENT_RENDER_RUNTIME_SOURCE before it. */
 export const REACT_CLIENT_RENDER_SOURCE = `
 class HandoffRenderBoundary extends React.Component {
   constructor(props) {
@@ -109,13 +152,17 @@ class HandoffRenderBoundary extends React.Component {
   }
 }
 
-const mountClientRender = (elementFor) => {
-  const container = document.getElementById('${ROOT_ELEMENT_ID}');
-  if (!container || container.getAttribute('data-handoff-render') !== 'client') return;
+const createReactClientRender = (container, elementFor) => {
   const root = createRoot(container);
   let attempt = 0;
   // A new key resets the boundary, so an error clears on the next args.
-  startClientRender((args) => root.render(React.createElement(HandoffRenderBoundary, { key: ++attempt }, elementFor(args))));
+  return (args) => root.render(React.createElement(HandoffRenderBoundary, { key: ++attempt }, elementFor(args)));
+};
+
+const mountClientRender = (elementFor) => {
+  const container = document.getElementById('${ROOT_ELEMENT_ID}');
+  if (!container || container.getAttribute('data-handoff-render') !== 'client') return;
+  startClientRender(createReactClientRender(container, elementFor));
 };
 `;
 
@@ -133,6 +180,54 @@ export const renderShellHead = (
   ]
     .filter(Boolean)
     .join('\n    ');
+};
+
+/**
+ * A preview document of a renderer that renders in the browser through the component's client
+ * artifact. `markup` is the server-rendered preview, if the renderer has one. The client artifact is
+ * a required reference, so a load failure marks the root and logs a visible error.
+ */
+export const generatePreviewDocument = (input: {
+  componentId: string;
+  previewKey: string;
+  title: string;
+  markup: string;
+  props: unknown;
+  sharedArtifacts: SharedArtifactPresence;
+  componentArtifacts: ComponentArtifactPresence;
+}): string => {
+  const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
+  const clientArtifactUrl = buildArtifactUrl(clientArtifactPath(input.componentId), basePath);
+  const loadErrorMessage = `Failed to load the client artifact (${clientArtifactPath(input.componentId)}). This preview cannot render.`;
+  // The handler is JS in a double-quoted HTML attribute, so `"` (from JSON.stringify) and `&` must be
+  // entity-encoded, or the attribute ends early. Browsers decode the entities before the handler runs.
+  const loadErrorHandler = `document.getElementById('${ROOT_ELEMENT_ID}').setAttribute('data-handoff-client-error', '1');console.error(${JSON.stringify(
+    loadErrorMessage
+  )});`
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;');
+  // Optional artifacts are referenced only when present, so an absent one never causes a failed request.
+  const sharedStyleLinks = renderSharedStyleLinks(input.sharedArtifacts, basePath);
+  const componentStyleLink = renderComponentStyleLink(input.componentArtifacts, input.componentId, basePath);
+  // A classic tag before the client module, so the global script runs first.
+  const globalScriptTag = renderGlobalScriptTag(input.sharedArtifacts, basePath);
+  return `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />${sharedStyleLinks ? `\n    ${sharedStyleLinks}` : ''}${componentStyleLink ? `\n    ${componentStyleLink}` : ''}
+    <link rel="stylesheet" href="${basePath}/assets/css/preview.css" />
+    <script id="${PREVIEW_PROPS_SCRIPT_ID}" type="application/json">${scriptSafeJson(input.props)}</script>${globalScriptTag ? `\n    ${globalScriptTag}` : ''}
+    <script
+      type="module"
+      src="${clientArtifactUrl}"
+      onerror="${loadErrorHandler}"
+    ></script>
+    <title>${input.title.replace(/</g, '&lt;')}</title>
+  </head>
+  <body>
+    <div id="${ROOT_ELEMENT_ID}" data-handoff-preview="${input.previewKey}">${input.markup}</div>
+  </body>
+</html>`;
 };
 
 export const generateRenderShellDocument = (input: { componentId: string; title: string; head: string }): string => {

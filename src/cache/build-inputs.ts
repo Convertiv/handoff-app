@@ -8,6 +8,8 @@ import type { InlineConfig, Plugin } from 'vite';
 export interface BuildInputs {
   files: Set<string>;
   failed: boolean;
+  /** A workspace setup problem that failed the build. The caller reports each distinct one once per run. */
+  setupError?: string;
 }
 
 export const createBuildInputs = (): BuildInputs => ({ files: new Set(), failed: false });

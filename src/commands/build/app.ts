@@ -1,6 +1,6 @@
 import { CommandModule } from 'yargs';
 import { SharedArgs } from '../types';
-import { createHandoff, getSharedOptions } from '../utils';
+import { createHandoff, getSharedOptions, runBuildCommand } from '../utils';
 
 export interface BuildAppArgs extends SharedArgs {
   skipComponents?: boolean;
@@ -18,7 +18,7 @@ const command: CommandModule<{}, BuildAppArgs> = {
   },
   handler: async (args: BuildAppArgs) => {
     const handoff = createHandoff(args);
-    await handoff.build('static', args.skipComponents ?? false);
+    await runBuildCommand(() => handoff.build('static', args.skipComponents ?? false));
   },
 };
 

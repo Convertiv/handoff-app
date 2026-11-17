@@ -1,5 +1,7 @@
 import { Argv } from 'yargs';
 import Handoff, { HandoffOptions } from '../';
+import { HandoffBuildError } from '../app-builder';
+import { ComponentBuildError } from '../transformers/preview/component/builder';
 import { REGISTRY_ENTITY_KINDS } from '../registry/content-kinds';
 import { Logger } from '../utils/logger';
 import { SharedArgs } from './types';
@@ -31,6 +33,24 @@ export const createHandoff = (args: SharedArgs, options: Pick<HandoffOptions, 'p
     skipBuild: args.build === false,
     ...options,
   });
+
+/**
+ * Run a build command. Expected failures, such as an invalid target or components that failed to
+ * build, print one line and exit non-zero. Their causes are already logged. Unexpected errors keep
+ * their stack trace.
+ */
+export const runBuildCommand = async (run: () => Promise<unknown>): Promise<void> => {
+  try {
+    await run();
+  } catch (error) {
+    if (error instanceof HandoffBuildError || error instanceof ComponentBuildError) {
+      Logger.error(error.message);
+      process.exitCode = 1;
+      return;
+    }
+    throw error;
+  }
+};
 
 /**
  * Run a registry command against a fresh Handoff. A selected profile may name a saved login instead

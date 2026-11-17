@@ -15,8 +15,12 @@
 
 import fs from 'fs-extra';
 import path from 'path';
+import { getGlobalEntryDirectories } from '../../cache/build-cache';
+import { readComponentSources } from '../../cache/component-sources';
 import Handoff from '../../index';
-import { isRegistrySourceFile } from '../../store/source-files';
+import { isPublishableSourceFile, isRegistrySourceFile } from '../../store/source-files';
+import { Logger } from '../../utils/logger';
+import { isPathInside, normalizePathForCompare } from '../../utils/path';
 import type { ComponentListObject, PatternListObject } from '../../transformers/preview/types';
 import type { TransferArtifact, TransferEntityKind, TransferFile, TransferPackage } from '../transfer';
 import {
@@ -102,6 +106,38 @@ const findSourceDir = async (handoff: Handoff, kind: RenderedEntityKind, id: str
   return relativeDir && !path.isAbsolute(relativeDir) ? relativeDir.split(path.sep).join('/') : undefined;
 };
 
+/**
+ * Warns about the files a component's build read that no publish uploads, because a checkout of the
+ * component builds only where they exist. A file that another item publishes, such as the template of
+ * a nested component, travels with that item. Files in the global entry directories belong to the
+ * workspace, not to an item.
+ */
+const warnUnpublishedSources = async (handoff: Handoff, id: string): Promise<void> => {
+  const recorded = readComponentSources(handoff.workingPath);
+  const components = await handoff.store.components.list();
+  const sourceDir = components.find((component) => component.id === id)?.path;
+  if (!sourceDir) return;
+
+  const published = new Set<string>();
+  for (const component of components) {
+    for (const file of recorded[component.id] ?? []) {
+      if (component.path && isPublishableSourceFile(file, component.path)) published.add(normalizePathForCompare(file));
+    }
+  }
+  const globalDirectories = getGlobalEntryDirectories(handoff);
+  const unpublished = (recorded[id] ?? []).filter(
+    (file) => !published.has(normalizePathForCompare(file)) && !globalDirectories.some((directory) => isPathInside(file, directory))
+  );
+
+  if (unpublished.length > 0) {
+    const relative = (file: string) => path.relative(handoff.workingPath, file).split(path.sep).join('/');
+    Logger.warn(
+      `Component "${id}" uses files that are not published: ${unpublished.map(relative).join(', ')}. ` +
+        `A checkout of "${id}" builds only where they exist. Only text source files inside a catalog item directory, such as "${relative(sourceDir)}", are published.`
+    );
+  }
+};
+
 /** Map an entity's related source files to transfer files, dropping workspace-only declarations. */
 const collectSourceFiles = async (handoff: Handoff, kind: TransferEntityKind, id: string): Promise<TransferFile[]> => {
   const store = kind === 'component' ? handoff.store.components : kind === 'pattern' ? handoff.store.patterns : handoff.store.pages;
@@ -174,6 +210,8 @@ const buildComponentPackage = async (handoff: Handoff, id: string): Promise<Tran
       }
     }
   }
+
+  await warnUnpublishedSources(handoff, id);
 
   const artifacts = Array.from(byPath.values());
   return {
