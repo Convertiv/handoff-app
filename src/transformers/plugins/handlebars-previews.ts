@@ -113,6 +113,7 @@ function emitPreviewFiles(
 
 // Helpers from `hooks.registerHandlebarsHelpers` exist only in the build, so a template that uses one fails in the browser.
 function generateHandlebarsClientSource(
+  componentId: string,
   runtimePath: string,
   templateSpec: string,
   context: { style: string; script: string; fields: unknown; title: string }
@@ -141,22 +142,28 @@ function generateHandlebarsClientSource(
     const keep = (node) => !(node.nodeName === 'SCRIPT' && node.src && loadedScripts.has(node.src));
     const remember = (node) => node.nodeName === 'SCRIPT' && node.src && loadedScripts.add(node.src);
 
-    let headApplied = false;
-    startClientRender((args) => {
+    // Head nodes carry their component, so a composer document can take them out with its last
+    // instance; a render after that adds them again.
+    const owner = ${JSON.stringify(componentId)};
+    const renderInto = (container) => (args) => {
       const parsed = new DOMParser().parseFromString(template({ ...context, properties: args }), 'text/html');
-      if (!headApplied) {
+      if (!document.head.querySelector('[data-handoff-owner=' + JSON.stringify(owner) + ']')) {
         for (const node of Array.from(parsed.head.childNodes)) {
-          if (node.nodeName === 'TITLE') continue;
+          if (node.nodeName === 'TITLE' || node.nodeType !== 1) continue;
           remember(node);
-          document.head.appendChild(activate(node));
+          const element = activate(node);
+          element.setAttribute('data-handoff-owner', owner);
+          document.head.appendChild(element);
         }
-        headApplied = true;
       }
-      const root = document.getElementById('root');
       const nodes = Array.from(parsed.body.childNodes).filter(keep);
       nodes.forEach(remember);
-      root.replaceChildren(...nodes.map(activate));
-    });
+      container.replaceChildren(...nodes.map(activate));
+    };
+    // Only the render shell starts the shell protocol; a composer document mounts through the registry.
+    const shellRoot = document.getElementById('root');
+    if (shellRoot && shellRoot.getAttribute('data-handoff-render') === 'client') startClientRender(renderInto(shellRoot));
+    registerClientMount(${JSON.stringify(componentId)}, (container) => renderInto(container));
   `;
 }
 
@@ -264,7 +271,7 @@ export function handlebarsPreviewsPlugin(
           { includeSharedStyles: Boolean(componentData.sharedStyles), sharedArtifacts, componentArtifacts }
         );
         const clientBundle = await bundleClientSource(
-          generateHandlebarsClientSource(resolveModule('handlebars/runtime', [handoff.modulePath, handoff.workingPath]), Handlebars.precompile(templateContent) as string, {
+          generateHandlebarsClientSource(componentId, resolveModule('handlebars/runtime', [handoff.modulePath, handoff.workingPath]), Handlebars.precompile(templateContent) as string, {
             style: context.style,
             script: context.script,
             fields: context.fields,

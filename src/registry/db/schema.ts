@@ -629,6 +629,36 @@ export const componentCustomPreviews = pgTable(
 );
 
 /**
+ * Documents of collections, keyed by the kind and id of their owner (`screen`, `notes`). One generic
+ * table holds every owner and collection, so a new screen, collection or owner kind never needs a
+ * migration. The app validates `data` against the collection schema; the table does not. `revision`
+ * drives optimistic concurrency. The GIN index serves equality filters (`data @> '{"field": value}'`).
+ */
+export const documents = pgTable(
+  'documents',
+  {
+    ownerKind: text('owner_kind').notNull(),
+    ownerId: text('owner_id').notNull(),
+    collection: text('collection').notNull(),
+    id: text('id').notNull(),
+    data: jsonb('data').$type<Record<string, unknown>>().notNull(),
+    schemaVersion: integer('schema_version').notNull().default(1),
+    revision: integer('revision').notNull().default(1),
+    createdBy: text('created_by').references(() => registryUsers.id, { onDelete: 'set null' }),
+    updatedBy: text('updated_by').references(() => registryUsers.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.ownerKind, table.ownerId, table.collection, table.id] }),
+    index('documents_data_idx').using('gin', table.data.op('jsonb_path_ops')),
+    index('documents_updated_idx').on(table.ownerKind, table.ownerId, table.collection, table.updatedAt),
+    check('documents_data_object', sql`jsonb_typeof(${table.data}) = 'object'`),
+    check('documents_revision_positive', sql`${table.revision} > 0`),
+  ]
+);
+
+/**
  * Fixed-window throttling counters. Callers pass a hash of the identifying value so raw emails and
  * IP addresses are not retained.
  */
@@ -672,4 +702,5 @@ export const registrySchema = {
   registryAiKeys,
   registryDeviceAuthorizations,
   registryAuthRateLimits,
+  documents,
 };

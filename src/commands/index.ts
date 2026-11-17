@@ -13,6 +13,7 @@ import loginCommand from './login';
 import logoutCommand from './logout';
 import makeComponentCommand from './make/component';
 import makePageCommand from './make/page';
+import makeScreenCommand from './make/screen';
 import pullCommand from './pull';
 import publishCommand from './publish';
 import { pushCommands } from './push';
@@ -36,6 +37,7 @@ export const commands = [
   logoutCommand,
   makePageCommand,
   makeComponentCommand,
+  makeScreenCommand,
   publishCommand,
   pullCommand,
   ...pushCommands,

@@ -20,8 +20,21 @@ interface LayoutComponentProps {
   config: ClientConfig;
   children: React.ReactNode;
   fullWidthHero?: boolean;
+  /** The whole viewport under the header, with no container, side nav or footer. Screens use it. */
+  fullBleed?: boolean;
+  /** With `fullBleed`: leave out the header too, so the content fills the viewport. */
+  fullscreen?: boolean;
 }
-export default function Layout<LayoutComponentProps>({ children, config, menu, metadata, current, fullWidthHero = false }) {
+export default function Layout<LayoutComponentProps>({
+  children,
+  config,
+  menu,
+  metadata,
+  current,
+  fullWidthHero = false,
+  fullBleed = false,
+  fullscreen = false,
+}) {
   // In registry mode the per-page `current` is empty for lambda-rendered (fallback) pages, so mount
   // the sidebar regardless and let SideNav resolve its section from the cached shell (and collapse
   // itself to full width when that section has no renderable nav). Workspace/static know the section
@@ -48,32 +61,41 @@ export default function Layout<LayoutComponentProps>({ children, config, menu, m
               className="rounded-lg mb-5"
             /> */}
           </div>
-          <Header />
+          {fullBleed ? (
+            <div className="flex h-screen flex-col overflow-hidden">
+              {!fullscreen && <Header />}
+              <div className="min-h-0 flex-1 overflow-hidden">{children}</div>
+            </div>
+          ) : (
+            <>
+              <Header />
 
-          <div className="container mx-auto min-h-screen max-w-[1500px]">
-            {fullWidthHero ? (
-              <div className="w-full">
-                <div className="relative bg-transparent px-0 lg:gap-10 xl:grid">
-                  <div className="page-content mx-auto w-full">{children}</div>
-                </div>
+              <div className="container mx-auto min-h-screen max-w-[1500px]">
+                {fullWidthHero ? (
+                  <div className="w-full">
+                    <div className="relative bg-transparent px-0 lg:gap-10 xl:grid">
+                      <div className="page-content mx-auto w-full">{children}</div>
+                    </div>
+                  </div>
+                ) : showSidebar ? (
+                  <SidebarProvider>
+                    <div className="flex w-full">
+                      <SideNav />
+                      <SidebarInset className="relative bg-transparent py-8 pl-8 pr-8 md:pl-8 lg:gap-10 lg:py-16 lg:pl-16">
+                        <div className="page-content mx-auto w-full">{children}</div>
+                      </SidebarInset>
+                    </div>
+                  </SidebarProvider>
+                ) : (
+                  <div className="flex w-full">
+                    <div className="relative w-full bg-transparent px-16 py-8 lg:gap-10 lg:py-16">
+                      <div className="page-content mx-auto w-full">{children}</div>
+                    </div>
+                  </div>
+                )}
               </div>
-            ) : showSidebar ? (
-              <SidebarProvider>
-                <div className="flex w-full">
-                  <SideNav />
-                  <SidebarInset className="relative bg-transparent py-8 pl-8 pr-8 md:pl-8 lg:gap-10 lg:py-16 lg:pl-16">
-                    <div className="page-content mx-auto w-full">{children}</div>
-                  </SidebarInset>
-                </div>
-              </SidebarProvider>
-            ) : (
-              <div className="flex w-full">
-                <div className="relative w-full bg-transparent px-16 py-8 lg:gap-10 lg:py-16">
-                  <div className="page-content mx-auto w-full">{children}</div>
-                </div>
-              </div>
-            )}
-          </div>
+            </>
+          )}
         </ThemeProvider>
       </ConfigContextProvider>
     </div>

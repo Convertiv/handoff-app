@@ -6,6 +6,7 @@ Builds and runs the Next.js documentation app from runtime config + generated pr
 
 1. **Initialize app shell** (`build.ts`)
    - Prepare `.handoff/<project>/app`, copy app sources, sync `public`, persist client config.
+   - Check the declared screens and generate their files (see `src/screens/README.md`). A screen problem stops the build.
 
 2. **Build component artifacts**
    - Production: `buildComponents` + `buildPatterns`, with `failOnError`. After building every component, `processComponents` throws `ComponentBuildError` for the components that failed and the declarations that did not load (`runtimeConfig.invalidDeclarations`). The build stops before `next build`.
@@ -44,3 +45,4 @@ Builds and runs the Next.js documentation app from runtime config + generated pr
 | `client-config.ts` | Persist client runtime config + token API payload |
 | `paths.ts` | App/public path helpers + public sync |
 | `websocket.ts` | Dev reload WebSocket server |
+| `screens.ts` | Generates the screen files into the staged app for every target, and watches screen directories under `start` |

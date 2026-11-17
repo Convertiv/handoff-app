@@ -2,6 +2,8 @@ import type { UIMessage } from 'ai';
 
 import type { DocsBackend } from '../docs-api/backend';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
+import { findScreen } from '../screens/manifest';
+import { toolPrefix } from '../screens/mcp';
 import { pageRefFromPath, type AiPageRef } from './page-ref';
 
 /**
@@ -31,6 +33,9 @@ const describePage = async (backend: DocsBackend, path: string): Promise<string[
   try {
     if (ref.kind === 'custom-preview') {
       return await describeCustomPreviewEditor(backend, ref);
+    }
+    if (ref.kind === 'screen') {
+      return describeScreen(ref);
     }
     if (ref.kind === 'component') {
       const component = await backend.getComponentDetail(ref.id);
@@ -82,6 +87,28 @@ const describeCustomPreviewEditor = async (backend: DocsBackend, ref: AiPageRef)
   ];
 };
 
+/** A screen's identity and the prefix of its tools. `describeScreenContext` adds what is open on it. */
+const describeScreen = (ref: AiPageRef): string[] | null => {
+  const screen = findScreen(ref.id);
+  if (!screen) return null;
+  return [
+    'page: screen (an application view, not a docs page)',
+    `title: ${clean(screen.title, 50)}`,
+    `screen id: ${clean(screen.id, 50)}`,
+    ...(screen.description ? [`description: ${clean(screen.description, 120)}`] : []),
+    `tools for this screen start with: ${toolPrefix(screen.id)}_`,
+  ];
+};
+
+const MAX_SCREEN_CONTEXT_CHARS = 2000;
+
+/** What the reader has open on a screen, as the screen reported it. Escaped and bounded like a draft. */
+const describeScreenContext = (value: unknown): string | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const json = JSON.stringify(value).replace(/</g, '\\u003c').replace(/>/g, '\\u003e');
+  return json.length <= MAX_SCREEN_CONTEXT_CHARS ? `open on the screen (JSON): ${json}` : 'open on the screen: too large to include';
+};
+
 const MAX_DRAFT_CHARS = 4000;
 
 /** Escaped so it cannot open or close a tag. A draft that is too long is left out, not cut into invalid JSON. */
@@ -113,7 +140,10 @@ export const withPageContext = async (messages: UIMessage[], backend: DocsBacken
       if (!pages.has(path)) pages.set(path, describePage(backend, path));
       const fields = await pages.get(path);
       if (!fields) return { ...message, parts };
-      const draft = pageRefFromPath(path)?.kind === 'custom-preview' ? describeDraft((message.metadata as { draft?: unknown }).draft) : null;
+      const kind = pageRefFromPath(path)?.kind;
+      const metadata = message.metadata as { draft?: unknown; screenContext?: unknown };
+      const draft =
+        kind === 'custom-preview' ? describeDraft(metadata.draft) : kind === 'screen' ? describeScreenContext(metadata.screenContext) : null;
       const block = ['<application_context>', ...fields, ...(draft ? [draft] : []), '</application_context>'].join('\n');
       return { ...message, parts: [{ type: 'text' as const, text: block }, ...parts] };
     })

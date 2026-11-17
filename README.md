@@ -33,6 +33,7 @@ database.
 - [Connecting a workspace to a registry](#connecting-a-workspace-to-a-registry)
 - [MCP](#mcp)
 - [AI assistant](#ai-assistant)
+- [Screens](#screens)
 - [CLI reference](#cli-reference)
 
 ## How Handoff works
@@ -121,12 +122,17 @@ npm run db:migrate  # registry database migrations
 ├─ components/
 ├─ patterns/
 ├─ pages/
+├─ screens/        # screen code (`make:screen`)
+├─ handoff/data/   # documents that screens store; commit this directory
 ├─ exported/       # fetched tokens and assets; commit this directory
 ├─ public/api/     # generated docs API; gitignored
 ├─ out/            # build output; gitignored
 ├─ .vercel/        # `--package vercel` output; gitignored
 └─ .handoff/       # local Handoff state; gitignored
 ```
+
+`handoff/` and `.handoff/` are different directories. Commit `handoff/`.
+Do not commit `.handoff/`.
 
 In a project that `init` creates, the working directory is the repository
 root. `HANDOFF_WORKING_PATH` sets a different working directory.
@@ -1088,6 +1094,185 @@ names the same module. The build copies only those modules into the registry.
 > [Custom AI provider](RECIPES.md#custom-ai-provider) ·
 > [Change connections without a rebuild](RECIPES.md#change-connections-without-a-rebuild)
 
+## Screens
+
+A screen is a view in the docs app at `/screens/<id>`. It reads the docs data,
+renders components live, stores its own data in collections, and gives the
+assistant tools. The build compiles screens into the app. A top-nav item,
+**Tools**, lists them.
+
+Create one:
+
+```bash
+npx handoff-app make:screen notes
+```
+
+The command writes `screens/notes/` and adds the screen to the config:
+
+```ts
+export default defineConfig({
+  screens: [{ id: 'notes', module: './screens/notes' }],
+  app: { screensTitle: 'Tools' }, // the top-nav label, optional
+});
+```
+
+### Screen files
+
+| File | Holds | Imports from |
+| --- | --- | --- |
+| `index.tsx` | The view: `export default defineScreen({ title, icon, nav, access, fullscreen, component })` | `handoff-app/screens` |
+| `collections.ts` | Collections: `defineCollection({ name, version, schema, migrate, mcp })` | `handoff-app/screens` (definitions and types only) |
+| `tools.ts` | Optional assistant tools: `export default defineScreenTools(...)` | `handoff-app/screens/server` |
+
+- Write `title`, `description`, `icon`, `nav`, `access` and `fullscreen` in
+  `defineScreen()` as literals. The build reads them to bake the nav, the
+  access rules and the page frame.
+- `icon` is a Lucide icon name, such as `notebook-pen`.
+- `access.read` and `access.write` are `member` (default) or `admin`. They
+  apply in a registry. A workspace has one user and applies no roles.
+- A screen owns every path under `/screens/<id>/`. Read the segments with
+  `useScreenRoute().params`. Go to one with `navigate(params)`, and get the
+  full URL to send or open in a new tab with `url(params)`.
+- `fullscreen` shows paths without the docs header. Use `true` for every path,
+  or a list of patterns for some paths. A pattern lists the segments after
+  `/screens/<id>/`, and `*` matches one segment. For example,
+  `fullscreen: ['*/view']` shows `/screens/<id>/<doc>/view` alone, so
+  you can send a link to it. A `ScreenLayout` on a fullscreen path shows a link
+  back to the docs. A static export serves only the screen root, so link to
+  other paths only from a running app.
+- The build stops when a screen file imports the database (`drizzle-orm`,
+  `pg`, `postgres`), `handoff-app` or its other entry points, server code from
+  UI code, or UI code from server code. The message names the file and the fix.
+
+### Collections
+
+A collection stores JSON documents. Its JSON Schema sets the document type, and
+the server validates every write against it.
+
+```ts
+import { defineCollection, type DocumentOf } from 'handoff-app/screens';
+
+export const notes = defineCollection({
+  name: 'notes',
+  version: 1,
+  mcp: true,
+  schema: {
+    type: 'object',
+    required: ['title'],
+    properties: { title: { type: 'string', maxLength: 120 } },
+    additionalProperties: false,
+  },
+});
+export type Note = DocumentOf<typeof notes>;
+```
+
+- A workspace stores each document at
+  `handoff/data/screens/<screen>/<collection>/<id>.json`. You can read, edit
+  and commit these files. A screen cannot change this location.
+- A registry stores documents in the `documents` table. Migration `0010` adds
+  it. A new screen or collection needs no migration.
+- Collection names and document ids use lowercase letters, digits, `-` and
+  `_`. A file whose name is not a valid id, such as `Notes.json`, is not
+  listed.
+- A screen never uses the database. It reads and writes only through the
+  collection hooks and stores.
+- To change a schema, bump `version` and add a `migrate` step for the new
+  version, such as `migrate: { 2: (old) => ({ ...old, tags: [] }) }`. A
+  document upgrades when it is read and is written back.
+- A write carries the revision it builds on. A write over a newer revision is
+  a conflict.
+- Queries support equality filters on top-level fields, a sort on
+  `createdAt`, `updatedAt` or `id`, and cursor paging. A document holds at
+  most 256 KB. Joins, range queries and large data are core features, not
+  screen features.
+- Schemas support `type`, `properties`, `required`, `additionalProperties`,
+  `items`, `enum`, `const`, `anyOf`, `oneOf` and the usual length, range and
+  count keywords. The build rejects other keywords, such as `$ref`.
+
+### SDK
+
+`handoff-app/screens`:
+
+| Group | API |
+| --- | --- |
+| Data | `useCollection(c, query?)`, `useDocument(c, id)`, `DocumentOf<typeof c>` |
+| Docs | `useComponents({ search, filter })`, `useComponent(id)`, `loadComponent(id)`, `usePatterns({ search, filter })`, `useDocsApi(path)` |
+| Session and routing | `useSession()`, `useScreenRoute()` |
+| Previews | `<ComponentPreview id thumbnail? />`, `useCustomPreviews(componentId)`, `<CustomPreview componentId id />` |
+| Composition | `<ComponentCanvas items viewport zoom selectedId onSelect empty mode />`, `<ArgsForm contract value onChange fields />`, `assessInstances()`, `useInstanceAssessment(items)`, `createInstance()`, `expandPattern()`, `insertAfter()`, `moveTo()` |
+| Layout | `<ScreenLayout toolbar left assistant>`, `ScreenLayout.Panel`, `.Status`, `.Action`, `.Divider`, `.Spacer`, `isScreenChrome(target)` |
+| Controls | `<DocumentMenu collection current onOpen />`, `<ViewportToggle />` |
+| Assistant | `useAssistantContext(value)` |
+| UI | `ui.Button`, `ui.Dialog`, `ui.Card`, `ui.Grid`, `ui.SearchInput`, `ui.EmptyState`, `ui.Loading`, `ui.AddButton`, `ui.SortableList`, `ui.ListRow`, `ui.SegmentedControl`, `ui.Icon` and others |
+
+- `useDocument` shows a change at once and saves it after a short pause.
+  `status` is `loading`, `saved`, `dirty`, `saving`, `conflict`, `missing` or
+  `error`. `ScreenLayout.Status document={doc}` shows it and offers the
+  conflict choices.
+- `ComponentCanvas` renders a list of component instances
+  (`{ id, componentId, args }`) together in one sandboxed frame, stacked
+  top to bottom in list order. For another layout, place `ComponentPreview`
+  elements yourself. Each instance renders through its component's client
+  artifact. `mode="view"` shows the instances alone, without the edit frame,
+  outlines and selection. A component that changed reports issues through
+  `useInstanceAssessment`; saved instances never break.
+- `isScreenChrome(event.target)` is `true` for an event in the assistant
+  column or in a dialog, menu, list or popover open on top of the screen. Use
+  it to ignore these events, for example when a click outside a selection
+  clears it.
+- `ui.Loading` is the spinner that the screen host and `ComponentCanvas`
+  show. Use it for your own loading states, so a screen shows one spinner
+  from first paint to content. It appears only after a short delay, so a
+  fast load does not flash it.
+- The hooks work the same in workspace and registry mode. A static export
+  leaves out the screens that have collections or tools.
+
+### Tools
+
+`handoff-app/screens/server`:
+
+```ts
+import { defineScreenTools, defineTool, toolResult } from 'handoff-app/screens/server';
+import { notes } from './collections';
+
+export default defineScreenTools(({ collections, docs }) => {
+  const store = collections.get(notes);
+  return [
+    defineTool(
+      {
+        name: 'rename_note',
+        description: 'Rename a note.',
+        inputSchema: { type: 'object', required: ['id', 'title'], properties: { id: { type: 'string' }, title: { type: 'string' } } },
+      },
+      async ({ id, title }) => {
+        const note = await store.update(id, (current) => ({ ...current, title }));
+        return toolResult(note.data, { changed: [note.ref] });
+      }
+    ),
+  ];
+});
+```
+
+- A tool is listed as `<screen>_<name>`, with `-` in the screen id written as
+  `_`. A collection with `mcp: true` also gets
+  `<screen>_<collection>_list|get|create|update|delete`.
+- `scope: 'screen'` (default) offers a tool to the assistant only on that
+  screen. `scope: 'global'` also lists it for external MCP clients.
+- Handler args are typed from `inputSchema` and validated before the call.
+- `changed` makes open screens reload those documents, so the view updates
+  while the assistant works.
+- Tools act as the reader. In a registry they need the screen's `write` role,
+  and an MCP token also needs a write scope.
+
+### Development
+
+- `npm run start` reloads edits to `index.tsx`, `collections.ts` and
+  `tools.ts`. It also regenerates the screen list when a screen file is added
+  or removed, or its title, icon or access changes.
+- `npm run dev` reloads edits to these files. Restart it after you add a file
+  or change `defineScreen()` options.
+- Restart either command after you change the `screens` list.
+
 ## CLI reference
 
 | Command | Description |
@@ -1105,6 +1290,7 @@ names the same module. The build copies only those modules into the registry.
 | `npx handoff-app validate:components` | Validate the catalog items |
 | `npx handoff-app make:component <name>` | Create a Handlebars catalog item |
 | `npx handoff-app make:page <name> [parent]` | Create a documentation page |
+| `npx handoff-app make:screen <id>` | Create a screen with a collection, a tool and a layout |
 | `npx handoff-app scaffold` | Create catalog item stubs for fetched Figma components |
 | `npx handoff-app eject:config` | Write the default config to the working directory |
 

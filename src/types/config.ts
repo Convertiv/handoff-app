@@ -77,6 +77,8 @@ export interface NextAppConfig {
   basePath?: string;
   /** @default true */
   attribution?: boolean;
+  /** Label of the top-nav item that leads to the screens. @default 'Tools' */
+  screensTitle?: string;
   ports?: {
     app: EnvValue<number>;
     websocket: EnvValue<number>;
@@ -107,6 +109,17 @@ export interface ConfigCatalog {
    * @example ["components", "patterns"]
    */
   include?: string[];
+}
+
+/** A screen: a view in the docs app, built from a directory of the workspace. */
+export interface ScreenDeclaration {
+  /** Route segment and tool prefix: `/screens/<id>`. Lowercase letters, digits and `-`. */
+  id: string;
+  /**
+   * The screen directory, relative to the working directory. It holds `index.tsx` and, optionally,
+   * `collections.ts` and `tools.ts`.
+   */
+  module: string;
 }
 
 /** Runtime mode. Resolved solely from `runtime.mode`; never inferred from env vars or connection settings. */
@@ -345,6 +358,11 @@ export interface Config {
    * Where catalog items are registered.
    */
   catalog?: ConfigCatalog;
+  /**
+   * Screens: views compiled into the docs app under `/screens/<id>`. A change to this list needs a
+   * restart of `start` or `dev`.
+   */
+  screens?: ScreenDeclaration[];
   /**
    * Override URLs for the asset zip download links. When unset, each link defaults to the
    * basePath-aware asset route `{basePath}/api/docs/assets/{collection}/{collection}.zip`, served by

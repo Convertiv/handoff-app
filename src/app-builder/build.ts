@@ -18,7 +18,10 @@ import { buildMainJS } from '../transformers/preview/component/javascript';
 import type { RuntimeMode } from '../types/config';
 import { Logger } from '../utils/logger';
 import { generateTokensApi, persistClientConfig } from './client-config';
+import { ScreenBuildError } from '../screens/build/check';
+import { SCREENS_GENERATED_FILES } from '../screens/build/generate';
 import { generateDefaultPages, generateNavShell } from './nav-shell';
+import { generateAppScreens, watchScreens } from './screens';
 import { getAppPath, syncPublicFiles } from './paths';
 import { materializeDocsReadModel, validateReferencedArtifacts } from './static-export';
 import { getVercelOutputPath, writeRegistryVercelOutput, writeStaticVercelOutput } from './vercel-output';
@@ -261,7 +264,13 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
 
   // Prepare project app dir
   await fs.ensureDir(appPath);
-  await fs.copy(srcPath, appPath, { overwrite: true, filter: (file) => !file.includes('next.config.mjs') });
+  // The screen files are always generated below. Copying their placeholders would let a concurrent
+  // re-stage (the app source watcher) empty the screen list after it was generated.
+  const generatedScreenFiles = new Set(SCREENS_GENERATED_FILES.map((file) => path.resolve(srcPath, file)));
+  await fs.copy(srcPath, appPath, {
+    overwrite: true,
+    filter: (file) => !file.includes('next.config.mjs') && !generatedScreenFiles.has(path.resolve(file)),
+  });
   if (includeWorkspaceArtifacts) {
     await syncPublicFiles(handoff);
   }
@@ -354,6 +363,15 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   // Registry builds must not bake workspace pages into the shell — they come from the DB at runtime.
   await generateNavShell(handoff, appPath, runtimeMode !== 'registry');
   await generateDefaultPages(handoff, appPath);
+
+  // Screens compile into every target. A registry runs the screens it was built with; it never
+  // reads their source at runtime.
+  try {
+    await generateAppScreens(handoff, appPath);
+  } catch (error) {
+    if (error instanceof ScreenBuildError) throw new HandoffBuildError(error.message);
+    throw error;
+  }
 
   return appPath;
 };
@@ -968,6 +986,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   watchCatalogDirectories(handoff, state, chokidarConfig);
   watchGlobalEntries(handoff, state, chokidarConfig);
   watchPages(handoff, chokidarConfig);
+  watchScreens(handoff, appPath);
 };
 
 /**

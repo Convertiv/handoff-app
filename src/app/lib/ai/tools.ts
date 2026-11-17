@@ -4,6 +4,7 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { dynamicTool, jsonSchema, type ToolSet } from 'ai';
 import { createMcpServer } from '../mcp';
 import type { McpPrincipal } from '../mcp/tool';
+import { CHANGED_DOCUMENTS_META, type ChangedDocument } from '../screens/mcp';
 
 /**
  * The assistant's tools: the MCP server's own tools, reached in process.
@@ -86,14 +87,25 @@ const parseToolPayload = (result: CallToolResult): unknown => {
   }
 };
 
+export interface AiToolSessionOptions {
+  /** The screen the question was asked on. Its screen-scoped tools join the set. */
+  screenId?: string;
+  /** Called with the screen documents a tool wrote, so the reader's open screen refreshes them. */
+  onChanged?: (changed: ChangedDocument[]) => void;
+}
+
 /**
  * Build the tool set for one request. Tool descriptions and input schemas come from the MCP server
- * itself, so the agent sees what any other MCP client would.
+ * itself, so the agent sees what any other MCP client would, plus the tools of the reader's screen.
  *
  * @param onSources - Called with the pages and components each tool read, as they are read.
  */
-export const createAiToolSession = async (onSources: (sources: AiSource[]) => void, principal: McpPrincipal): Promise<AiToolSession> => {
-  const server = createMcpServer({ principal });
+export const createAiToolSession = async (
+  onSources: (sources: AiSource[]) => void,
+  principal: McpPrincipal,
+  options: AiToolSessionOptions = {}
+): Promise<AiToolSession> => {
+  const server = createMcpServer({ principal, screenId: options.screenId });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: 'handoff-docs-assistant', version: '1.0.0' });
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
@@ -111,6 +123,8 @@ export const createAiToolSession = async (onSources: (sources: AiSource[]) => vo
             arguments: (asRecord(input) ?? {}) as Record<string, unknown>,
           })) as CallToolResult;
           if (!result.isError) onSources(sourcesOf(definition.name, parseToolPayload(result)));
+          const changed = result._meta?.[CHANGED_DOCUMENTS_META];
+          if (Array.isArray(changed) && changed.length > 0) options.onChanged?.(changed as ChangedDocument[]);
           return result.content;
         },
       }),

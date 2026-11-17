@@ -71,6 +71,13 @@
       "when": 1792311973418,
       "tag": "0009_component_custom_previews",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794572714544,
+      "tag": "0010_documents",
+      "breakpoints": true
     }
   ]
 }

@@ -14,6 +14,7 @@ import {
   Loader2,
   MessageSquareText,
   Pencil,
+  Wrench,
   Plus,
   Square,
   SquarePen,
@@ -37,6 +38,7 @@ import { getCustomPreviewDraft } from '../CustomPreview/events';
 import { toolCallLabel } from './toolLabel';
 import { useAiChat } from './useAiChat';
 import { useAiConnections, type AiModelOption } from './useAiConnections';
+import { getScreenAssistantContext } from '../../lib/screens/events';
 import { pageAt, useNavTitles, usePageContext, type AiPage } from './usePageContext';
 
 /**
@@ -446,6 +448,7 @@ const PAGE_ICONS: Record<AiPageKind, React.ElementType> = {
   pattern: LayoutTemplate,
   page: FileText,
   'custom-preview': Pencil,
+  screen: Wrench,
 };
 
 /**
@@ -502,7 +505,7 @@ const PageChip: React.FC<{ page: AiPage; state: PageChipState; onToggle?: () => 
   );
 };
 
-export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactNode }> = ({ active, controls }) => {
+export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactNode; title?: React.ReactNode }> = ({ active, controls, title }) => {
   const [input, setInput] = React.useState('');
   const connections = useAiConnections(active);
   const composerRef = React.useRef<HTMLTextAreaElement>(null);
@@ -561,6 +564,7 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
           sentAt: Date.now(),
           ...(context && { path: context.path }),
           ...(context?.kind === 'custom-preview' && getCustomPreviewDraft() && { draft: getCustomPreviewDraft() }),
+          ...(context?.kind === 'screen' && getScreenAssistantContext() && { screenContext: getScreenAssistantContext() }),
         },
       },
       { body: { model: selectedModel } }
@@ -613,6 +617,7 @@ export const AiConversation: React.FC<{ active: boolean; controls?: React.ReactN
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div className="flex h-11 shrink-0 items-center justify-end gap-0.5 px-2">
+        {title && <div className="mr-auto min-w-0 truncate pl-1 text-[13px] font-semibold">{title}</div>}
         {canStartFresh && (
           <Button
             type="button"
