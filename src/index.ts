@@ -8,6 +8,7 @@ import { makeComponent, makePage } from './cli/make';
 import { loginProfileNames } from './cli/auth/store';
 import {
   type ConfigLoadContext,
+  HandoffConfigError,
   initConfigWithMetadata,
   initRuntimeConfig,
   loadProfileEnv,
@@ -229,6 +230,16 @@ class Handoff {
       profile: this._options.profile,
       ...this.profilesWithoutConfig(),
     });
+    // A config file that loaded before and is now missing fails the reload, so the last good config
+    // stays in use. Falling back to the defaults would rebuild the project without its settings.
+    const missingConfigPath =
+      (this._mainConfigFilePath && !configResult.configPath && this._mainConfigFilePath) ||
+      (this._profileConfigFilePath && !configResult.profileConfigPath && this._profileConfigFilePath);
+    if (missingConfigPath) {
+      throw new HandoffConfigError(
+        `Config file "${path.basename(missingConfigPath)}" is missing. The last loaded configuration stays in use until the file is restored.`
+      );
+    }
     const config = configResult.config;
     this.config = config;
     this._mainConfigFilePath = configResult.configPath;

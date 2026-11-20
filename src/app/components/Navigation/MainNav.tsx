@@ -8,6 +8,7 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from '../../components/ui/navigation-menu';
+import { isScreensPath, listedScreens, SCREENS_ROUTE, screensManifest } from '../../lib/screens/manifest';
 import { cn } from '../../lib/utils';
 import { useConfigContext } from '../context/ConfigContext';
 import { useNav } from '../context/NavProvider';
@@ -19,7 +20,10 @@ const trimSlashes = (input: string): string => {
 export function MainNav() {
   const context = useConfigContext();
   const router = useRouter();
-  const { menu } = useNav();
+  // Screens are their own area: a docs section that links into it stays out, and one item leads there.
+  const menu = useNav().menu?.filter((section) => !isScreensPath(`/${trimSlashes(section.path ?? '')}`));
+  const hasScreens = listedScreens().length > 0;
+  const inScreens = isScreensPath(router.pathname);
   return (
     <NavigationMenu>
       <NavigationMenuList>
@@ -62,6 +66,19 @@ export function MainNav() {
               </NavigationMenuItem>
             );
           })}
+        {hasScreens && (
+          <NavigationMenuItem>
+            <NavigationMenuLink className={navigationMenuTriggerStyle()} asChild>
+              <Link
+                href={SCREENS_ROUTE}
+                className="block select-none space-y-1 rounded-sm p-3 leading-none no-underline outline-hidden transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                {...(inScreens ? { 'data-active': 'true' } : {})}
+              >
+                <span className="text-sm leading-none">{screensManifest.title}</span>
+              </Link>
+            </NavigationMenuLink>
+          </NavigationMenuItem>
+        )}
       </NavigationMenuList>
     </NavigationMenu>
   );

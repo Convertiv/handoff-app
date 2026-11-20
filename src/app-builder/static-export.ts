@@ -7,6 +7,7 @@ import { CLIENT_ARTIFACT_SUFFIX } from '../custom-previews/shell';
 import type { ComponentListObject, PatternListObject } from '../transformers/preview/types';
 import { Logger } from '../utils/logger';
 import { getAppPath } from './paths';
+import { CANVAS_DOCUMENT_PATH, generateCanvasDocument } from '../custom-previews/canvas';
 
 /**
  * Static build target materialization.
@@ -178,6 +179,8 @@ export const materializeDocsReadModel = async (handoff: Handoff, outDir: string)
   // Canonical artifact route: every generated artifact, addressable at `/api/docs/artifacts/{path}`.
   await fs.ensureDir(artifactsOut);
   await fs.copy(artifactRoot, artifactsOut, { overwrite: true });
+  // The component canvas that screens render into. The live route generates it on request.
+  await fs.writeFile(path.join(artifactsOut, CANVAS_DOCUMENT_PATH), generateCanvasDocument(handoff.config?.app?.base_path));
 
   const components = readJsonArray<ComponentListObject>(path.resolve(artifactRoot, 'components.json'));
   const patterns = readJsonArray<PatternListObject>(path.resolve(artifactRoot, 'patterns.json'));

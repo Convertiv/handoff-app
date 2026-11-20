@@ -14,6 +14,7 @@ import { normalizeConfig } from './helpers';
 import { HandoffConfigError } from './errors';
 import { isEnvReference } from './from-env';
 import { resolveConfigEnv } from './resolve-env';
+import { resolveScreenDeclarations } from '../screens/build/declarations';
 
 export const CONFIG_FILE_PREFERENCE = [
   'handoff.config.ts',
@@ -301,6 +302,12 @@ export const initConfigWithMetadata = (configOverride?: Partial<Config>, context
     throw new HandoffConfigError(
       'Item declarations support ts, js, and cjs. Convert JSON declarations to defineCatalogItem. See UPGRADE.md#catalog-items.'
     );
+  }
+
+  try {
+    resolveScreenDeclarations(config.screens, workingPath);
+  } catch (error) {
+    throw new HandoffConfigError((error as Error).message);
   }
 
   return { config, configPath, profile: profileSelection?.name, profileConfigPath };

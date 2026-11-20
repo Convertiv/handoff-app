@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { AiAssistantMobileTrigger } from '../../components/AiAssistant/AiAssistantProvider';
 import { Button } from '../../components/ui/button';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '../../components/ui/sheet';
+import { isScreensPath, listedScreens, screenRoute, screensManifest } from '../../lib/screens/manifest';
 import { cn } from '../../lib/utils';
 import { useConfigContext } from '../context/ConfigContext';
 import { useNav } from '../context/NavProvider';
@@ -19,7 +20,7 @@ export function MobileNav() {
   const context = useConfigContext();
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const { menu } = useNav();
+  const menu = useNav().menu?.filter((section) => !isScreensPath(`/${trimSlashes(section.path ?? '')}`));
 
   const toggleTheme = () => {
     if (theme === 'light') {
@@ -71,6 +72,25 @@ export function MobileNav() {
                 </Link>
               );
             })}
+          {listedScreens().length > 0 && (
+            <div className="flex flex-col space-y-1 border-t pt-4">
+              <span className="px-4 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">{screensManifest.title}</span>
+              {listedScreens().map((screen) => (
+                <Link
+                  key={screen.id}
+                  href={screenRoute(screen.id)}
+                  className={cn(
+                    'rounded-md px-4 py-2 text-sm',
+                    trimSlashes(router.asPath).startsWith(trimSlashes(screenRoute(screen.id)))
+                      ? 'bg-accent font-normal text-accent-foreground'
+                      : 'text-foreground hover:bg-accent/50 hover:text-accent-foreground'
+                  )}
+                >
+                  {screen.title}
+                </Link>
+              ))}
+            </div>
+          )}
           <div className="mt-4 border-t pt-4">
             <Button variant="ghost" className="w-full justify-start font-normal" onClick={toggleTheme}>
               {theme === 'light' && (

@@ -1,6 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
 @import 'tailwindcss';
+/* Screen files live in the workspace, outside this app, so Tailwind is told where to find their classes. */
+@import '../generated/screens.css';
 
 @plugin 'tailwindcss-animate';
 @plugin '@tailwindcss/typography';
@@ -57,6 +59,8 @@
 
 	--animate-accordion-down: accordion-down 0.2s ease-out;
 	--animate-accordion-up: accordion-up 0.2s ease-out;
+	/* Waits before it fades in, so a fast load ends before the spinner shows. */
+	--animate-loading-in: loading-in 200ms ease-out 300ms both;
 
 	@keyframes accordion-down {
 		from {
@@ -64,6 +68,11 @@
 		}
 		to {
 			height: var(--radix-accordion-content-height);
+		}
+	}
+	@keyframes loading-in {
+		from {
+			opacity: 0;
 		}
 	}
 	@keyframes accordion-up {

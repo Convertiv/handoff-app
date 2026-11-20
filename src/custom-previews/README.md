@@ -19,6 +19,7 @@ Pure code, with no database or Node imports. The docs app editor, the registry s
 | `assess.ts` | `assessArgs()` checks args against the current contract and fills new required props from their defaults at render time; `parseArgs`/`parseTitle`/`parseDescription` validate request input |
 | `sandbox.ts` | The frame sandbox and CSP that every render shell runs under |
 | `shell.ts` | The render shell contract that build, publish and the registry share: the shell and client bundle file suffixes, the props script id, and `scriptSafeJson()` |
+| `canvas.ts` | The component canvas, `canvas.render.html`: one sandboxed document that renders a list of component instances. Its postMessage protocol is in the file comment. |
 | `index.ts` | Barrel re-exports |
 
 ## Related
@@ -30,3 +31,7 @@ Pure code, with no database or Node imports. The docs app editor, the registry s
   runs at an opaque origin. The docs app frames it with `sandbox="allow-scripts"`, and both routes that
   serve it send `Content-Security-Policy: sandbox allow-scripts`. The shell reports its height with
   `postMessage`, because the parent cannot measure a cross-origin document.
+- Canvas: the docs API serves `canvas.render.html` in every mode, and the static build writes it. It
+  runs at an opaque origin, reads each component's render shell, and loads only the artifacts that
+  shell names. So the shells and client bundles are served with `Access-Control-Allow-Origin: *`. A
+  static host must send that header too, or the canvas cannot load components.

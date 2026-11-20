@@ -1,5 +1,11 @@
 import type { NextApiResponse } from 'next';
-import { CLIENT_ARTIFACT_SUFFIX, CUSTOM_PREVIEW_CONTENT_SECURITY_POLICY, RENDER_SHELL_SUFFIX } from '@handoff/custom-previews';
+import {
+  CANVAS_DOCUMENT_PATH,
+  CLIENT_ARTIFACT_SUFFIX,
+  CUSTOM_PREVIEW_CONTENT_SECURITY_POLICY,
+  RENDER_SHELL_SUFFIX,
+  generateCanvasDocument,
+} from '@handoff/custom-previews';
 import { validateArtifactSegments } from './artifacts';
 import type { DocsBackend } from './backend';
 import { sendDocsError } from './errors';
@@ -27,7 +33,11 @@ export const serveArtifactBySegments = async (
     return;
   }
 
-  const resolved = await backend.resolveArtifact(validation.segments);
+  // The canvas is part of the app, not of a build, so every mode serves it without a stored artifact.
+  const isCanvas = validation.segments.length === 1 && validation.segments[0] === CANVAS_DOCUMENT_PATH;
+  const resolved = isCanvas
+    ? { contentType: 'text/html; charset=utf-8', body: generateCanvasDocument(process.env.HANDOFF_APP_BASE_PATH) }
+    : await backend.resolveArtifact(validation.segments);
   if (!resolved) {
     sendDocsError(res, 'artifact_not_found', `Artifact "${validation.segments.join('/')}" was not found.`);
     return;
@@ -38,8 +48,9 @@ export const serveArtifactBySegments = async (
   if (fileName.endsWith(RENDER_SHELL_SUFFIX)) {
     res.setHeader('Content-Security-Policy', CUSTOM_PREVIEW_CONTENT_SECURITY_POLICY);
   }
-  // The sandboxed shell loads this bundle from origin `null`. It is public and sent without credentials.
-  if (fileName.endsWith(CLIENT_ARTIFACT_SUFFIX)) {
+  // The sandboxed shell loads this bundle, and the canvas reads each render shell, from origin `null`.
+  // Both are public build output and are sent without credentials.
+  if (fileName.endsWith(CLIENT_ARTIFACT_SUFFIX) || fileName.endsWith(RENDER_SHELL_SUFFIX)) {
     res.setHeader('Access-Control-Allow-Origin', '*');
   }
   res.setHeader('Content-Type', resolved.contentType);

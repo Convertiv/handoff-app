@@ -309,3 +309,108 @@ exporting the whole list
 
 * `exportables: string[]` Return the list with whatever additions and subtractions
   you need for your application.
+
+## Screens
+
+Screens have two entry points. Both are versioned public API, and neither loads
+the CLI. The [README](../README.md#screens) explains the files and the rules.
+
+### `handoff-app/screens`
+
+Use it in `index.tsx` and its imports. `collections.ts` may use only the
+definitions, the helpers and the types.
+
+**Definitions**
+
+* `defineScreen({ title, description?, icon?, nav?, access?, fullscreen?, component })`
+  Declares the screen. Default-export the result. Write every option except
+  `component` as a literal. `fullscreen` is `true` or a list of path patterns,
+  such as `['*/view']`, shown without the docs header.
+* `defineCollection({ name, version?, schema, migrate?, mcp? })` Declares a
+  collection. The document type comes from `schema`.
+* `DocumentOf<typeof collection>` The document type of a collection.
+* `ComponentInstance` `{ id, componentId, args }`: one placed component.
+
+**Helpers** (they run anywhere)
+
+* `createInstance(componentOrId, { args?, preview? }?)` A new instance. A
+  `ComponentInfo` gives it the component's default args, or the args of the
+  named `preview`. `args` wins over both.
+* `expandPattern(pattern)` A pattern's components as new instances.
+* `insertAfter(list, items, afterId?)`, `moveTo(list, id, position)` Reorder a list
+  of items with ids.
+* `assessComponentArgs(contract, args)`, `assessInstance(instance, component)`
+  Check args against a component's current contract.
+* `emptyValue(schema)`, `validateValue(schema, value)` Work with a schema.
+
+**Hooks and components** (they run only inside the docs app)
+
+| API | Returns or renders |
+| --- | --- |
+| `useCollection(c, query?)` | `{ documents, status, error, hasMore, loadMore, create, remove, refresh }` |
+| `useDocument(c, id)` | `{ id, data, revision, status, error, update(fn), save, refresh, resolveConflict(keep) }` |
+| `useComponents({ search?, filter? })` | `{ data: ComponentSummary[], groups, status, error }` |
+| `useComponent(id)` | `{ data: ComponentInfo }` with `contract`, `argsSchema`, `defaultArgs`, `previews` |
+| `loadComponent(id)` | `Promise<ComponentInfo \| null>`, for event handlers |
+| `usePatterns({ search?, filter? })` | `{ data: PatternInfo[], groups }`, each with its components and args |
+| `useDocsApi(path)` | Any docs read API path, such as `tokens/foundations/colors.json` |
+| `useSession()` | `{ mode, user, canRead, canWrite, status }` |
+| `useScreenRoute()` | `{ screenId, params, navigate(params), href(params), url(params) }`; `url` is the full URL, for a link to send |
+| `useCustomPreviews(componentId)` | Saved custom previews (registry only) |
+| `useAssistantContext(value)` | Sends `value` with each question asked on the screen |
+| `useInstanceAssessment(items)`, `assessInstances(items)` | Issues per instance id |
+| `isScreenChrome(target)` | `true` for an event in the assistant column or in a dialog, menu, list or popover open on top of the screen |
+| `ScreenLayout` | `toolbar`, `left`, `assistant`; `.Panel`, `.Status`, `.Action`, `.Divider`, `.Spacer` |
+| `ComponentCanvas` | `items`, `viewport`, `zoom`, `selectedId`, `onSelect`, `empty`, `onRenderError`, `mode?` (`edit` or `view`) |
+| `ComponentPreview` | `id`, `previewKey?`, `thumbnail?` |
+| `CustomPreview` | `componentId`, `id` |
+| `ArgsForm` | `contract`, `value`, `onChange`, `fields?`, `disabled?` |
+| `DocumentMenu` | `collection`, `current`, `onOpen`, `titleField?`, `create?`, `autoOpen?`, `noun?` |
+| `ViewportToggle` | `value`, `onChange`, `zoom?`, `onZoomChange?`, `zoomLevels?` |
+| `ui` | Curated primitives: `Button`, `Input`, `Label`, `Badge`, `Card*`, `Dialog*`, `Separator`, `Grid`, `SearchInput`, `EmptyState`, `Loading`, `AddButton`, `SortableList`, `ListRow`, `SegmentedControl`, `Icon` |
+
+**Choose the components a screen offers**
+
+`filter` keeps the components a screen offers. `search` then narrows them. Search
+reads the id, title, description, group, categories and tags. `groups` lists the
+groups of the filtered components, so a search does not change them. Narrow by
+group in the screen.
+
+Define the filter once in `collections.ts`. Pass it to `useComponents` and to
+`docs.components()` in `tools.ts`, and check it in tools that place components.
+The assistant can find any component through the built-in tools, so a filter in
+the UI alone does not limit it. Define the filter outside render.
+
+```ts
+// collections.ts
+export const offered = (component: ComponentSummary) => component.group !== 'Examples';
+
+// index.tsx
+const components = useComponents({ search, filter: offered });
+
+// tools.ts
+const component = await docs.component(componentId);
+if (!component || !offered(component)) return toolError(`"${componentId}" is not offered on this screen.`);
+```
+
+`ArgsForm` shows every property. Pass `fields` to show only some, in that order.
+The other properties keep their values.
+
+### `handoff-app/screens/server`
+
+Use it only in `tools.ts`.
+
+* `defineScreenTools((context) => tools)` The default export of `tools.ts`.
+  `context` has:
+  * `collections.get(c)` A typed store: `get(id)`, `list(query)`,
+    `create(data, { id? })`, `put(id, data, { revision? })`, `update(id, fn)`
+    (retries when another write lands first) and `remove(id)`. Each stored
+    document has `ref`, which `toolResult` takes in `changed`.
+  * `docs` `component(id)`, `components({ search?, filter? })`, `pattern(id)`,
+    `patterns({ search?, filter? })`, `assessArgs(component, args)`.
+  * `caller` The registry user, or `null` in a workspace.
+* `defineTool({ name, description, inputSchema, scope?, readOnly?, title? }, handler)`
+  One tool. `handler` gets args typed from `inputSchema`.
+* `toolResult(payload, { changed? })`, `toolError(message)` The two results.
+* `ScreenDataError` What a store throws: `not_found`, `conflict`, `invalid`,
+  `forbidden`, `too_large`. A tool returns its message to the agent.

@@ -14,6 +14,7 @@ import { withPageContext } from '@/lib/ai/context';
 import { AiConnectionError, createAiLanguageModel } from '@/lib/ai/model';
 import { DOCS_ASSISTANT_PROMPT } from '@/lib/ai/prompt';
 import { describeAiConnections, findAiConnection, selectAiModel } from '@/lib/ai/resolve';
+import { pageRefFromPath } from '@/lib/ai/page-ref';
 import { createAiToolSession, type AiSource } from '@/lib/ai/tools';
 // Not the auth barrel: it loads the registry database.
 import { scopesForRegistryRole } from '@handoff/registry/auth/types';
@@ -32,6 +33,14 @@ import { resolveDocsBackend } from '@/lib/docs-api';
  * belongs to the gateway, which enforces budgets and rate limits per key.
  */
 const MAX_AGENT_STEPS = 12;
+
+/** The screen of the latest question, whose screen-scoped tools the agent may use. */
+const screenOfLatestQuestion = (messages: UIMessage[]): string | undefined => {
+  const latest = [...messages].reverse().find((message) => message.role === 'user');
+  const path = (latest?.metadata as { path?: unknown } | undefined)?.path;
+  const ref = typeof path === 'string' ? pageRefFromPath(path) : null;
+  return ref?.kind === 'screen' ? ref.id : undefined;
+};
 
 const readMessages = (body: unknown): UIMessage[] => {
   const messages = (body as { messages?: unknown })?.messages;
@@ -90,7 +99,11 @@ export default async function aiChatHandler(req: NextApiRequest, res: NextApiRes
 
       const principal =
         reader.userId && reader.role ? { userId: reader.userId, role: reader.role, scopes: scopesForRegistryRole(reader.role) } : null;
-      const session = await createAiToolSession(writeSources, principal);
+      const session = await createAiToolSession(writeSources, principal, {
+        screenId: screenOfLatestQuestion(messages),
+        // Transient: the browser refreshes the documents now, and a stored transcript needs no copy.
+        onChanged: (changed) => writer.write({ type: 'data-screen-change', data: changed, transient: true }),
+      });
       // Torn down with the response, the way `/api/mcp/` does it: the merged stream outlives this
       // function, and a reader who closes the modal mid-answer must not leave the session open.
       res.on('close', () => void session.close());

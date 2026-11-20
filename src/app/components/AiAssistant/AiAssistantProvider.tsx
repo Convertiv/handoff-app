@@ -42,6 +42,14 @@ const AiAssistantContext = React.createContext<AiAssistantApi | null>(null);
 /** The opener, or `null` where this build has no assistant. */
 export const useAiAssistant = (): AiAssistantApi | null => React.useContext(AiAssistantContext);
 
+/**
+ * Whether this reader can use the assistant, on dock routes and others alike. Screens show the
+ * conversation in their own column and read this. `undefined` while a registry session loads.
+ */
+const AiAvailabilityContext = React.createContext<boolean | undefined>(false);
+
+export const useAiAvailable = (): boolean | undefined => React.useContext(AiAvailabilityContext);
+
 export const AiAssistantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const router = useRouter();
   const visible = isAiAssistantRoute(router.pathname);
@@ -139,13 +147,15 @@ const AiAssistant: React.FC<{ children: React.ReactNode; available: boolean | un
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [available, value, visible]);
 
-  if (available !== true || !visible) return <>{children}</>;
+  if (available !== true || !visible) return <AiAvailabilityContext.Provider value={available}>{children}</AiAvailabilityContext.Provider>;
 
   return (
-    <AiAssistantContext.Provider value={value}>
-      {children}
-      {restored && <AiAssistantPanel state={dock} isMobile={isMobile} onChange={change} />}
-    </AiAssistantContext.Provider>
+    <AiAvailabilityContext.Provider value={available}>
+      <AiAssistantContext.Provider value={value}>
+        {children}
+        {restored && <AiAssistantPanel state={dock} isMobile={isMobile} onChange={change} />}
+      </AiAssistantContext.Provider>
+    </AiAvailabilityContext.Provider>
   );
 };
 
