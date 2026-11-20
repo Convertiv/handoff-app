@@ -3,6 +3,7 @@ import path from 'path';
 import Handoff from '..';
 import { generateScreens, type ScreensContext } from '../screens/build/generate';
 import { Logger } from '../utils/logger';
+import type { WatcherState } from './watchers/utils';
 
 /**
  * Screens in the staged app: generation for every build, and the watcher for `start`.
@@ -25,19 +26,42 @@ export const generateAppScreens = async (handoff: Handoff, appPath: string): Pro
   if (manifest.screens.length > 0) Logger.info(`Checked ${manifest.screens.length} screen${manifest.screens.length === 1 ? '' : 's'}.`);
 };
 
-const MAIN_CONFIG_SETTLE_MS = 400;
-
-/** Watch the screen directories and the main config; keep the generated files current. */
-export const watchScreens = (handoff: Handoff, appPath: string): void => {
+/**
+ * Watch the screen directories and keep the generated files current.
+ *
+ * The runtime configuration watcher calls `state.refreshScreens` after each config reload. A timer
+ * here would race that reload, which waits behind any running component build, and regenerate from
+ * the old config.
+ */
+export const watchScreens = (handoff: Handoff, appPath: string, state: WatcherState): void => {
   let watcher: chokidar.FSWatcher | null = null;
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  let watchedDirectoriesKey = '';
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  // Runs in sequence, so the last run writes the latest config.
+  let queue: Promise<void> = Promise.resolve();
 
   const directories = (): string[] =>
     (Array.isArray(handoff.config?.screens) ? handoff.config.screens : [])
       .map((screen) => (typeof screen?.module === 'string' ? path.resolve(handoff.workingPath, screen.module) : null))
       .filter((directory): directory is string => Boolean(directory));
 
-  const regenerate = async () => {
+  const syncWatcher = () => {
+    const watched = directories();
+    const key = watched.join('\n');
+    if (key === watchedDirectoriesKey) return;
+    watchedDirectoriesKey = key;
+    void watcher?.close();
+    watcher = null;
+    if (watched.length === 0) return;
+    watcher = chokidar
+      .watch(watched, { ignoreInitial: true, ignored: /(^|[/\\])(node_modules|\..+)([/\\]|$)|\.tmp$/ })
+      .on('all', () => {
+        if (debounceTimer) clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => void regenerate(), 50);
+      });
+  };
+
+  const generate = async () => {
     try {
       const { changed } = await generateScreens(contextOf(handoff), appPath);
       if (changed) Logger.success('Screens updated.');
@@ -45,24 +69,11 @@ export const watchScreens = (handoff: Handoff, appPath: string): void => {
       // The dev server keeps the last good files; the next save tries again.
       Logger.error(error instanceof Error ? error.message : String(error));
     }
-    arm();
+    syncWatcher();
   };
 
-  const schedule = (delay = 50) => {
-    if (timer) clearTimeout(timer);
-    timer = setTimeout(() => void regenerate(), delay);
-  };
+  const regenerate = (): Promise<void> => (queue = queue.then(generate));
 
-  const arm = () => {
-    void watcher?.close();
-    const mainConfig = handoff.getMainConfigFilePath();
-    const watched = [...directories(), ...(mainConfig ? [mainConfig] : [])];
-    if (watched.length === 0) return;
-    watcher = chokidar
-      .watch(watched, { ignoreInitial: true, ignored: /(^|[/\\])(node_modules|\..+)([/\\]|$)|\.tmp$/ })
-      // The runtime configuration watcher reloads the config first; regenerate once it has.
-      .on('all', (_event, file) => schedule(file === mainConfig ? MAIN_CONFIG_SETTLE_MS : 50));
-  };
-
-  arm();
+  state.refreshScreens = regenerate;
+  syncWatcher();
 };

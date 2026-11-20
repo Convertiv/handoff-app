@@ -986,7 +986,7 @@ export const watchApp = async (handoff: Handoff): Promise<void> => {
   watchCatalogDirectories(handoff, state, chokidarConfig);
   watchGlobalEntries(handoff, state, chokidarConfig);
   watchPages(handoff, chokidarConfig);
-  watchScreens(handoff, appPath);
+  watchScreens(handoff, appPath, state);
 };
 
 /**

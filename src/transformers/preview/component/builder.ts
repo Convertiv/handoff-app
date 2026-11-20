@@ -206,6 +206,8 @@ export type ProcessComponentsOptions = {
    * running.
    */
   failOnError?: boolean;
+  /** Collects the id of each component this run built. Components the cache skipped are not added. */
+  builtIds?: Set<string>;
 };
 
 /**
@@ -482,6 +484,7 @@ export async function processComponents(
     // Write the updated component data to the API file for external access and caching.
     //console.log('data', data);
     await writeComponentApi(runtimeComponentId, data, handoff, []);
+    options.builtIds?.add(runtimeComponentId);
 
     // Build the summary metadata for this component.
     const summary = buildComponentSummary(runtimeComponentId, data);
