@@ -1,6 +1,7 @@
 'use client';
 
 import type { CollectionHandle, DocumentHandle, DocumentStatus, UseCollection, UseDocument } from '@handoff/screens/client-api';
+import { DEFAULT_LIST_LIMIT, MAX_LIST_LIMIT } from '@handoff/screens/store';
 import type { CollectionQuery, StoredDocument } from '@handoff/screens/types';
 import * as React from 'react';
 import { onScreenChanges, type ChangedDocument } from '../events';
@@ -13,11 +14,14 @@ import { useScreenContext } from './context';
  * A document change shows at once and is saved after {@link SAVE_DELAY_MS}. The save carries the
  * revision it builds on; a `409` puts the document in `conflict` with the other writer's version,
  * until the screen resolves it. Writes by the assistant arrive as change events and refresh the
- * caches that show those documents.
+ * caches that show those documents. Other writes, by MCP clients or other tabs, show when the reader
+ * returns to the tab, which reads the shown documents and lists again.
  */
 
 const SAVE_DELAY_MS = 600;
 const REFRESH_DELAY_MS = 80;
+/** Switching back to the tab fires both `focus` and `visibilitychange`; they count as one return. */
+const FOCUS_THROTTLE_MS = 5000;
 
 type Stored = StoredDocument<unknown>;
 type Listener = () => void;
@@ -180,6 +184,42 @@ const resolveConflict = (entry: DocumentEntry, keep: 'mine' | 'theirs'): void =>
   if (keep === 'mine') void saveDocument(entry);
 };
 
+/**
+ * Shows a stored version read from the server. A newer version replaces the shown data when
+ * nothing is unsaved, and becomes a conflict otherwise. `null` means the document is gone.
+ */
+const mergeStored = (entry: DocumentEntry, current: Stored | null): void => {
+  if (!current) {
+    if (!entry.stored || entry.local !== undefined) return;
+    entry.stored = null;
+    entry.status = 'missing';
+    entry.error = null;
+    publish(entry);
+    return;
+  }
+  if (entry.stored && current.revision <= entry.stored.revision) return;
+  if (entry.local === undefined && !entry.saving) {
+    entry.stored = current;
+    entry.status = 'saved';
+    entry.error = null;
+  } else {
+    entry.conflict = current;
+    entry.status = 'conflict';
+    entry.error = 'The document changed while you were editing it.';
+  }
+  publish(entry);
+};
+
+/** Reads the document again and merges it. A failed read keeps what is shown. */
+const revalidateDocument = async (entry: DocumentEntry): Promise<void> => {
+  if (entry.loading) return entry.loading;
+  if (entry.saving) return;
+  const current = await readDocument(entry.screenId, entry.collection, entry.id).catch(() => undefined);
+  // A save that started meanwhile may have written the version just read; its own result settles it.
+  if (current === undefined || entry.saving) return;
+  mergeStored(entry, current);
+};
+
 /** A tool or another tab wrote the document. */
 const applyRemoteChange = async (entry: DocumentEntry, change: ChangedDocument): Promise<void> => {
   if (change.revision === 0) {
@@ -190,18 +230,11 @@ const applyRemoteChange = async (entry: DocumentEntry, change: ChangedDocument):
     return;
   }
   if (entry.stored && change.revision <= entry.stored.revision) return;
-  const current = await readDocument(entry.screenId, entry.collection, entry.id).catch(() => null);
-  if (!current) return;
-  if (entry.local === undefined && !entry.saving) {
-    entry.stored = current;
-    entry.status = 'saved';
-  } else {
-    entry.conflict = current;
-    entry.status = 'conflict';
-    entry.error = 'The document changed while you were editing it.';
-  }
-  publish(entry);
+  const current = await readDocument(entry.screenId, entry.collection, entry.id).catch(() => undefined);
+  if (current !== undefined) mergeStored(entry, current);
 };
+
+const isLoaded = (entry: DocumentEntry): boolean => entry.stored !== null || entry.status === 'missing';
 
 const IDLE_DOCUMENT: DocumentSnapshot = { data: undefined, revision: 0, status: 'idle', error: null };
 const noop = () => () => undefined;
@@ -241,7 +274,7 @@ export const useDocument: UseDocument = (collection, id) => {
       error: snapshot.error,
       update: (change) => entry && updateDocument(entry, change),
       save: () => (entry ? saveDocument(entry) : Promise.resolve()),
-      refresh: () => (entry ? loadDocument(entry) : Promise.resolve()),
+      refresh: () => (!entry ? Promise.resolve() : isLoaded(entry) ? revalidateDocument(entry) : loadDocument(entry)),
       resolveConflict: (keep) => entry && resolveConflict(entry, keep),
     }),
     [entry, id, snapshot]
@@ -302,25 +335,49 @@ const collectionEntry = (screenId: string, collection: string, query: Collection
   return entry;
 };
 
-const loadCollection = (entry: CollectionEntry, more = false): Promise<void> => {
+/** Writes finished per collection, so a list read that overlaps a write is read again. */
+const collectionWrites = new Map<string, number>();
+const writesKey = (screenId: string, collection: string): string => JSON.stringify([screenId, collection]);
+const writesOf = (screenId: string, collection: string): number => collectionWrites.get(writesKey(screenId, collection)) ?? 0;
+const countWrite = (screenId: string, collection: string): void => {
+  collectionWrites.set(writesKey(screenId, collection), writesOf(screenId, collection) + 1);
+};
+
+/**
+ * Reads the first page again, or the next one with `more`. A reload reads as many documents as
+ * are shown, so pages loaded with `loadMore` stay. With `quiet`, a failed reload keeps the list.
+ */
+const loadCollection = (entry: CollectionEntry, more = false, quiet = false): Promise<void> => {
   if (entry.loading) return entry.loading;
   const cursor = more ? (entry.nextCursor ?? undefined) : undefined;
   if (more && !cursor) return Promise.resolve();
-  entry.loading = listDocuments(entry.screenId, entry.collection, { ...entry.query, cursor })
+  const limit = more
+    ? entry.query.limit
+    : Math.min(Math.max(entry.documents.length, entry.query.limit ?? DEFAULT_LIST_LIMIT), MAX_LIST_LIMIT);
+  const writes = writesOf(entry.screenId, entry.collection);
+  let isStale = false;
+  entry.loading = listDocuments(entry.screenId, entry.collection, { ...entry.query, limit, cursor })
     .then((page) => {
+      // A write finished while the read ran, so the page may predate it.
+      if (writesOf(entry.screenId, entry.collection) !== writes) {
+        isStale = true;
+        return;
+      }
       entry.documents = more ? [...entry.documents, ...page.documents] : page.documents;
       entry.nextCursor = page.nextCursor;
       entry.status = 'ready';
       entry.error = null;
     })
     .catch((error) => {
+      if (quiet && entry.status === 'ready') return;
       entry.status = 'error';
       entry.error = messageOf(error);
     })
     .finally(() => {
       entry.loading = null;
-      publishCollection(entry);
-    });
+      if (!isStale) publishCollection(entry);
+    })
+    .then(() => (isStale ? loadCollection(entry, more, quiet) : undefined));
   return entry.loading;
 };
 
@@ -341,6 +398,7 @@ const refreshCollection = (screenId: string, collection: string): void => {
 
 /** A saved document shows its new data in the lists that hold it, without a reload. */
 const updateListedDocument = (screenId: string, collection: string, stored: Stored): void => {
+  countWrite(screenId, collection);
   for (const entry of collectionEntriesOf(screenId, collection)) {
     if (!entry.documents.some((document) => document.id === stored.id)) continue;
     entry.documents = entry.documents.map((document) => (document.id === stored.id ? stored : document));
@@ -385,6 +443,7 @@ export const useCollection: UseCollection = (collection, query) => {
       refresh: () => loadCollection(entry),
       create: async (data, options) => {
         const stored = await createDocument(screen.id, collection.name, data, options?.id);
+        countWrite(screen.id, collection.name);
         const cached = documentEntry(screen.id, collection.name, stored.id);
         cached.stored = stored;
         cached.status = settledStatus(cached);
@@ -394,6 +453,7 @@ export const useCollection: UseCollection = (collection, query) => {
       },
       remove: async (id) => {
         await deleteDocument(screen.id, collection.name, id);
+        countWrite(screen.id, collection.name);
         const cached = documents.get(documentKey(screen.id, collection.name, id));
         if (cached) void applyRemoteChange(cached, { screen: screen.id, collection: collection.name, id, revision: 0 });
         refreshCollection(screen.id, collection.name);
@@ -403,8 +463,22 @@ export const useCollection: UseCollection = (collection, query) => {
   );
 };
 
-// Changes from the assistant's tools: refresh the lists and documents they touched.
+let revalidatedAt = 0;
+
+/** Reads the shown documents and lists again, at most once per {@link FOCUS_THROTTLE_MS}. */
+const revalidateShown = (): void => {
+  if (document.visibilityState !== 'visible' || Date.now() - revalidatedAt < FOCUS_THROTTLE_MS) return;
+  revalidatedAt = Date.now();
+  documents.forEach((entry) => {
+    if (entry.listeners.size > 0 && isLoaded(entry)) void revalidateDocument(entry);
+  });
+  collections.forEach((entry) => {
+    if (entry.listeners.size > 0) void loadCollection(entry, false, true);
+  });
+};
+
 if (typeof window !== 'undefined') {
+  // Changes from the assistant's tools: refresh the lists and documents they touched.
   onScreenChanges((changed) => {
     for (const change of changed) {
       refreshCollection(change.screen, change.collection);
@@ -412,4 +486,7 @@ if (typeof window !== 'undefined') {
       if (entry) void applyRemoteChange(entry, change);
     }
   });
+  // Changes from MCP clients or other tabs show when the reader returns.
+  window.addEventListener('focus', revalidateShown);
+  document.addEventListener('visibilitychange', revalidateShown);
 }

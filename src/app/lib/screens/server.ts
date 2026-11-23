@@ -1,4 +1,4 @@
-import { isCollection, type AnyCollection, type ScreenRole } from '@handoff/screens/define';
+import { isCollection, isScreenOptions, type AnyCollection, type ScreenRole } from '@handoff/screens/define';
 import {
   queryComponents,
   queryPatterns,
@@ -92,6 +92,14 @@ export const createScreenStores = (
       actor: caller?.userId ?? null,
       canWrite: permissions.canWrite,
     });
+  },
+});
+
+/** Options for the screen's tools. `definition` only types the result; the build baked the values. */
+export const screenOptions = (screen: ScreenManifestEntry): ScreenToolsContext['options'] => ({
+  get: (definition) => {
+    if (!isScreenOptions(definition)) throw new Error(`options.get() needs the default export of the options.ts of screen "${screen.id}".`);
+    return screen.options as never;
   },
 });
 

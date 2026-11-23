@@ -1,4 +1,4 @@
-import { toArgsSchema, type ComponentContract } from '../custom-previews/contract';
+import { toArgsSchema, type ComponentContract as CoreContract } from '../custom-previews/contract';
 import { assessComponentArgs } from './instances';
 import type { ComponentInfo, ComponentQuery, ComponentSummary, PatternInfo, PatternQuery } from './types';
 
@@ -19,7 +19,7 @@ export interface ComponentArtifactShape {
   tags?: string[];
   image?: string;
   renderer?: string;
-  properties?: ComponentContract;
+  properties?: CoreContract;
   previews?: Record<string, { title?: string; values?: Record<string, unknown>; url?: string }>;
   customPreview?: { renderUrl?: string };
 }

@@ -8,6 +8,7 @@ import type { ScreenMeta } from '../manifest';
  * Reads a screen's `defineScreen({ ... })` options from its source. The build bakes the title, icon,
  * nav, access and fullscreen paths into the nav, the server and the page frame, and the UI module
  * cannot run in Node, so those options must be literals. The rule matches Next.js route segment config.
+ * Compiled ES modules from screen packages work too, if they are not minified.
  */
 
 export type { ScreenMeta };
@@ -28,9 +29,18 @@ export const readScreenMeta = (file: string, searchPaths: string[]): ScreenMeta 
     throw new Error(`${file}${at ? `:${at.line + 1}:${at.character + 1}` : ''}: ${message}`);
   };
 
+  // Compiled output calls it as `defineScreen(...)`, `ns.defineScreen(...)` or `(0, ns.defineScreen)(...)`.
+  const isDefineScreen = (callee: TS.Expression): boolean => {
+    if (ts.isParenthesizedExpression(callee)) {
+      const inner = callee.expression;
+      return ts.isBinaryExpression(inner) && inner.operatorToken.kind === ts.SyntaxKind.CommaToken && isDefineScreen(inner.right);
+    }
+    if (ts.isIdentifier(callee)) return callee.text === 'defineScreen';
+    return ts.isPropertyAccessExpression(callee) && callee.name.text === 'defineScreen';
+  };
   const calls: TS.CallExpression[] = [];
   const visit = (node: TS.Node) => {
-    if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'defineScreen') calls.push(node);
+    if (ts.isCallExpression(node) && isDefineScreen(node.expression)) calls.push(node);
     ts.forEachChild(node, visit);
   };
   visit(source);

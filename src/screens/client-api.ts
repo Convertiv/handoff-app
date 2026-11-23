@@ -8,12 +8,11 @@ import type {
   ReactElement,
   ReactNode,
 } from 'react';
-import type { ComponentContract } from '../custom-previews/contract';
-import type { CustomPreview } from '../custom-previews/types';
-import type { AnyCollection, ComponentInstance, DocumentOf, ScreenRole } from './define';
+import type { AnyCollection, AnyScreenOptions, ComponentInstance, DocumentOf, OptionsOf, ScreenRole } from './define';
 import type {
   ArgsIssue,
   CollectionQuery,
+  ComponentContract,
   ComponentInfo,
   ComponentQuery,
   ComponentSummary,
@@ -55,7 +54,10 @@ export interface DocumentHandle<Doc> {
   update(change: (document: Doc) => Doc): void;
   /** Save pending changes now. */
   save(): Promise<void>;
-  /** Read the stored document again. Unsaved changes are kept. */
+  /**
+   * Read the stored document again. A newer version replaces the shown data, or becomes a conflict
+   * when changes are unsaved. A failed read keeps what is shown.
+   */
   refresh(): Promise<void>;
   /** After a conflict: write your changes over the other writer's (`mine`), or drop yours (`theirs`). */
   resolveConflict(keep: 'mine' | 'theirs'): void;
@@ -138,6 +140,9 @@ export interface ScreenRoute {
 
 export type UseScreenRoute = () => ScreenRoute;
 
+/** The screen's options with schema defaults filled. Pass the default export of `options.ts`; it types the result. */
+export type UseScreenOptions = <D extends AnyScreenOptions>(definition: D) => OptionsOf<D>;
+
 // ---------------------------------------------------------------------------------------------
 // Previews
 // ---------------------------------------------------------------------------------------------
@@ -152,7 +157,23 @@ export interface ComponentPreviewProps {
   className?: string;
 }
 
-export type SavedCustomPreview = CustomPreview;
+/** A component state a reader saved in a registry: the component id and complete args. */
+export interface SavedCustomPreview {
+  id: string;
+  componentId: string;
+  title: string;
+  description?: string;
+  args: Record<string, unknown>;
+  /** `unsupported`: the published component has no client render shell. */
+  status: 'ok' | 'needs-attention' | 'unsupported';
+  issues: ArgsIssue[];
+  /** The component's contract changed since the preview was saved. */
+  contractChanged: boolean;
+  createdBy: { id: string; name?: string } | null;
+  updatedBy: { id: string; name?: string } | null;
+  createdAt: string;
+  updatedAt: string;
+}
 
 /** The custom previews readers saved for a component. Registry only; empty in a workspace. */
 export type UseCustomPreviews = (componentId: string | null | undefined) => DataResult<SavedCustomPreview[]>;

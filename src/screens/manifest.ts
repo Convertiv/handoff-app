@@ -27,6 +27,8 @@ export interface ScreenManifestEntry extends ScreenMeta {
   id: string;
   collections: CollectionMeta[];
   tools: ToolMeta[];
+  /** Declared options with schema defaults filled. Empty without `options.ts`. */
+  options: Record<string, unknown>;
   /** Needs API routes, so a static export leaves it out. */
   needsServer: boolean;
 }

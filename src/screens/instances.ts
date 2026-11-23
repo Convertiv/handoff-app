@@ -1,7 +1,7 @@
 import { assessArgs } from '../custom-previews/assess';
-import type { ComponentContract } from '../custom-previews/contract';
+import { toCoreContract } from './core-contract';
 import type { ComponentInstance } from './define';
-import type { ArgsAssessment, ComponentInfo, InstanceAssessment, PatternInfo } from './types';
+import type { ArgsAssessment, ComponentContract, ComponentInfo, InstanceAssessment, PatternInfo } from './types';
 
 /**
  * Component instances: creating, expanding and checking them against the current component
@@ -43,7 +43,7 @@ export const expandPattern = (pattern: Pick<PatternInfo, 'components'>): Compone
 
 /** Args checked against a component's current contract, with defaults filled in for rendering. */
 export const assessComponentArgs = (contract: ComponentContract | undefined, args: Record<string, unknown>): ArgsAssessment => {
-  const { issues, renderArgs } = assessArgs(contract, args ?? {});
+  const { issues, renderArgs } = assessArgs(toCoreContract(contract), args ?? {});
   return { args: renderArgs, issues };
 };
 

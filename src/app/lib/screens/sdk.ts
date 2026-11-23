@@ -20,6 +20,7 @@ import { ui as uiImpl } from '../../components/Screens/primitives';
 import { ScreenLayout as ScreenLayoutImpl } from '../../components/Screens/ScreenLayout';
 import {
   useAssistantContext as useAssistantContextImpl,
+  useScreenOptions as useScreenOptionsImpl,
   useScreenRoute as useScreenRouteImpl,
   useSession as useSessionImpl,
 } from './client/context';
@@ -49,6 +50,7 @@ export const usePatterns: Api.UsePatterns = usePatternsImpl;
 export const useDocsApi: Api.UseDocsApi = useDocsApiImpl;
 export const useSession: Api.UseSession = useSessionImpl;
 export const useScreenRoute: Api.UseScreenRoute = useScreenRouteImpl;
+export const useScreenOptions: Api.UseScreenOptions = useScreenOptionsImpl;
 export const useCustomPreviews: Api.UseCustomPreviews = useCustomPreviewsImpl;
 export const useAssistantContext: Api.UseAssistantContext = useAssistantContextImpl;
 export const useInstanceAssessment: Api.UseInstanceAssessment = useInstanceAssessmentImpl;

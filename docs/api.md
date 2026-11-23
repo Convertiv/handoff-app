@@ -328,7 +328,14 @@ definitions, the helpers and the types.
   such as `['*/view']`, shown without the docs header.
 * `defineCollection({ name, version?, schema, migrate?, mcp? })` Declares a
   collection. The document type comes from `schema`.
+* `defineScreenOptions({ schema })` Declares a screen's options. Default-export
+  it from `options.ts`. The build checks the declared values and fills each
+  `default`.
 * `DocumentOf<typeof collection>` The document type of a collection.
+* `OptionsOf<typeof options>` The options a screen reads, with defaults filled.
+* `OptionsInputOf<typeof options>` The options a declaration may pass.
+* `ScreenDeclaration<Options>` `{ id, module, options? }`: one entry of the
+  `screens` config. A factory returns it.
 * `ComponentInstance` `{ id, componentId, args }`: one placed component.
 
 **Helpers** (they run anywhere)
@@ -356,6 +363,7 @@ definitions, the helpers and the types.
 | `useDocsApi(path)` | Any docs read API path, such as `tokens/foundations/colors.json` |
 | `useSession()` | `{ mode, user, canRead, canWrite, status }` |
 | `useScreenRoute()` | `{ screenId, params, navigate(params), href(params), url(params) }`; `url` is the full URL, for a link to send |
+| `useScreenOptions(options)` | The screen's options, typed by the default export of `options.ts` |
 | `useCustomPreviews(componentId)` | Saved custom previews (registry only) |
 | `useAssistantContext(value)` | Sends `value` with each question asked on the screen |
 | `useInstanceAssessment(items)`, `assessInstances(items)` | Issues per instance id |
@@ -368,6 +376,20 @@ definitions, the helpers and the types.
 | `DocumentMenu` | `collection`, `current`, `onOpen`, `titleField?`, `create?`, `autoOpen?`, `noun?` |
 | `ViewportToggle` | `value`, `onChange`, `zoom?`, `onZoomChange?`, `zoomLevels?` |
 | `ui` | Curated primitives: `Button`, `Input`, `Label`, `Badge`, `Card*`, `Dialog*`, `Separator`, `Grid`, `SearchInput`, `EmptyState`, `Loading`, `AddButton`, `SortableList`, `ListRow`, `SegmentedControl`, `Icon` |
+
+**Keep data current**
+
+`useDocument` and `useCollection` show changes from other writers without a
+reload:
+
+* A tool that the assistant runs on the screen: the change shows at once. The
+  tool must return the documents it wrote in `changed`.
+* An MCP client, such as a coding agent, or another tab: the change shows when
+  the reader returns to the tab.
+
+A newer version replaces the shown data. If the reader has unsaved changes, the
+document goes to `conflict` and keeps them. Call `refresh()` to read again at
+any time.
 
 **Choose the components a screen offers**
 
@@ -406,6 +428,8 @@ Use it only in `tools.ts`.
     `create(data, { id? })`, `put(id, data, { revision? })`, `update(id, fn)`
     (retries when another write lands first) and `remove(id)`. Each stored
     document has `ref`, which `toolResult` takes in `changed`.
+  * `options.get(options)` The screen's options, typed by the default export of
+    `options.ts`.
   * `docs` `component(id)`, `components({ search?, filter? })`, `pattern(id)`,
     `patterns({ search?, filter? })`, `assessArgs(component, args)`.
   * `caller` The registry user, or `null` in a workspace.

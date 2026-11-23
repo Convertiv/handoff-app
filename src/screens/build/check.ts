@@ -1,11 +1,11 @@
 import esbuild from 'esbuild';
 import { builtinModules, createRequire } from 'module';
 import path from 'path';
-import { isCollection, type AnyCollection } from '../define';
+import { isCollection, isScreenOptions, type AnyCollection } from '../define';
 import * as screensRuntime from '../runtime';
 import type { CollectionMeta, ToolMeta } from '../manifest';
 import type { ScreenTool, ScreenToolsDefinition } from '../server';
-import { schemaProblems } from '../validate';
+import { describeIssues, schemaProblems, validateValue, withDefaults } from '../validate';
 import type { ScreenFiles } from './declarations';
 
 /**
@@ -14,7 +14,7 @@ import type { ScreenFiles } from './declarations';
  * - The UI graph (`index.tsx`) must not reach server code, the database or the CLI.
  * - The server graph (`collections.ts`, `tools.ts`) must not reach React, Next or UI files, and may
  *   take only the pure helpers from `handoff-app/screens`.
- * - `collections.ts` is shared by both, so it must not import Node built-ins either.
+ * - `collections.ts` and `options.ts` are shared by both, so they must not import Node built-ins either.
  *
  * Bare package imports are not followed: they are checked by name and left external.
  */
@@ -31,6 +31,8 @@ export type { CollectionMeta, ToolMeta };
 export interface ScreenCheckResult {
   collections: CollectionMeta[];
   tools: ToolMeta[];
+  /** Declared options with schema defaults filled. */
+  options: Record<string, unknown>;
 }
 
 /**
@@ -54,7 +56,12 @@ const isBare = (specifier: string): boolean => !specifier.startsWith('.') && !pa
 
 const CODE_FILE = /\.(m?[jt]sx?|cjs|cts|mts)$/;
 
-type Graph = 'ui' | 'collections' | 'tools';
+type Graph = 'ui' | 'collections' | 'options' | 'tools';
+
+/** Graphs that the UI and the server both load. */
+const isShared = (graph: Graph): boolean => graph === 'collections' || graph === 'options';
+
+const FILE_LABEL: Record<Graph, string> = { ui: 'index.tsx', collections: 'collections.ts', options: 'options.ts', tools: 'tools.ts' };
 
 interface GuardOptions {
   graph: Graph;
@@ -97,7 +104,7 @@ const guardPlugin = ({ graph, screen, workingPath, problems, safeScreensModule }
             if (graph !== 'tools') {
               report(
                 importer,
-                `imports "handoff-app/screens/server", which is server code. Import it only from tools.ts; ${graph === 'ui' ? 'UI files use "handoff-app/screens"' : 'collections.ts uses "handoff-app/screens"'}.`
+                `imports "handoff-app/screens/server", which is server code. Import it only from tools.ts; ${graph === 'ui' ? 'UI files use "handoff-app/screens"' : `${FILE_LABEL[graph]} uses "handoff-app/screens"`}.`
               );
             }
           } else if (specifier === 'handoff-app/screens') {
@@ -111,12 +118,12 @@ const guardPlugin = ({ graph, screen, workingPath, problems, safeScreensModule }
         } else if (graph !== 'ui' && UI_PACKAGES.includes(name)) {
           report(
             importer,
-            `imports "${specifier}", which is UI code. collections.ts, tools.ts and the files they import run on the server; move this import to index.tsx or a file only the UI imports.`
+            `imports "${specifier}", which is UI code. collections.ts, options.ts, tools.ts and the files they import run on the server; move this import to index.tsx or a file only the UI imports.`
           );
-        } else if (graph === 'collections' && NODE_BUILTINS.has(specifier)) {
+        } else if (isShared(graph) && NODE_BUILTINS.has(specifier)) {
           report(
             importer,
-            `imports "${specifier}". collections.ts is shared by the UI and the server, so it cannot use Node built-ins. Move this code to tools.ts.`
+            `imports "${specifier}". ${FILE_LABEL[graph]} is shared by the UI and the server, so it cannot use Node built-ins. Move this code to tools.ts.`
           );
         } else if (graph === 'ui' && NODE_BUILTINS.has(specifier)) {
           report(importer, `imports the Node built-in "${specifier}" in UI code, which runs in the browser.`);
@@ -159,7 +166,7 @@ const describeBuildFailure = (error: unknown, graph: Graph, workingPath: string)
       : '';
     const missing = MISSING_EXPORT.exec(message.text);
     if (missing && missing[1].includes('handoff-screens-safe')) {
-      return `${file}: imports "${missing[2]}" from "handoff-app/screens" in server code. ${graph === 'tools' ? 'tools.ts' : 'collections.ts'} may use only defineCollection, types and the pure helpers; hooks and components belong in index.tsx.`;
+      return `${file}: imports "${missing[2]}" from "handoff-app/screens" in server code. ${FILE_LABEL[graph]} may use only defineCollection, types and the pure helpers; hooks and components belong in index.tsx.`;
     }
     return `${file ? `${file}: ` : ''}${message.text}`;
   });
@@ -221,10 +228,34 @@ const readCollections = (exports: Record<string, unknown>, file: string, problem
   return collections;
 };
 
+const readOptions = (
+  exports: Record<string, unknown>,
+  screen: ScreenFiles,
+  problems: string[],
+  workingPath: string
+): Record<string, unknown> => {
+  const where = relative(workingPath, screen.options!);
+  const definition = exports.default ?? exports;
+  if (!isScreenOptions(definition)) {
+    problems.push(`${where}: must default-export defineScreenOptions({ schema }) from "handoff-app/screens".`);
+    return {};
+  }
+  const schemaIssues = schemaProblems(definition.schema, 'options schema').map((problem) => `${where}: ${problem}`);
+  if (schemaIssues.length > 0) {
+    problems.push(...schemaIssues);
+    return {};
+  }
+  const value = withDefaults(definition.schema, screen.optionValues ?? {}) as Record<string, unknown>;
+  const issues = validateValue(definition.schema, value, 'options');
+  if (issues.length > 0) problems.push(`the declared options do not match the schema in ${where}: ${describeIssues(issues)}`);
+  return value;
+};
+
 const readTools = (
   exports: Record<string, unknown>,
   screen: ScreenFiles,
   collections: AnyCollection[],
+  options: Record<string, unknown>,
   problems: string[],
   workingPath: string
 ): ScreenTool[] => {
@@ -247,6 +278,12 @@ const readTools = (
           }
           const fail = unavailable(`collections.get(${collection.name})`);
           return { get: fail, list: fail, create: fail, put: fail, update: fail, remove: fail } as never;
+        },
+      },
+      options: {
+        get: (definition) => {
+          if (!isScreenOptions(definition)) throw new Error('options.get() needs the default export of options.ts.');
+          return options as never;
         },
       },
       docs: {
@@ -301,12 +338,28 @@ export const checkScreen = async (screen: ScreenFiles, workingPath: string): Pro
     }
   }
 
+  let options: Record<string, unknown> = {};
+  if (screen.options) {
+    const code = await bundle(screen.options, { graph: 'options', screen, workingPath, problems, safeScreensModule }, 'node');
+    if (code) {
+      try {
+        options = readOptions(evaluate(code, screen.options), screen, problems, workingPath);
+      } catch (error) {
+        problems.push(`${relative(workingPath, screen.options)}: could not be loaded: ${(error as Error).message}`);
+      }
+    }
+  } else if (screen.optionValues) {
+    problems.push(
+      `the declaration passes \`options\`, but the screen has no ${screen.packageName ? `"${screen.module}/options" export` : 'options.ts'} that declares them. Remove \`options\` or declare them with defineScreenOptions().`
+    );
+  }
+
   let tools: ScreenTool[] = [];
   if (screen.tools) {
     const code = await bundle(screen.tools, { graph: 'tools', screen, workingPath, problems, safeScreensModule }, 'node');
     if (code) {
       try {
-        tools = readTools(evaluate(code, screen.tools), screen, collections, problems, workingPath);
+        tools = readTools(evaluate(code, screen.tools), screen, collections, options, problems, workingPath);
       } catch (error) {
         problems.push(`${relative(workingPath, screen.tools)}: could not be loaded: ${(error as Error).message}`);
       }
@@ -322,5 +375,6 @@ export const checkScreen = async (screen: ScreenFiles, workingPath: string): Pro
   return {
     collections: collections.map((collection) => ({ name: collection.name, version: collection.version, mcp: collection.mcp })),
     tools: tools.map((tool) => ({ name: tool.name, scope: tool.scope })),
+    options,
   };
 };

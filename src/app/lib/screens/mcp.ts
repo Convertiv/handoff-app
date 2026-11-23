@@ -11,6 +11,7 @@ import { screensManifest, type ScreenManifestEntry } from './manifest';
 import {
   createDocsReader,
   createScreenStores,
+  screenOptions,
   declaredScreenTools,
   findServedScreen,
   resolveCollectionsBackend,
@@ -246,7 +247,7 @@ export const createScreenMcpTools = async ({
     const permissions = screenPermissions(screen, caller, hasWriteScope(principal));
     if (!permissions.canRead) continue;
     const backend = await resolveCollectionsBackend();
-    const context = { collections: createScreenStores(screen, backend, caller, permissions), docs, caller };
+    const context = { collections: createScreenStores(screen, backend, caller, permissions), options: screenOptions(screen), docs, caller };
     const screenTools = [
       ...screenCollections(screen.id).flatMap((collection) => collectionTools(screen, collection, backend, caller, permissions)),
       ...declaredScreenTools(screen.id, context).filter((tool) => tool.readOnly || permissions.canWrite),

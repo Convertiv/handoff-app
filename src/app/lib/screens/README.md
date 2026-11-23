@@ -9,6 +9,7 @@ The docs app side of screens (see `src/screens/README.md` for the SDK and the bu
    hooks                 → /api/screens/<id>/<collection>/[id]  → http.ts → typed store → backend
    assistant column      → /api/ai/chat (screen page context)   → MCP server + screen tools
    tool writes           → `data-screen-change` stream parts     → events.ts → client caches refresh
+   other writes          → tab focus / visibility                → client caches read the shown data again
 ```
 
 ## Files

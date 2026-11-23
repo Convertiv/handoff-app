@@ -21,7 +21,7 @@ import { generateTokensApi, persistClientConfig } from './client-config';
 import { ScreenBuildError } from '../screens/build/check';
 import { SCREENS_GENERATED_FILES } from '../screens/build/generate';
 import { generateDefaultPages, generateNavShell } from './nav-shell';
-import { generateAppScreens, watchScreens } from './screens';
+import { generateAppScreens, screenPackages, watchScreens } from './screens';
 import { getAppPath, syncPublicFiles } from './paths';
 import { materializeDocsReadModel, validateReferencedArtifacts } from './static-export';
 import { getVercelOutputPath, writeRegistryVercelOutput, writeStaticVercelOutput } from './vercel-output';
@@ -327,6 +327,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
   const escapedAiEnabled = escapeForSingleQuotedJsString(String(ai.enabled));
   const escapedAiConnections = escapeForSingleQuotedJsString(JSON.stringify(ai.connections));
   const escapedAiDefaultModel = escapeForSingleQuotedJsString(ai.defaultModel ?? '');
+  const escapedScreenPackages = escapeForSingleQuotedJsString(JSON.stringify(screenPackages(handoff)));
   const placeholderValues: Record<string, string> = {
     '%HANDOFF_PROJECT_ID%': escapedProjectId,
     '%HANDOFF_APP_BASE_PATH%': escapedAppBasePath,
@@ -350,6 +351,7 @@ const initializeProjectApp = async (handoff: Handoff, options: InitializeProject
     '%HANDOFF_AI_ENABLED%': escapedAiEnabled,
     '%HANDOFF_AI_BAKED_CONNECTIONS%': escapedAiConnections,
     '%HANDOFF_AI_DEFAULT_MODEL%': escapedAiDefaultModel,
+    '%HANDOFF_SCREEN_PACKAGES%': escapedScreenPackages,
   };
   let nextConfigContent = await fs.readFile(nextConfigPath, 'utf-8');
   for (const [placeholder, value] of Object.entries(placeholderValues)) {

@@ -1,8 +1,14 @@
 # Screens Module
 
 A screen is a view in the docs app at `/screens/<id>`, written against a typed SDK. The project
-config declares screens (`screens: [{ id, module }]`), and the build compiles them into the app.
-There is no runtime plugin loader.
+config declares screens (`screens: [{ id, module, options? }]`), and the build compiles them into
+the app. There is no runtime plugin loader.
+
+`module` reads like an import: `./` or `../` is a workspace directory, and anything else is an npm
+package with an optional subpath. `build/declarations.ts` resolves both to `ScreenFiles`; nothing
+else resolves `module`. A package exports the UI at its subpath and optional
+`<subpath>/collections`, `<subpath>/options` and `<subpath>/tools`, read with the `import` and
+`default` conditions. The app adds screen packages to `transpilePackages`.
 
 A screen directory holds:
 
@@ -10,6 +16,7 @@ A screen directory holds:
 |------|---------|---------|
 | `index.tsx` | `handoff-app/screens` | The browser. Default-exports `defineScreen({ ... })`. |
 | `collections.ts` | `defineCollection` and types from `handoff-app/screens` | The browser and the server. Pure data. |
+| `options.ts` (optional) | `defineScreenOptions` from `handoff-app/screens` | The browser and the server. Pure data. |
 | `tools.ts` (optional) | `handoff-app/screens/server` | The server. Default-exports `defineScreenTools(...)`. |
 
 ## Entry points
@@ -46,6 +53,10 @@ Neither entry point loads the CLI.
 
 ## Adding to the SDK
 
+Public types live in this directory and never re-export a core type. Screens depend on them, so a
+change to core internals, such as the preview transformer's `SlotMetadata`, must not change them.
+Where the app assigns a core record to a public type, the compiler checks that the shapes still match.
+
 - A helper that runs anywhere: write it in its module, export it from `runtime.ts`, and document it in `docs/api.md`.
 - A hook or a component: add its type to `client-api.ts`, declare it in `index.ts`, implement it in the
   app and export it from `src/app/lib/screens/sdk.ts`, and document it in `docs/api.md`.
@@ -58,9 +69,9 @@ Neither entry point loads the CLI.
 
 | File | Purpose |
 |------|---------|
-| `declarations.ts` | Checks the `screens` config at load: ids, duplicates, directories, `index.tsx` |
+| `declarations.ts` | Resolves the `screens` config at load: ids, duplicates, options as plain JSON, directories and packages (`exports`) |
 | `analyze.ts` | Reads `title`, `description`, `icon`, `nav`, `access` and `fullscreen` from `defineScreen()` as literals |
-| `check.ts` | Bundles each import graph with esbuild and rejects forbidden imports; loads `collections.ts` and `tools.ts` to check names and schemas |
+| `check.ts` | Bundles each import graph with esbuild and rejects forbidden imports; loads `collections.ts`, `options.ts` and `tools.ts` to check names, schemas and declared options, and fills option defaults |
 | `generate.ts` | Writes `generated/screens.json`, `screens.client.ts`, `screens.server.ts` and `screens.css` into the staged app |
 | `scaffold.ts` | `make:screen <id>` |
 
@@ -70,7 +81,14 @@ Forbidden imports, each reported with the file and the fix:
 - UI graph: `handoff-app/screens/server`, the screen's `tools.ts`, Node built-ins;
 - server graph: React, Next and other UI packages, `.tsx`/`.jsx` files, hooks or components from
   `handoff-app/screens`;
-- `collections.ts`: Node built-ins.
+- `collections.ts` and `options.ts`: Node built-ins.
+
+## Options
+
+`options.ts` default-exports `defineScreenOptions({ schema })`. The build checks the declaration's
+`options` against the schema, fills each `default` (`withDefaults`), and bakes the result into the
+manifest. `useScreenOptions(definition)` and `options.get(definition)` in tools return it; the
+definition only types the result. The browser receives the manifest, so options must not hold secrets.
 
 ## Files
 
@@ -87,5 +105,6 @@ Forbidden imports, each reported with the file and the fix:
 | `instances.ts` | Component instances: create, expand a pattern, assess against contracts, list helpers |
 | `catalog.ts` | Docs records as `ComponentSummary`, `ComponentInfo` and `PatternInfo`, and the component and pattern queries. The browser hooks and the server docs reader both use it |
 | `store.ts` | `CollectionsBackend` and the typed store |
-| `types.ts` | Stored documents, queries, docs shapes, `ScreenDataError` |
+| `types.ts` | Stored documents, queries, docs shapes (including `ComponentContract`), `ScreenDataError` |
+| `core-contract.ts` | Internal. Hands a public `ComponentContract` to the core custom-previews helpers |
 | `manifest.ts` | The shape of `generated/screens.json` |

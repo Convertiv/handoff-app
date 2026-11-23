@@ -1,7 +1,14 @@
 'use client';
 
 import type { ScreenRole } from '@handoff/screens/define';
-import type { ScreenRoute, ScreenSession, UseAssistantContext, UseScreenRoute, UseSession } from '@handoff/screens/client-api';
+import type {
+  ScreenRoute,
+  ScreenSession,
+  UseAssistantContext,
+  UseScreenOptions,
+  UseScreenRoute,
+  UseSession,
+} from '@handoff/screens/client-api';
 import { useSession as useNextAuthSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import * as React from 'react';
@@ -16,7 +23,11 @@ export interface ScreenContextValue {
   fullscreen: boolean;
 }
 
-export const ScreenContext = React.createContext<ScreenContextValue | null>(null);
+// On `globalThis`: a manifest change in dev re-runs this module, and loaded screen chunks must
+// still read the context that `ScreenHost` provides.
+const contextKey = Symbol.for('handoff.screens.context');
+const contextStore = globalThis as typeof globalThis & { [contextKey]?: React.Context<ScreenContextValue | null> };
+export const ScreenContext = (contextStore[contextKey] ??= React.createContext<ScreenContextValue | null>(null));
 
 export const useScreenContext = (): ScreenContextValue => {
   const context = React.useContext(ScreenContext);
@@ -42,6 +53,14 @@ export const useScreenRoute: UseScreenRoute = () => {
         void router[options?.replace ? 'replace' : 'push'](href(next), undefined, { shallow: true, scroll: false }),
     };
   }, [router, screen.id, params]);
+};
+
+export const useScreenOptions: UseScreenOptions = (definition) => {
+  const { screen } = useScreenContext();
+  if (definition?.kind !== 'handoff-screen-options') {
+    throw new Error("useScreenOptions() needs the default export of the screen's options.ts.");
+  }
+  return screen.options as never;
 };
 
 const roleAllows = (role: ScreenRole, required: ScreenRole): boolean => required === 'member' || role === 'admin';

@@ -19,6 +19,7 @@ export declare const usePatterns: Api.UsePatterns;
 export declare const useDocsApi: Api.UseDocsApi;
 export declare const useSession: Api.UseSession;
 export declare const useScreenRoute: Api.UseScreenRoute;
+export declare const useScreenOptions: Api.UseScreenOptions;
 export declare const useCustomPreviews: Api.UseCustomPreviews;
 export declare const useAssistantContext: Api.UseAssistantContext;
 export declare const useInstanceAssessment: Api.UseInstanceAssessment;

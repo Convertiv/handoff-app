@@ -1122,6 +1122,7 @@ export default defineConfig({
 | --- | --- | --- |
 | `index.tsx` | The view: `export default defineScreen({ title, icon, nav, access, fullscreen, component })` | `handoff-app/screens` |
 | `collections.ts` | Collections: `defineCollection({ name, version, schema, migrate, mcp })` | `handoff-app/screens` (definitions and types only) |
+| `options.ts` | Options (optional): `export default defineScreenOptions({ schema })` | `handoff-app/screens` (definitions and types only) |
 | `tools.ts` | Optional assistant tools: `export default defineScreenTools(...)` | `handoff-app/screens/server` |
 
 - Write `title`, `description`, `icon`, `nav`, `access` and `fullscreen` in
@@ -1143,6 +1144,115 @@ export default defineConfig({
 - The build stops when a screen file imports the database (`drizzle-orm`,
   `pg`, `postgres`), `handoff-app` or its other entry points, server code from
   UI code, or UI code from server code. The message names the file and the fix.
+
+### Where a screen comes from
+
+`module` reads like an import:
+
+- A path that starts with `./` or `../` is a directory of the workspace.
+- Anything else is an npm package, such as `@acme/kudos-screen`, or a subpath
+  of one, such as `@acme/screens/kudos`, for a package with several screens.
+
+```ts
+import kudos from '@acme/kudos-screen/handoff';
+
+export default defineConfig({
+  screens: [
+    { id: 'notes', module: './screens/notes' },
+    { id: 'board', module: '@acme/screens/board' },
+    kudos({ id: 'kudos', maxPerDay: 3 }),
+  ],
+});
+```
+
+- `id` sets the route, the tool prefix and the owner of stored documents. The
+  workspace picks it, so packages cannot collide. Keep it across package
+  upgrades, or the screen loses its documents.
+- A factory, such as `kudos()`, only returns `{ id, module, options }`. In a
+  JSON config, write that object by hand.
+- Restart `start` or `dev` after you install or remove a screen package.
+
+### Screen options
+
+A screen takes options from its declaration. Declare them in `options.ts` with
+a JSON Schema:
+
+```ts
+// options.ts
+import { defineScreenOptions } from 'handoff-app/screens';
+
+export default defineScreenOptions({
+  schema: {
+    type: 'object',
+    properties: {
+      heading: { type: 'string', default: 'Notes' },
+      maxPerDay: { type: 'integer', minimum: 1, default: 5 },
+    },
+    additionalProperties: false,
+  },
+});
+```
+
+```ts
+// handoff.config.ts
+screens: [{ id: 'notes', module: './screens/notes', options: { maxPerDay: 3 } }];
+```
+
+Read them with `useScreenOptions(options)` in the UI and
+`options.get(options)` in `tools.ts`. The types come from the schema.
+
+- The build checks the values against the schema and fills each `default`.
+  A wrong value stops the build and names the option.
+- The build bakes options into the app, so a change needs a rebuild. In
+  `start` and `dev`, saving the config applies it.
+- The browser receives the options. Do not put secrets in them.
+- Options must be plain JSON. Functions and class instances are rejected.
+
+### Screen packages
+
+A screen package exports the same files as a screen directory, as compiled ES
+modules:
+
+```json
+{
+  "name": "@acme/kudos-screen",
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./collections": "./dist/collections.js",
+    "./options": "./dist/options.js",
+    "./tools": "./dist/tools.js",
+    "./handoff": "./dist/handoff.js"
+  },
+  "peerDependencies": { "handoff-app": "^2.3.0", "react": "^19" }
+}
+```
+
+- `.` is the UI. `./collections`, `./options` and `./tools` are optional. For a
+  package with several screens, export `./<name>`, `./<name>/collections` and so
+  on, and declare `module: '@acme/screens/<name>'`.
+- Handoff reads `exports` with the `import` and `default` conditions. A package
+  without `exports` is read as a screen directory.
+- Compile JSX and TypeScript, but do not minify. The build reads the literal
+  options of `defineScreen()` from the compiled file.
+- Import the SDK from `handoff-app/screens` and `handoff-app/screens/server`,
+  as in a workspace screen. The same import rules apply.
+- `./handoff` (optional) exports a factory for the config. The config loads it,
+  so keep UI code out.
+
+```ts
+// src/handoff.ts
+import type { OptionsInputOf, ScreenDeclaration } from 'handoff-app/screens';
+import type options from './options';
+
+type KudosOptions = OptionsInputOf<typeof options>;
+
+export default ({ id = 'kudos', ...options }: KudosOptions & { id?: string } = {}): ScreenDeclaration<KudosOptions> => ({
+  id,
+  module: '@acme/kudos-screen',
+  options,
+});
+```
 
 ### Collections
 

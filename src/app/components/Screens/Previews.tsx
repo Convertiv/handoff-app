@@ -4,6 +4,7 @@ import { buildArtifactUrl } from '@handoff/artifacts/url';
 import { contractFields, assessArgs } from '@handoff/custom-previews';
 import { CUSTOM_PREVIEW_FRAME_SANDBOX } from '@handoff/custom-previews/sandbox';
 import type { ArgsFormProps, ComponentPreviewProps, CustomPreviewProps, ViewportToggleProps } from '@handoff/screens/client-api';
+import { toCoreContract } from '@handoff/screens/core-contract';
 import { Component as ComponentIcon } from 'lucide-react';
 import * as React from 'react';
 import { useComponentArtifact } from '../../lib/screens/client/docs';
@@ -95,11 +96,11 @@ export const CustomPreview: React.FC<CustomPreviewProps> = ({ componentId, id, c
 export const ArgsForm: React.FC<ArgsFormProps> = ({ contract, value, onChange, fields: shown, disabled }) => {
   const shownKey = shown?.join('\n');
   const fields = React.useMemo(() => {
-    const all = contract ?? {};
+    const all = toCoreContract(contract) ?? {};
     const names = shownKey === undefined ? null : shownKey.split('\n').filter((name) => name in all);
     return contractFields(names ? Object.fromEntries(names.map((name) => [name, all[name]])) : all);
   }, [contract, shownKey]);
-  const issues = React.useMemo(() => assessArgs(contract, value ?? {}).issues, [contract, value]);
+  const issues = React.useMemo(() => assessArgs(toCoreContract(contract), value ?? {}).issues, [contract, value]);
   if (fields.length === 0) return <p className="px-1 py-2 text-[13px] text-muted-foreground">This component declares no properties.</p>;
   return (
     // The form pads itself for the docs editor; a panel already pads its body.

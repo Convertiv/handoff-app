@@ -1,6 +1,7 @@
 'use client';
 
 import { buildArtifactUrl } from '@handoff/artifacts/url';
+import type { CustomPreview } from '@handoff/custom-previews';
 import type {
   AssessInstances,
   DataResult,
@@ -165,9 +166,10 @@ export const useCustomPreviews: UseCustomPreviews = (componentId) => {
       if (change.componentId === componentId) invalidate(key);
     });
   }, [key, componentId]);
+  // Read as the core record, so the compiler checks that it still fits the public type.
   return useResource<SavedCustomPreview[]>(
     key,
-    async () => (await fetchJson<{ customPreviews?: SavedCustomPreview[] }>(customPreviewListUrl(componentId!))).customPreviews ?? []
+    async () => (await fetchJson<{ customPreviews?: CustomPreview[] }>(customPreviewListUrl(componentId!))).customPreviews ?? []
   );
 };
 

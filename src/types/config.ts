@@ -1,4 +1,5 @@
 import type { EnvValue, EnvSecret, RuntimeEnvReference } from '../config/from-env';
+import type { ScreenDeclaration } from '../screens/define';
 import { BuildOptions } from 'esbuild';
 import type Handlebars from 'handlebars';
 import { Types as HandoffTypes } from 'handoff-core';
@@ -111,16 +112,8 @@ export interface ConfigCatalog {
   include?: string[];
 }
 
-/** A screen: a view in the docs app, built from a directory of the workspace. */
-export interface ScreenDeclaration {
-  /** Route segment and tool prefix: `/screens/<id>`. Lowercase letters, digits and `-`. */
-  id: string;
-  /**
-   * The screen directory, relative to the working directory. It holds `index.tsx` and, optionally,
-   * `collections.ts` and `tools.ts`.
-   */
-  module: string;
-}
+/** A screen: a view in the docs app, from a workspace directory or an npm package. */
+export type { ScreenDeclaration };
 
 /** Runtime mode. Resolved solely from `runtime.mode`; never inferred from env vars or connection settings. */
 export type RuntimeMode = 'workspace' | 'registry';

@@ -3,7 +3,7 @@
  * `tools.ts`; the build rejects it in UI code. Pure: it has no runtime dependencies, so a screen
  * never pulls the CLI into the app.
  */
-import type { AnyCollection, DocumentOf, ToolScope } from './define';
+import type { AnyCollection, AnyScreenOptions, DocumentOf, OptionsOf, ToolScope } from './define';
 import type { FromSchema, JsonObjectSchema } from './schema';
 import type {
   ArgsAssessment,
@@ -16,7 +16,7 @@ import type {
   PatternQuery,
 } from './types';
 
-export type { ToolScope } from './define';
+export type { AnyScreenOptions, OptionsOf, ScreenOptionsDefinition, ToolScope } from './define';
 export type { FromSchema, JsonObjectSchema, JsonSchema } from './schema';
 export type {
   ArgsAssessment,
@@ -58,6 +58,8 @@ export interface ToolCaller {
 export interface ScreenToolsContext {
   /** Typed stores over this screen's collections. Writes act as the caller and check the screen's access. */
   collections: { get<C extends AnyCollection>(collection: C): CollectionStore<DocumentOf<C>> };
+  /** The screen's options with defaults filled. Pass the default export of `options.ts` to `get()`. */
+  options: { get<D extends AnyScreenOptions>(definition: D): OptionsOf<D> };
   docs: DocsReader;
   caller: ToolCaller | null;
 }

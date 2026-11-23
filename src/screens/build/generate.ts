@@ -13,8 +13,11 @@ import { resolveScreenDeclarations, type ScreenFiles } from './declarations';
  * - `generated/screens.client.ts`: one lazy import per screen UI, so each screen is its own chunk.
  * - `generated/screens.server.ts`: the collections and tools modules. Only API routes import it, so
  *   server code never reaches the browser bundle.
- * - `generated/screens.css`: a Tailwind `@source` per screen directory. Tailwind scans only the app,
- *   and the screens live in the workspace.
+ * - `generated/screens.css`: a Tailwind `@source` per screen directory or screen package. Tailwind
+ *   scans only the app, and the screens live in the workspace or in `node_modules`.
+ *
+ * The generated files import screens by resolved file path, not by package name. The staged app
+ * sits inside the `handoff-app` package, where workspace packages may not resolve.
  */
 
 export const SCREENS_MANIFEST_PATH = path.join('generated', 'screens.json');
@@ -49,8 +52,8 @@ export const readScreens = async (context: ScreensContext): Promise<{ files: Scr
   for (const screen of files) {
     try {
       const meta = readScreenMeta(screen.ui, searchPaths);
-      const { collections, tools } = await checkScreen(screen, context.workingPath);
-      screens.push({ id: screen.id, ...meta, collections, tools, needsServer: collections.length > 0 || tools.length > 0 });
+      const { collections, tools, options } = await checkScreen(screen, context.workingPath);
+      screens.push({ id: screen.id, ...meta, collections, tools, options, needsServer: collections.length > 0 || tools.length > 0 });
     } catch (error) {
       problems.push((error as Error).message);
     }

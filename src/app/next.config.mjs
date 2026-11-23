@@ -35,6 +35,11 @@ const resolveOutputMode = (target) => {
   return undefined;
 };
 
+// Screen packages compile with the app, so the `handoff-app/screens` alias applies to them. The
+// build replaces the placeholder with a JSON list; the raw template, as linted, keeps it.
+const screenPackagesValue = '%HANDOFF_SCREEN_PACKAGES%';
+const screenPackages = screenPackagesValue.startsWith('[') ? JSON.parse(screenPackagesValue) : [];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: resolveOutputMode(handoffBuildTarget),
@@ -79,7 +84,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  transpilePackages: ['handoff-app', 'react-syntax-highlighter'],
+  transpilePackages: ['handoff-app', 'react-syntax-highlighter', ...screenPackages],
   typescript: {
     tsconfigPath: 'tsconfig.json',
   },

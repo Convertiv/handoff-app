@@ -1,4 +1,3 @@
-import type { ComponentContract } from '../custom-previews/contract';
 import type { ComponentInstance } from './define';
 
 /**
@@ -93,6 +92,45 @@ export interface ArgsIssue {
   path: string;
   message: string;
 }
+
+export type ComponentPropertyType = 'text' | 'image' | 'button' | 'array' | 'number' | 'boolean' | 'object' | 'function' | 'enum' | 'any';
+
+/** Limits the design system sets on a property's value. */
+export interface ComponentPropertyRules {
+  required?: boolean;
+  content?: { min: number; max: number };
+  dimensions?: {
+    width: number;
+    height: number;
+    min: { width: number; height: number };
+    max: { width: number; height: number };
+    recommend: { width: number; height: number };
+  };
+  filesize?: number;
+  filetype?: string;
+  pattern?: string;
+}
+
+/** One property of a component, as the build documents it. */
+export interface ComponentProperty {
+  id?: string;
+  name: string;
+  description: string;
+  /** The property's type as written in source, such as `'primary' | 'secondary'`. */
+  generic: string;
+  default?: string | number | boolean | object | unknown[] | null;
+  type: ComponentPropertyType;
+  /** The item type when `type` is `array`. */
+  items?: { type: ComponentPropertyType; properties?: { [key: string]: ComponentProperty } };
+  /** The nested properties when `type` is `object`. */
+  properties?: { [key: string]: ComponentProperty };
+  key?: string;
+  rules?: ComponentPropertyRules;
+  warnings?: string[];
+}
+
+/** A component's properties by name. The args of an instance follow it. */
+export type ComponentContract = { [key: string]: ComponentProperty };
 
 export interface ComponentSummary {
   id: string;

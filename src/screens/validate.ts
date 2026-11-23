@@ -201,6 +201,18 @@ export const schemaProblems = (schema: unknown, path = 'schema'): string[] => {
   return problems;
 };
 
+/** Fills each missing property that has a `default`, at every level of nested objects. Set values never change. */
+export const withDefaults = (schema: JsonSchema, value: unknown): unknown => {
+  if (value === undefined) return 'default' in schema ? structuredClone(schema.default) : undefined;
+  if (!isObject(value) || !schema.properties) return value;
+  const result: Record<string, unknown> = { ...value };
+  for (const [key, child] of Object.entries(schema.properties)) {
+    const filled = withDefaults(child, result[key]);
+    if (filled !== undefined) result[key] = filled;
+  }
+  return result;
+};
+
 /**
  * The smallest value a schema accepts for its required parts: `default` when given, otherwise an
  * empty string, zero, `false`, an empty list or an object with its required properties. Used to
