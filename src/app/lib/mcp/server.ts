@@ -27,7 +27,7 @@ import type { McpPrincipal, McpTool } from './tool';
  */
 
 /** Version of the MCP surface itself, reported in `initialize`. Bump when a tool contract changes. */
-const MCP_SERVER_VERSION = '2.2.0';
+const MCP_SERVER_VERSION = '2.3.0';
 
 const tools = [...componentTools, ...customPreviewTools, ...tokenTools, ...pageTools];
 
@@ -56,13 +56,13 @@ const withValidator = (tool: McpTool): ValidatedTool => {
 export const createMcpServer = ({ principal, screenId }: { principal: McpPrincipal; screenId?: string }): Server => {
   let screenTools: Promise<Map<string, ValidatedTool>> | null = null;
   const loadScreenTools = (): Promise<Map<string, ValidatedTool>> =>
-    (screenTools ??= createScreenMcpTools({ principal, screenId, isRegistry: getServerRuntimeConfig().mode === 'registry' })
-      .then((list) => new Map(list.map((tool) => [tool.definition.name, withValidator(tool)])))
-      .catch((error) => {
-        // Docs tools keep working when a screen's tools cannot load.
-        console.error('Screen tools could not be loaded.', error);
-        return new Map<string, ValidatedTool>();
-      }));
+  (screenTools ??= createScreenMcpTools({ principal, screenId, isRegistry: getServerRuntimeConfig().mode === 'registry' })
+    .then((list) => new Map(list.map((tool) => [tool.definition.name, withValidator(tool)])))
+    .catch((error) => {
+      // Docs tools keep working when a screen's tools cannot load.
+      console.error('Screen tools could not be loaded.', error);
+      return new Map<string, ValidatedTool>();
+    }));
 
   const server = new Server(
     { name: 'handoff', version: MCP_SERVER_VERSION },
