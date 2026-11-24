@@ -8,6 +8,8 @@ export interface WatcherState {
   runtimeConfigurationWatcher: chokidar.FSWatcher | null;
   /** Watches every registered catalog directory for newly created item subdirectories. */
   catalogDirectoriesWatcher: chokidar.FSWatcher | null;
+  /** Regenerates the screen files from the current config. Set by `watchScreens`. */
+  refreshScreens?: () => Promise<void>;
 }
 
 /**

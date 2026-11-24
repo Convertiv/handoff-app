@@ -2,6 +2,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { AjvJsonSchemaValidator } from '@modelcontextprotocol/sdk/validation/ajv';
 import { getServerRuntimeConfig } from '../docs-api/runtime-config';
+import { createScreenMcpTools } from '../screens/mcp';
 import { componentTools } from './components';
 import { customPreviewTools } from './custom-previews';
 import { pageTools } from './pages';
@@ -38,7 +39,31 @@ const toolsByName = new Map(
 
 const isOffered = (tool: McpTool): boolean => !tool.registryOnly || getServerRuntimeConfig().mode === 'registry';
 
-export const createMcpServer = ({ principal }: { principal: McpPrincipal }): Server => {
+type ValidatedTool = McpTool & { validate: ReturnType<AjvJsonSchemaValidator['getValidator']> };
+
+/** Screen tools are rebuilt per session, with stores bound to its caller, so their compiled schemas are cached by content. */
+const screenValidators = new Map<string, ValidatedTool['validate']>();
+const withValidator = (tool: McpTool): ValidatedTool => {
+  const key = JSON.stringify(tool.definition.inputSchema);
+  if (!screenValidators.has(key)) screenValidators.set(key, validator.getValidator(tool.definition.inputSchema));
+  return { ...tool, validate: screenValidators.get(key)! };
+};
+
+/**
+ * @param screenId - The screen of the assistant's page context. Its `screen`-scoped tools are listed
+ * only then; external MCP clients pass none and see global screen tools only.
+ */
+export const createMcpServer = ({ principal, screenId }: { principal: McpPrincipal; screenId?: string }): Server => {
+  let screenTools: Promise<Map<string, ValidatedTool>> | null = null;
+  const loadScreenTools = (): Promise<Map<string, ValidatedTool>> =>
+    (screenTools ??= createScreenMcpTools({ principal, screenId, isRegistry: getServerRuntimeConfig().mode === 'registry' })
+      .then((list) => new Map(list.map((tool) => [tool.definition.name, withValidator(tool)])))
+      .catch((error) => {
+        // Docs tools keep working when a screen's tools cannot load.
+        console.error('Screen tools could not be loaded.', error);
+        return new Map<string, ValidatedTool>();
+      }));
+
   const server = new Server(
     { name: 'handoff', version: MCP_SERVER_VERSION },
     {
@@ -49,16 +74,20 @@ export const createMcpServer = ({ principal }: { principal: McpPrincipal }): Ser
         'and spacing from handoff_get_tokens instead of inventing values. Search documentation with ' +
         'handoff_search_pages and read a page with handoff_get_page. Where custom preview tools are ' +
         'listed, save a new state of a component with handoff_create_custom_preview, writing its args ' +
-        'against `argsSchema` from handoff_get_component.',
+        'against `argsSchema` from handoff_get_component. Tools named after a screen read and change that ' +
+        "screen's data; prefer them when the question is about what the reader has open on the screen.",
     }
   );
 
-  server.setRequestHandler(ListToolsRequestSchema, () => ({ tools: tools.filter(isOffered).map((tool) => tool.definition) }));
+  server.setRequestHandler(ListToolsRequestSchema, async () => ({
+    tools: [...tools.filter(isOffered), ...(await loadScreenTools()).values()].map((tool) => tool.definition),
+  }));
 
   // Unknown tools and invalid arguments are tool errors, so the agent can read them and retry.
   server.setRequestHandler(CallToolRequestSchema, async ({ params }) => {
-    const tool = toolsByName.get(params.name);
-    if (!tool || !isOffered(tool)) {
+    const builtIn = toolsByName.get(params.name);
+    const tool = builtIn && isOffered(builtIn) ? builtIn : (await loadScreenTools()).get(params.name);
+    if (!tool) {
       return fail(`Tool "${params.name}" was not found.`);
     }
     const args = tool.validate(params.arguments ?? {});

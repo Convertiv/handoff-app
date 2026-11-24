@@ -35,6 +35,11 @@ const resolveOutputMode = (target) => {
   return undefined;
 };
 
+// Screen packages compile with the app, so the `handoff-app/screens` alias applies to them. The
+// build replaces the placeholder with a JSON list; the raw template, as linted, keeps it.
+const screenPackagesValue = '%HANDOFF_SCREEN_PACKAGES%';
+const screenPackages = screenPackagesValue.startsWith('[') ? JSON.parse(screenPackagesValue) : [];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: resolveOutputMode(handoffBuildTarget),
@@ -47,8 +52,13 @@ const nextConfig = {
   // build, and `copyTracedFiles` copies traced files with no existence guard, so leaving them in
   // fails the build with `ENOENT`. Exclude them (`**` matches the server + every per-page trace).
   // Registry-only; static export, which legitimately produces these files, is untouched.
+  // Next's `route-module.js` joins `process.cwd()` with a runtime value, so nft also sweeps the
+  // webpack build cache (`.next/cache`, hundreds of MB) into the bundle. It is never read at runtime,
+  // and it pushes the Vercel function past the 250 MB limit.
   outputFileTracingExcludes:
-    handoffBuildTarget === 'registry' ? { '**': ['**/export-detail.json', '**/.next/export/**'] } : undefined,
+    handoffBuildTarget === 'registry'
+      ? { '**': ['**/export-detail.json', '**/.next/export/**', '**/.next/cache/**'] }
+      : undefined,
   reactStrictMode: true,
   pageExtensions: ['js', 'jsx', 'ts', 'tsx'],
   trailingSlash: true,
@@ -74,7 +84,7 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  transpilePackages: ['handoff-app', 'react-syntax-highlighter'],
+  transpilePackages: ['handoff-app', 'react-syntax-highlighter', ...screenPackages],
   typescript: {
     tsconfigPath: 'tsconfig.json',
   },
@@ -188,6 +198,11 @@ const nextConfig = {
     resolveAlias: {
       '@handoff': path.resolve('%HANDOFF_MODULE_PATH%/src'),
       '@': path.resolve('.'),
+      // Screens import the SDK by its package name. Both names resolve to the app's own modules, so a
+      // screen shares React context and caches with the app instead of loading a second copy.
+      // Turbopack reads a file alias relative to the app, not as an absolute path.
+      'handoff-app/screens/server': path.relative('.', path.resolve('%HANDOFF_MODULE_PATH%/src/screens/server.ts')),
+      'handoff-app/screens': './lib/screens/sdk.ts',
     },
     resolveExtensions: [
       '.js',
@@ -202,6 +217,8 @@ const nextConfig = {
       ...config.resolve.alias,
       '@handoff': path.resolve('%HANDOFF_MODULE_PATH%/src'),
       '@': path.resolve('.'),
+      'handoff-app/screens/server$': path.resolve('%HANDOFF_MODULE_PATH%/src/screens/server.ts'),
+      'handoff-app/screens$': path.resolve('./lib/screens/sdk.ts'),
     };
     return config;
   },

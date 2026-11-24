@@ -10,7 +10,7 @@ import { buildMainJS } from '../transformers/preview/component/javascript';
 import { Logger } from '../utils/logger';
 import { isPathInside, normalizePathForCompare } from '../utils/path';
 import { persistClientConfig } from './client-config';
-import { getStrategy, runAllFinalizers } from './config-diff';
+import { type FinalizeContext, getStrategy, runAllFinalizers } from './config-diff';
 import { syncPublicFiles } from './paths';
 import {
   getComponentSourceReaders,
@@ -311,6 +311,11 @@ export const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState)
               const handle =
                 entryBefore && strategy ? strategy.capture(handoff, entryBefore.entityId) : undefined;
 
+              const patternIdsBefore = Object.keys(handoff.runtimeConfig?.entities.patterns ?? {});
+
+              // Checked before the reload, which can change the main config path.
+              const wasMainConfig = handoff.isMainConfigFile(changedFile);
+
               let reloadFailed = false;
               try {
                 handoff.reload();
@@ -335,8 +340,17 @@ export const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState)
 
               const kindChanged = !!entryBefore && !!entryAfter && entryBefore.kind !== entryAfter.kind;
 
-              if (handoff.isMainConfigFile(changedFile)) {
-                await processComponents(handoff);
+              let finalizeContext: FinalizeContext | undefined;
+
+              if (wasMainConfig || handoff.isMainConfigFile(changedFile)) {
+                await state.refreshScreens?.();
+                const builtIds = new Set<string>();
+                await processComponents(handoff, undefined, undefined, { builtIds });
+                // Pattern output depends only on component output and the pattern declarations.
+                const patternIdsAfter = Object.keys(handoff.runtimeConfig?.entities.patterns ?? {});
+                const patternSetChanged =
+                  patternIdsBefore.length !== patternIdsAfter.length || patternIdsAfter.some((id) => !patternIdsBefore.includes(id));
+                if (builtIds.size === 0 && !patternSetChanged) finalizeContext = { skipPatternFinalizer: true };
               } else if (kindChanged) {
                 // The declaration switched between an implementation and a composition. A targeted
                 // rebuild would leave the previous lane's summary entry and artifacts behind, so
@@ -355,7 +369,7 @@ export const watchRuntimeConfiguration = (handoff: Handoff, state: WatcherState)
                 await processComponents(handoff, effectiveId);
               }
 
-              await runAllFinalizers(handoff);
+              await runAllFinalizers(handoff, finalizeContext);
             } catch (e) {
               Logger.error('Error reloading runtime configuration:', e);
             }

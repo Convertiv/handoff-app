@@ -5,6 +5,7 @@ import { useRouter } from 'next/router';
 import * as React from 'react';
 
 import { pageRefFromPath, type AiPageKind } from '../../lib/ai/page-ref';
+import { findScreen } from '../../lib/screens/manifest';
 import { normalizePathForMatch, stripBasePath } from '../../lib/utils';
 import { useNav } from '../context/NavProvider';
 import { componentRoute } from '../CustomPreview/api';
@@ -52,6 +53,11 @@ export const useNavTitles = (): Map<string, string> => {
 /** The page at a route, or `null` when the route gives no context or is not in the nav. */
 export const pageAt = (path: string, titles: Map<string, string>): AiPage | null => {
   const ref = pageRefFromPath(path);
+  if (ref?.kind === 'screen') {
+    const screen = findScreen(ref.id);
+    // Every route of a screen is one context, so the chip and the server see the screen's own route.
+    return screen ? { path: `/screens/${encodeURIComponent(screen.id)}`, kind: ref.kind, title: screen.title } : null;
+  }
   if (ref?.kind === 'custom-preview') {
     const component = titles.get(componentRoute(ref.id));
     return component ? { path, kind: ref.kind, title: `${component} · custom preview` } : null;

@@ -310,7 +310,7 @@ function buildUsageSnippet(
 }
 
 // Custom previews render the meta-level component with args, never a story.
-function generateCsfClientSource(templatePath: string): string {
+function generateCsfClientSource(componentId: string, templatePath: string): string {
   return `
     import React from 'react';
     import { createRoot } from 'react-dom/client';
@@ -333,6 +333,7 @@ function generateCsfClientSource(templatePath: string): string {
     };
 
     mountClientRender(elementFor);
+    registerClientMount(${JSON.stringify(componentId)}, (container) => createReactClientRender(container, elementFor));
   `;
 }
 
@@ -562,7 +563,7 @@ export function csfRenderPlugin(
         lastHtml = html;
       }
 
-      const clientBundle = await bundleClientSource(generateCsfClientSource(templatePath), handoff, componentId);
+      const clientBundle = await bundleClientSource(generateCsfClientSource(componentId, templatePath), handoff, componentId);
       if (clientBundle) {
         this.emitFile({ type: 'asset', fileName: clientArtifactFileName(componentId), source: clientBundle });
         this.emitFile({

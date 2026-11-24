@@ -12,7 +12,8 @@ export const DOCK_WIDTH_VAR = '--ai-dock-width';
 
 const STORAGE_KEY = 'handoff:ai:dock';
 const NON_DOCS_ROUTES = ['/cli/device', '/install', '/login', '/reset-password'] as const;
-const NON_DOCS_ROUTE_PREFIXES = ['/account'] as const;
+// Screens place the conversation in their own column, so the dock stays away from them.
+const NON_DOCS_ROUTE_PREFIXES = ['/account', '/screens'] as const;
 
 /** The assistant answers from the docs catalog, so application and authentication routes omit it. */
 export const isAiAssistantRoute = (pathname: string): boolean => {

@@ -1,0 +1,1 @@
+export { createRegistryCollectionsBackend } from './store';

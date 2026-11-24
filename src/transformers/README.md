@@ -20,9 +20,7 @@ transformers/
 
 ## Preview frame layout
 
-Each plugin passes its preview documents and render shell through `frameDocumentFor()` (`utils/frame-layout.ts`). A component of type `element` (the default) gets a style that centers its specimen in the frame, with a 100px minimum body height. Other types, such as `block`, keep the bare `<body>`, because a full-width block would shrink under the centering grid.
-
-Element frames also clear their page background while the frame URL ends with `#handoff-background=transparent`. The docs app sets that fragment with `frameUrlWithBackground()`, so switching does not reload the frame.
+Each plugin passes its preview documents and render shell through `frameDocumentFor()` (`utils/frame-layout.ts`). A component of type `element` (the default) gets a style that centers its specimen in the frame, with 32px padding and a 100px minimum body height. Other types, such as `block`, keep the bare `<body>`, because a full-width block would shrink under the centering grid.
 
 ## Client-rendered previews
 
@@ -33,7 +31,13 @@ shares one contract:
   calls `mountPreviews(componentId, mount)`. `mount(container, { hydrate })` returns a `render(args)`
   function. The runtime finds every mount point (the custom preview shell, the standalone `#root` with
   its `#__APP_PROPS__` script, and each pattern mount marked `[data-handoff-component]`), parses the
-  props, and reports render errors to the docs app.
+  props, and reports render errors to the docs app. It also registers the mount in
+  `window.__handoffMounts` (`registerClientMount`), so the component canvas can mount the component
+  into containers it creates later. A container marked `data-handoff-render="client"` renders in the
+  browser with no server markup. Handlebars and CSF artifacts, which render only the shell, register
+  their mount the same way. A client artifact that adds nodes to the document head marks them with
+  `data-handoff-owner="<componentId>"` and adds them again when they are gone, so the canvas can
+  remove them with the component's last instance.
 - **Build**: `emitClientPreviews()` (`plugins/client-previews.ts`) emits each preview document, its
   `-inspect` twin, and the render shell, and fills the component record.
 

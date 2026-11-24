@@ -54,6 +54,10 @@ README section before you use a recipe.
 - [Connect a client by hand](#connect-a-client-by-hand)
 - [Turn off MCP](#turn-off-mcp)
 
+**Screens**
+
+- [Screen with a collection, a canvas and a tool](#screen-with-a-collection-a-canvas-and-a-tool)
+
 **Continuous integration**
 
 - [Publish from GitHub Actions](#publish-from-github-actions)
@@ -1099,6 +1103,174 @@ Notes:
 
 - This value is baked at build time. Rebuild a deployed registry after you
   change it.
+
+---
+
+## Screens
+
+See [Screens](README.md#screens) in the README.
+
+### Screen with a collection, a canvas and a tool
+
+This screen keeps showcases: named lists of components that render together.
+A reader picks a showcase, adds components, and edits their args. The assistant
+can add components too.
+
+1. Create the screen and add it to the config:
+
+   ```bash
+   npx handoff-app make:screen showcase
+   ```
+
+2. Replace `screens/showcase/collections.ts`:
+
+   ```ts
+   import { defineCollection, type ComponentInstance } from 'handoff-app/screens';
+
+   export const showcases = defineCollection({
+     name: 'showcases',
+     mcp: true,
+     schema: {
+       type: 'object',
+       required: ['title', 'items'],
+       properties: {
+         title: { type: 'string', minLength: 1, maxLength: 120 },
+         items: {
+           type: 'array',
+           maxItems: 100,
+           items: {
+             type: 'object',
+             required: ['id', 'componentId', 'args'],
+             properties: { id: { type: 'string' }, componentId: { type: 'string' }, args: { type: 'object' } },
+             additionalProperties: false,
+           },
+         },
+       },
+       additionalProperties: false,
+     },
+   });
+
+   export type Item = ComponentInstance;
+   ```
+
+3. Replace `screens/showcase/tools.ts`:
+
+   ```ts
+   import { createInstance, defineScreenTools, defineTool, toolError, toolResult } from 'handoff-app/screens/server';
+   import { showcases } from './collections';
+
+   export default defineScreenTools(({ collections, docs }) => {
+     const store = collections.get(showcases);
+     return [
+       defineTool(
+         {
+           name: 'add_component',
+           description: 'Add a component with its default args to a showcase.',
+           inputSchema: {
+             type: 'object',
+             required: ['showcaseId', 'componentId'],
+             properties: { showcaseId: { type: 'string' }, componentId: { type: 'string' } },
+           },
+         },
+         async ({ showcaseId, componentId }) => {
+           const component = await docs.component(componentId);
+           if (!component) return toolError(`Unknown component "${componentId}". Search the components first.`);
+           const showcase = await store.update(showcaseId, (current) => ({ ...current, items: [...current.items, createInstance(component)] }));
+           return toolResult({ items: showcase.data.items.length }, { changed: [showcase.ref] });
+         }
+       ),
+     ];
+   });
+   ```
+
+4. Replace `screens/showcase/index.tsx`:
+
+   ```tsx
+   import { useState } from 'react';
+   import {
+     ArgsForm,
+     ComponentCanvas,
+     DocumentMenu,
+     ScreenLayout,
+     ViewportToggle,
+     createInstance,
+     defineScreen,
+     loadComponent,
+     ui,
+     useAssistantContext,
+     useComponent,
+     useComponents,
+     useDocument,
+     useScreenRoute,
+     type Viewport,
+   } from 'handoff-app/screens';
+   import { showcases, type Item } from './collections';
+
+   function Showcase() {
+     const { params, navigate } = useScreenRoute();
+     const showcase = useDocument(showcases, params[0]);
+     const components = useComponents();
+     const [selectedId, setSelectedId] = useState<string>();
+     const [viewport, setViewport] = useState<Viewport>('desktop');
+     useAssistantContext({ showcaseId: params[0] });
+
+     const items = showcase.data?.items ?? [];
+     const selected = items.find((item) => item.id === selectedId);
+     const setItems = (change: (items: Item[]) => Item[]) => showcase.update((current) => ({ ...current, items: change(current.items) }));
+     const add = async (componentId: string) => {
+       const item = createInstance((await loadComponent(componentId)) ?? componentId);
+       setItems((current) => [...current, item]);
+       setSelectedId(item.id);
+     };
+
+     return (
+       <ScreenLayout
+         assistant
+         toolbar={
+           <>
+             <DocumentMenu collection={showcases} current={params[0]} onOpen={(id) => navigate(id ? [id] : [])} noun="showcase" />
+             <ScreenLayout.Status document={showcase} />
+             <ScreenLayout.Spacer />
+             <ViewportToggle value={viewport} onChange={setViewport} />
+           </>
+         }
+         left={
+           selected ? (
+             <Editor item={selected} onBack={() => setSelectedId(undefined)} onChange={(args) => setItems((current) => current.map((item) => (item.id === selected.id ? { ...item, args } : item)))} />
+           ) : (
+             <ScreenLayout.Panel title="Components" count={components.data?.length}>
+               <div className="flex flex-col gap-1.5">
+                 {components.data?.map((component) => (
+                   <ui.ListRow key={component.id} title={component.title} icon="component" onClick={() => void add(component.id)} />
+                 ))}
+               </div>
+             </ScreenLayout.Panel>
+           )
+         }
+       >
+         <ComponentCanvas items={items} viewport={viewport} selectedId={selectedId} onSelect={setSelectedId} empty={<ui.EmptyState title="Pick a component on the left" />} />
+       </ScreenLayout>
+     );
+   }
+
+   function Editor({ item, onBack, onChange }: { item: Item; onBack(): void; onChange(args: Item['args']): void }) {
+     const component = useComponent(item.componentId);
+     return (
+       <ScreenLayout.Panel title={component.data?.title ?? item.componentId} onBack={onBack}>
+         {component.data && <ArgsForm contract={component.data.contract} value={item.args} onChange={onChange} />}
+       </ScreenLayout.Panel>
+     );
+   }
+
+   export default defineScreen({ title: 'Showcase', icon: 'layout-grid', component: Showcase });
+   ```
+
+5. Run `npm run start` and open `/screens/showcase`. Create a showcase with the
+   menu in the toolbar. In a workspace, the documents are in
+   `handoff/data/screens/showcase/showcases/`.
+
+6. For a registry, run `npm run db:migrate` once, so the database has the
+   `documents` table. Then build and deploy the registry as usual.
 
 ---
 

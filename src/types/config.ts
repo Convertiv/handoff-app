@@ -1,4 +1,5 @@
 import type { EnvValue, EnvSecret, RuntimeEnvReference } from '../config/from-env';
+import type { ScreenDeclaration } from '../screens/define';
 import { BuildOptions } from 'esbuild';
 import type Handlebars from 'handlebars';
 import { Types as HandoffTypes } from 'handoff-core';
@@ -77,6 +78,8 @@ export interface NextAppConfig {
   basePath?: string;
   /** @default true */
   attribution?: boolean;
+  /** Label of the top-nav item that leads to the screens. @default 'Tools' */
+  screensTitle?: string;
   ports?: {
     app: EnvValue<number>;
     websocket: EnvValue<number>;
@@ -108,6 +111,9 @@ export interface ConfigCatalog {
    */
   include?: string[];
 }
+
+/** A screen: a view in the docs app, from a workspace directory or an npm package. */
+export type { ScreenDeclaration };
 
 /** Runtime mode. Resolved solely from `runtime.mode`; never inferred from env vars or connection settings. */
 export type RuntimeMode = 'workspace' | 'registry';
@@ -345,6 +351,11 @@ export interface Config {
    * Where catalog items are registered.
    */
   catalog?: ConfigCatalog;
+  /**
+   * Screens: views compiled into the docs app under `/screens/<id>`. A change to this list needs a
+   * restart of `start` or `dev`.
+   */
+  screens?: ScreenDeclaration[];
   /**
    * Override URLs for the asset zip download links. When unset, each link defaults to the
    * basePath-aware asset route `{basePath}/api/docs/assets/{collection}/{collection}.zip`, served by

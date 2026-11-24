@@ -101,6 +101,29 @@ const __handoffReadProps = (propsId) => {
 };
 
 /**
+ * Makes the component mountable into any container of this document, now and later. Each container
+ * marked [data-handoff-component][data-handoff-render="client"] renders in the browser with its
+ * data-handoff-props, and a composer document (the component canvas) mounts its own containers
+ * through window.__handoffMounts once the 'handoff:mount-registered' event names the component.
+ */
+const registerClientMount = (componentId, mount) => {
+  const mounts = (window.__handoffMounts = window.__handoffMounts || {});
+  mounts[componentId] = mount;
+  document
+    .querySelectorAll('[data-handoff-component=' + JSON.stringify(componentId) + '][data-handoff-render="client"]')
+    .forEach((container) => {
+      if (container.__handoffRender) return;
+      try {
+        container.__handoffRender = mount(container, { hydrate: false });
+        container.__handoffRender(__handoffReadProps(container.getAttribute('data-handoff-props')));
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  window.dispatchEvent(new CustomEvent('handoff:mount-registered', { detail: componentId }));
+};
+
+/**
  * Renders every mount point of the component in this document: the custom preview shell, the
  * standalone preview root with its props script, and each pattern mount. mount(container, { hydrate })
  * returns a render(args) function; hydrate is true when the container holds server-rendered markup.
@@ -117,12 +140,14 @@ const mountPreviews = (componentId, mount) => {
     }
   }
   document.querySelectorAll('[data-handoff-component=' + JSON.stringify(componentId) + ']').forEach((container) => {
+    if (container.getAttribute('data-handoff-render') === 'client') return;
     try {
       mount(container, { hydrate: true })(__handoffReadProps(container.getAttribute('data-handoff-props')));
     } catch (error) {
       console.error(error);
     }
   });
+  registerClientMount(componentId, mount);
 };
 `;
 

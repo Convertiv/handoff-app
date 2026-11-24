@@ -4,6 +4,7 @@ import { Chat, useChat, type UseChatHelpers } from '@ai-sdk/react';
 import { DefaultChatTransport, isDynamicToolUIPart, isToolUIPart, type UIMessage, type UIMessagePart } from 'ai';
 import * as React from 'react';
 
+import { announceScreenChanges, type ChangedDocument } from '../../lib/screens/events';
 import { announceCustomPreviewChange, customPreviewChangeOf } from '../CustomPreview/events';
 
 const basePath = process.env.HANDOFF_APP_BASE_PATH ?? '';
@@ -106,6 +107,10 @@ const createChat = (messages: UIMessage[]): Chat<UIMessage> =>
     messages,
     transport: new DefaultChatTransport({ api: `${basePath}/api/ai/chat`, credentials: 'include' }),
     onFinish: ({ message }) => announceChanges(message),
+    // Screen writes arrive as they happen, so the canvas updates while the answer still streams.
+    onData: (part) => {
+      if (part.type === 'data-screen-change' && Array.isArray(part.data)) announceScreenChanges(part.data as ChangedDocument[]);
+    },
   });
 
 const getChat = (): Chat<UIMessage> => (chat ??= createChat(readTranscript()));

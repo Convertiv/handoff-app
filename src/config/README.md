@@ -17,6 +17,9 @@ Handles loading, validation, and resolution of handoff configuration.
 | `helpers.ts` | `defineConfig()` — typed authoring; maps camelCase keys to the runtime keys |
 | `index.ts` | Barrel re-exports |
 
+The loader also checks the `screens` list (`src/screens/build/declarations.ts`): ids, duplicates,
+and that each module directory and its `index.tsx` exist.
+
 ## Usage
 
 ```ts

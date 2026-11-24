@@ -52,6 +52,14 @@
       "types": "./dist/providers.d.ts",
       "default": "./dist/providers.js"
     },
+    "./screens": {
+      "types": "./dist/screens/index.d.ts",
+      "default": "./dist/screens/index.js"
+    },
+    "./screens/server": {
+      "types": "./dist/screens/server.d.ts",
+      "default": "./dist/screens/server.js"
+    },
     "./package.json": "./package.json",
     "./*": "./*"
   },
@@ -74,6 +82,12 @@
       ],
       "providers": [
         "./dist/providers.d.ts"
+      ],
+      "screens": [
+        "./dist/screens/index.d.ts"
+      ],
+      "screens/server": [
+        "./dist/screens/server.d.ts"
       ]
     }
   },

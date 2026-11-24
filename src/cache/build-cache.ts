@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 import fs from 'fs-extra';
 import path from 'path';
 import Handoff from '../index';
@@ -33,10 +34,8 @@ export interface GlobalDepsState {
   globalScss?: FileState;
   /** Global JS entry file state */
   globalJs?: FileState;
-  /** Main config file state. The build hooks are declared there */
-  mainConfig?: FileState;
-  /** Profile config file state */
-  profileConfig?: FileState;
+  /** Hash of the config settings that component builds read. See {@link computeBuildConfigFingerprint} */
+  buildConfig?: string;
   /** Selected profile. All profiles write to the same output, so a switch invalidates all of it */
   profile?: string;
   /** Lockfile state. It stands in for the files under `node_modules`, which the cache does not track */
@@ -47,8 +46,8 @@ export interface GlobalDepsState {
   basePath?: string;
 }
 
-const GLOBAL_FILE_DEPS = ['tokens', 'globalScss', 'globalJs', 'mainConfig', 'profileConfig', 'lockfile'] as const;
-const GLOBAL_VALUE_DEPS = ['profile', 'version', 'basePath'] as const;
+const GLOBAL_FILE_DEPS = ['tokens', 'globalScss', 'globalJs', 'lockfile'] as const;
+const GLOBAL_VALUE_DEPS = ['buildConfig', 'profile', 'version', 'basePath'] as const;
 
 const LOCKFILE_NAMES = ['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lock', 'bun.lockb'];
 
@@ -146,16 +145,7 @@ export async function computeGlobalDepsState(handoff: Handoff): Promise<GlobalDe
     result.globalJs = (await computeFileState(handoff.runtimeConfig.entries.js)) ?? undefined;
   }
 
-  const mainConfigPath = handoff.getMainConfigFilePath();
-  if (mainConfigPath) {
-    result.mainConfig = (await computeFileState(mainConfigPath)) ?? undefined;
-  }
-
-  const profileConfigPath = handoff.getProfileConfigFilePath();
-  if (profileConfigPath) {
-    result.profileConfig = (await computeFileState(profileConfigPath)) ?? undefined;
-  }
-
+  result.buildConfig = computeBuildConfigFingerprint(handoff);
   result.profile = handoff.getProfile();
 
   const lockfilePath = findLockfile(handoff.workingPath);
@@ -168,6 +158,42 @@ export async function computeGlobalDepsState(handoff: Handoff): Promise<GlobalDe
 
   return result;
 }
+
+/**
+ * Hashes the config settings that component builds read, so editing any other setting, such as the
+ * app title, rebuilds no component. Add every new setting that changes build output here.
+ *
+ * While a hook is defined, the config file text counts too, because a hook can read any value in its
+ * file, such as a top-level constant. A change in a module that the config imports is not detected;
+ * use `--force`.
+ */
+export function computeBuildConfigFingerprint(handoff: Handoff): string {
+  const { hooks, reactDocgen } = handoff.config ?? {};
+  const hasHooks = Object.values(hooks ?? {}).some((hook) => typeof hook === 'function');
+  const buildSettings = {
+    hooks,
+    reactDocgen,
+    entries: handoff.runtimeConfig?.entries,
+    configTexts: hasHooks ? [handoff.getMainConfigFilePath(), handoff.getProfileConfigFilePath()].map(readConfigText) : undefined,
+  };
+  const serialized = JSON.stringify(buildSettings, (_, value) => {
+    if (typeof value === 'function') return value.toString();
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      return Object.fromEntries(Object.entries(value).sort(([left], [right]) => left.localeCompare(right)));
+    }
+    return value;
+  });
+  return createHash('sha256').update(serialized).digest('hex');
+}
+
+const readConfigText = (configPath: string | undefined): string | undefined => {
+  if (!configPath) return undefined;
+  try {
+    return fs.readFileSync(configPath, 'utf8');
+  } catch {
+    return undefined;
+  }
+};
 
 /** The nearest lockfile, searched up from the working directory so that a monorepo root lockfile is found. */
 function findLockfile(fromDirectory: string): string | undefined {
